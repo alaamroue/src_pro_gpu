@@ -156,13 +156,56 @@ int main(int argc , char *argv[]){
     try{
         //system_1->set_system_per_file("L:/daniel/work/promaides/test_pro/markgreifenheide/data/HYD/Hyd_mgh_10x10/HYD/mgh_10x10_Ref.ilm");
         //system_1->set_system_per_file("L:/daniel/work/promaides/test_pro/mark1/data/HYD/Hyd_mgh_25x25/mgh_25x25_Ref.ilm");
-        system_1->set_system_per_file("L:/daniel/work/promaides/test_pro/rur_test/data/HYD/Rur_Kompletto_nur_ein_Zeitschritt/HQ100NL_DGMNL_dikeline_all.ilm");
+        //system_1->set_system_per_file("L:/daniel/work/promaides/test_pro/rur_test/data/HYD/Rur_Kompletto_nur_ein_Zeitschritt/HQ100NL_DGMNL_dikeline_all.ilm");
+
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/TestCase_LargeFP_Montain/HYD/Simple_L_FP_Mountain.ilm");
+
+        // FOR GPU
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/newcastle/newcastle.ilm");
+        // FOR CPU
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/newcastleWithLessBound/newcastle.ilm");
+
+        //Dike Testing
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/diketest/dike.ilm");
+
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/TestCase_LargeFP_Montain/HYD/1000x1000_L_FP_Mountain.ilm");
+        system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/flat_plain_with_one_pointSource/flat_withPointSource.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/flat_plain_with_one_pointSource/flat_withPointSource2M.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/flat_plain_with_one_pointSource5x5/flat_withPointSource.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/flat_plain_with_one_pointSourceRec/flat_withPointSourceRec.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/flat_plain_with_one_pointSourceRec99/flat_withPointSourceRec99.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/1M_Perlin_30/project.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/TestCase_Aachen/ac_rain.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/TestCase_AachenCroppedInt/ac_rain.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/TestCase_Aachencropped/ac_rain.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/komplete_tests/HYD/test_case_HQ100.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/newcastleWithCoupling/newcastleCouple.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/simpleCoupling/simpleCoupling.ilm");
+
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/herrenkrug/herrenkrug.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/herrenkrugNoCoupling/herrenkrugNoCap.ilm");
+
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/roman_2fp_1rv/roman.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/rur21/HQ21.ilm");
+        //system_1->set_system_per_file("./test/HQ21.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/rur21Raster3(no.2)/HQ21Raster3.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/rur21Raster3(no.2)Cropped/HQ21Raster3Cropped.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/flat_plain_with_one_pointSourceButRaster3/flat_withPointSourceRaster3.ilm");
+
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/rur21OnlyRaster0/HQ21oneOnly.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/rur21Raster5/HQ21Raster5.ilm");
+
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/SpeedTesting/1D-2D-Modell mit Deichbruechen 2002/HYD/Elbe_Deichbrueche_2002.ilm");
+        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/SpeedTesting/1D-2D-Modell mit Deichbruechen 2002/HYD/Elbe_Deichbrueche_2002_gpu.ilm");
+
 
         system_1->init_models();
-        //system_1->init_solver();
-        //system_1->output_setted_members();
-        //system_1->make_calculation();
-        //system_1->output_final_model_statistics();
+        system_1->init_solver();
+        system_1->set_folder_name_file();
+
+        system_1->output_setted_members();
+        system_1->make_calculation();
+        system_1->output_final_model_statistics();
     }
     catch(Error msg){
         msg.output_msg(2);

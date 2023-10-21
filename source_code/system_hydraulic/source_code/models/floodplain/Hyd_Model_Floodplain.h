@@ -31,6 +31,11 @@
 #include "Geo_Simple_Polygon.h"
 
 
+//GPU Includes
+#include "common.h"
+#include "CDomainCartesian.h"
+#include "COCLDevice.h"
+#include "Profiler.h"
 
 ///Model class for a hydraulic floodplain model where the diffusive wave approach is applicated \ingroup hyd
 /**
@@ -124,6 +129,8 @@ public:
 	///Reset the model to the state before the calculation after the preproccesing
 	void reset_model(Hyd_Param_Global *global_params);
 
+	///Initialize the gpu solver with the given parameters
+	void init_solver_gpu(Hyd_Param_Global* global_params);
 	///Initialize the solver with the given parameters
 	void init_solver(Hyd_Param_Global *global_params);
 	///Reinitialize the solver
@@ -145,6 +152,8 @@ public:
 	void reset_solver(void);
 	///Solve the model
 	void solve_model(const double next_time_point, const string system_id);
+	///Solve the model using gpu
+	void solve_model_gpu(const double next_time_point, const string system_id);
 
 	///Output the given members
 	void output_members(void);
@@ -201,6 +210,15 @@ public:
 
 	///Compare the equality of two hydraulic systems in terms of model numbers; further the models are compared
 	void transfer_glob_elem_id_fp(Hyd_Model_Floodplain *to_fp);
+
+	///Fetches the number of coupling condition of the floodplain; the number of cells who will have a coupling values after each iteration
+	int get_number_coupling_conditions(void);
+
+	///Fetches the number of boundary condition of the floodplain; the number of cells who will have a boundary values after each iteration
+	int get_number_boundary_conditions(void);
+
+	///Fetches the optimized coupling ids
+	unsigned long get_optimized_coupling_id(unsigned long);
 
 private:
 	//members
@@ -325,8 +343,7 @@ private:
 
 
 
-	///Initialize the solver with the given parameters for GPU calculation
-	void init_solver_gpu(Hyd_Param_Global *global_params);
+
 
 	///Run the solver GPU
 	void run_solver_gpu(const double next_time_point, const string system_id);
@@ -463,7 +480,7 @@ private:
 
 	///This equation is the differential equation which is to solve
 	#ifdef _WIN32
-	friend int __cdecl f2D_equation2solve(realtype time, N_Vector results, N_Vector ds_dt, void *floodplain_data);
+    friend int __cdecl f2D_equation2solve(realtype time, N_Vector results, N_Vector ds_dt, void *floodplain_data);
 	#elif defined(__unix__) || defined(__unix)
 	friend int __attribute__((cdecl)) f2D_equation2solve(realtype time, N_Vector results, N_Vector ds_dt, void *floodplain_data);
 	#endif

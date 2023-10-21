@@ -264,6 +264,7 @@ target_include_directories(system_hydraulic
 		source_code/general
 		source_code/models
 		source_code/solver
+		source_code/solvergpu
 		source_code/system
 		source_code/szenario
 		source_code/gui
@@ -278,7 +279,7 @@ target_include_directories(system_hydraulic
 )
 
 ## Adding Required Libraries
-target_link_libraries(system_hydraulic solver system_sys)
+target_link_libraries(system_hydraulic solver solvergpu system_sys)
 
 ###
 ### Yes, AUTOUIC is on, but for some reason we still need to do this

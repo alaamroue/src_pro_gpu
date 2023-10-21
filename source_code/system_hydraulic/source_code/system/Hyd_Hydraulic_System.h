@@ -38,6 +38,11 @@
 #include "_Sys_Common_System.h"
 #include "Sys_Project.h"
 
+//Includes for OpenCl GPU:
+#include "common.h"
+#include "CDomainCartesian.h"
+#include "COCLDevice.h"
+#include "Profiler.h"
 
 
 
@@ -72,6 +77,8 @@ public:
 	///Container of global parameters of the system
 	Hyd_Param_Global global_parameters;
 
+	///Pointer to GPU Model Solver containing all gpu related data
+	CModel* pManager;
 
 	///Container of material parameters 
 	Hyd_Param_Material material_params;
@@ -343,7 +350,9 @@ private:
 	int calc_number;
 	///Identifer string 
 	string identifier_str;
-	
+
+	//Future holder for multithreading
+	std::vector<std::future<void>> m_futures;
 
 	///Output to display is on the way
 	bool output_is_running;
@@ -371,6 +380,9 @@ private:
 
 	//Flag if the temperature calculation is applied;
 	bool temp_calc;
+
+	//Profiler Class
+	Profiler profiler;
 
 	//methods 
 

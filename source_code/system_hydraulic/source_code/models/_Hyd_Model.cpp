@@ -1,6 +1,8 @@
 //#include "_Hyd_Model.h"
 #include "Hyd_Headers_Precompiled.h"
 
+CLog* model::log;
+
 // constructor
 _Hyd_Model::_Hyd_Model(void) {
 
@@ -54,6 +56,8 @@ _Hyd_Model::_Hyd_Model(void) {
 	
 	this->instat_boundary_curves=NULL;
 
+	this->gpu_in_use = false;
+	this->pManager = nullptr;
 }
 //destructor
 _Hyd_Model::~_Hyd_Model(void){
@@ -245,12 +249,195 @@ void _Hyd_Model::init_solver(Hyd_Param_Global *global_params){
 	this->count_solver_memory();
 }
 //Initialize the solver with the given parameters for GPU calculation
-void _Hyd_Model::init_solver_gpu(Hyd_Param_Global *global_params) {
-	//Todo Alaa
-	//global_params->
-	//pointer to the solver_pgu
-	//allcoate solver gpu
+void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 
+	this->gpu_in_use = true;
+	Hyd_Model_Floodplain* myFloodplain = (Hyd_Model_Floodplain*)this;
+
+	_hyd_floodplain_scheme_info scheme_info = myFloodplain->Param_FP.get_scheme_info();
+
+	pManager = new CModel();
+	CProfiler* cProfiler = new CProfiler(true);
+
+	if (model::log == nullptr) {
+		CLog* cLog = new CLog();
+		model::log = cLog;
+	}
+	//TODO: Alaa destory the profiler
+	pManager->setLogger(model::log);
+	pManager->setProfiler(cProfiler);
+
+
+	pManager->setUIStatus(false);
+
+	CExecutorControl* pExecutor = CExecutorControl::createExecutor(model::executorTypes::executorTypeOpenCL, pManager);
+	//pExecutor->setDeviceFilter(model::filters::devices::devicesCPU);
+	pExecutor->setDeviceFilter(model::filters::devices::devicesGPU);
+	//pExecutor->setDeviceFilter(model::filters::devices::devicesAPU);
+	pExecutor->createDevices();
+	pManager->setExecutor(pExecutor);
+
+	double outputFrequency = global_params->GlobTStep / global_params->GlobNofITS;
+	double simulationLength = global_params->GlobTNof * global_params->GlobTStep;
+
+	int id = scheme_info.selected_device;
+	//TODO: Alaa Make these customizable
+	pManager->setSelectedDevice(id);														// Set GPU device to Use. Important: Has to be called after setExecutor. Default is the faster one.
+	pManager->setName("Name");																// Set Name of Project
+	pManager->setDescription("The Description");											// Set Description of Project
+	pManager->setSimulationLength(simulationLength);												// Set Simulation Length
+	pManager->setOutputFrequency(outputFrequency);	// Set Output Frequency
+	pManager->setFloatPrecision(model::floatPrecision::kDouble);							// Set Precision
+
+	pManager->getDomainSet()->setSyncMethod(model::syncMethod::kSyncTimestep);
+
+	CDomainBase* pDomainNew;
+	pDomainNew = CDomainBase::createDomain(model::domainStructureTypes::kStructureCartesian);
+	static_cast<CDomain*>(pDomainNew)->setDevice(pManager->getExecutor()->getDevice(id));
+	CDomainCartesian* ourCartesianDomain = (CDomainCartesian*)pDomainNew;
+
+	ourCartesianDomain->setCellResolution(*myFloodplain->Param_FP.get_ptr_width_x(), *myFloodplain->Param_FP.get_ptr_width_y());
+	ourCartesianDomain->setCols(myFloodplain->Param_FP.get_no_elems_x());
+	ourCartesianDomain->setRows(myFloodplain->Param_FP.get_no_elems_y());
+
+	model::log->writeDivide();
+	if (myFloodplain->get_number_boundary_conditions() == 0) {
+		ourCartesianDomain->setUseOptimizedCoupling(true);
+		model::log->writeLine("Boundary Condition Optimization: On");
+	}
+	if (myFloodplain->get_number_coupling_conditions() == 0) {
+		ourCartesianDomain->setUseOptimizedCoupling(false);
+		model::log->writeLine("Boundary Condition Optimization: Off");
+
+		if (myFloodplain->get_number_boundary_conditions() == 0) {
+			//TODO: Alaa Add warning that there are no coupling and no boundary
+		}
+	}
+	model::log->writeDivide();
+	ourCartesianDomain->setOptimizedCouplingSize(myFloodplain->get_number_coupling_conditions());
+
+	CScheme* pScheme;
+	model::schemeTypes::schemeTypes mst;
+	if (scheme_info.scheme_type == _hyd_calc_scheme_type::eDIFFUSIVE_GPU){
+		mst = model::schemeTypes::kPromaidesScheme;
+	}else if (scheme_info.scheme_type == _hyd_calc_scheme_type::eINERTIAL_GPU) {
+		mst = model::schemeTypes::kInertialSimplification;
+	}else if (scheme_info.scheme_type == _hyd_calc_scheme_type::eGODUNOV_GPU){
+		mst = model::schemeTypes::kGodunov;
+	}else if (scheme_info.scheme_type == _hyd_calc_scheme_type::eMUSCL_GPU) {
+		mst = model::schemeTypes::kMUSCLHancock;
+	}
+
+	pScheme = CScheme::createScheme(mst);
+
+	//pScheme->setQueueMode(model::queueMode::kAuto);
+	//pScheme->setQueueSize(1);
+	model::SchemeSettings schemeSettings;
+	schemeSettings.CourantNumber = scheme_info.courant_number;
+	schemeSettings.DryThreshold = 1E-10;
+	schemeSettings.Timestep = 0.1;
+	schemeSettings.ReductionWavefronts = scheme_info.reduction_wavefronts;
+	schemeSettings.FrictionStatus = scheme_info.friction_status;
+	schemeSettings.CachedWorkgroupSize[0] = 8;
+	schemeSettings.CachedWorkgroupSize[1] = 8;
+	schemeSettings.NonCachedWorkgroupSize[0] = scheme_info.workgroup_size_x;
+	schemeSettings.NonCachedWorkgroupSize[1] = scheme_info.workgroup_size_y;
+
+	if (mst == model::schemeTypes::kGodunov) {
+		schemeSettings.CacheMode = model::schemeConfigurations::godunovType::kCacheNone;
+		schemeSettings.CacheConstraints = model::cacheConstraints::godunovType::kCacheActualSize;
+	}
+	else if (mst == model::schemeTypes::kMUSCLHancock) {
+		schemeSettings.CacheMode = model::schemeConfigurations::musclHancock::kCacheNone;
+		schemeSettings.CacheConstraints = model::cacheConstraints::musclHancock::kCacheActualSize;
+	}
+	else if (mst == model::schemeTypes::kInertialSimplification) {
+		schemeSettings.CacheMode = model::schemeConfigurations::inertialFormula::kCacheNone;
+		schemeSettings.CacheConstraints = model::cacheConstraints::inertialFormula::kCacheActualSize;
+	}
+	else if (mst == model::schemeTypes::kPromaidesScheme) {
+		schemeSettings.CacheMode = model::schemeConfigurations::promaidesFormula::kCacheNone;
+		schemeSettings.CacheConstraints = model::cacheConstraints::promaidesFormula::kCacheActualSize;
+	}else {
+		std::cout << "Error: Scheme not chosen!" << std::endl;
+	}
+
+	schemeSettings.ExtrapolatedContiguity = true;
+
+	pScheme->setupScheme(schemeSettings, pManager);
+	pScheme->setOutputFreq(pManager->getOutputFrequency());
+	//pScheme->setDebugger(1, 1);
+	pScheme->setDomain(ourCartesianDomain);			// Scheme allocates the memory and thus needs to know the dimensions
+	pScheme->prepareAll();							//Needs Dimension data to alocate memory
+	ourCartesianDomain->setScheme(pScheme);
+
+	ourCartesianDomain->resetAllValues();
+
+	pManager->log->writeLine("Setting Data...");
+	unsigned long ulCellID;
+	unsigned char	ucRounding = 6;
+	for (unsigned long iRow = 0; iRow < myFloodplain->Param_FP.get_no_elems_y(); iRow++) {
+		for (unsigned long iCol = 0; iCol < myFloodplain->Param_FP.get_no_elems_x(); iCol++) {
+			ulCellID = ourCartesianDomain->getCellID(iCol, ourCartesianDomain->getRows() - iRow - 1);
+			//Elevations
+			if (myFloodplain->floodplain_elems[ulCellID].get_elem_type() == _hyd_elem_type::STANDARD_ELEM ||
+				myFloodplain->floodplain_elems[ulCellID].get_elem_type() == _hyd_elem_type::DIKELINE_ELEM) {
+				ourCartesianDomain->handleInputData(ulCellID, myFloodplain->floodplain_elems[ulCellID].get_z_value(), model::rasterDatasets::dataValues::kBedElevation, ucRounding);
+			}
+			else {
+				ourCartesianDomain->handleInputData(ulCellID, -9999.0, model::rasterDatasets::dataValues::kBedElevation, ucRounding);
+			}
+			//Manning Coefficient
+			ourCartesianDomain->handleInputData(ulCellID, myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().n_value, model::rasterDatasets::dataValues::kManningCoefficient, ucRounding);
+			//Depth
+			ourCartesianDomain->handleInputData(ulCellID, myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().init_condition, model::rasterDatasets::dataValues::kDepth, ucRounding);
+			//VelocityX
+			ourCartesianDomain->handleInputData(ulCellID, 0.0, model::rasterDatasets::dataValues::kVelocityX, ucRounding);
+			//VelocityY
+			ourCartesianDomain->handleInputData(ulCellID, 0.0, model::rasterDatasets::dataValues::kVelocityY, ucRounding);
+			//Boundary Condition
+			if (ourCartesianDomain->getUseOptimizedCoupling() == false) {
+				ourCartesianDomain->setBoundaryCondition(ulCellID, 0.0);
+			}
+			//Poleni Conditions
+			if (!myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().no_flow_x_flag) {
+				ourCartesianDomain->setPoleniConditionX(ulCellID, myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().poleni_flag_x);
+			}
+			//Poleni Conditions
+			if (!myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().no_flow_y_flag) {
+				ourCartesianDomain->setPoleniConditionY(ulCellID, myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().poleni_flag_y);
+			}
+			//Zxmax
+			ourCartesianDomain->setZxmax(ulCellID, myFloodplain->floodplain_elems[ulCellID].get_flow_data().height_border_x_abs);
+			//cx
+			ourCartesianDomain->setcx(ulCellID, myFloodplain->floodplain_elems[ulCellID].get_flow_data().poleni_x);
+			//Zymax
+			ourCartesianDomain->setZymax(ulCellID, myFloodplain->floodplain_elems[ulCellID].get_flow_data().height_border_y_abs);
+			//cy
+			ourCartesianDomain->setcy(ulCellID, myFloodplain->floodplain_elems[ulCellID].get_flow_data().poleni_y);
+			//Coupling Condition
+			//ourCartesianDomain->setCouplingCondition(ulCellID, 0.0);
+
+		}
+	}
+	if (ourCartesianDomain->getUseOptimizedCoupling()) {
+		//set id array
+		for (int i = 0; i < ourCartesianDomain->getOptimizedCouplingSize(); i++) {
+			ourCartesianDomain->setOptimizedCouplingID(i, myFloodplain->get_optimized_coupling_id(i));
+		}
+	}
+
+	pDomainNew->setID(1);	// Should not be needed, but somehow is?
+	pManager->getDomainSet()->getDomainBaseVector()->push_back(pDomainNew);
+
+	pManager->log->writeLine("The computational engine is now ready.");
+
+
+
+
+	pManager->runModelPrepare();
+
+	//TODO: Alaa: Calculate memory     this->count_solver_memory();
 }
 //Reset the solver-tolerances, if they are changed by the dynamic tolerance decreasment; also the warn_counter is reseted
 void _Hyd_Model::reset_solver_tolerances(void){
@@ -451,18 +638,15 @@ void _Hyd_Model::run_solver(const double next_time_point, const string system_id
 		
 	this->calculate_solver_errors();
 }
-//Run the solver GPU
-void _Hyd_Model::run_solver_gpu(const double next_time_point, const string system_id) {
-
-	//Todo Alaa
-
-
-}
 //get the number of solver timesteps
 long int _Hyd_Model::get_number_solversteps(void){
 	//calculate them
 	int flag=-1;
 	long int buff=0;
+	if (this->gpu_in_use) {
+		//TODO: Alaa Get Gpu Timesteps
+	}
+	else {
 	flag=CVodeGetNumSteps(this->cvode_mem, &buff);
 	 if(flag<0){
 		Warning msg=this->set_warning(3);
@@ -473,6 +657,7 @@ long int _Hyd_Model::get_number_solversteps(void){
 		msg.output_msg(2);
 	}
 
+	}
 	return this->number_solversteps+buff;
 }
 //output final statistics of the solver
@@ -1091,4 +1276,29 @@ Error _Hyd_Model::set_error(const int err_type){
 	msg.make_second_info(info.str());
 	return msg;
 
+}
+/*
+ *  Raise an error message and deal with it accordingly.
+ */
+void model::doError(std::string sError, unsigned char cError)
+{
+	model::log->writeError(sError, cError);
+	if (cError & model::errorCodes::kLevelModelStop)
+		std::cout << "model forceAbort was requested by a function." << std::endl;
+	if (cError & model::errorCodes::kLevelFatal)
+	{
+		model::doPause();
+		exit(model::appReturnCodes::kAppFatal);
+
+	}
+}
+
+/*
+ *  Suspend the application temporarily pending the user
+ *  pressing return to continue.
+ */
+void model::doPause()
+{
+	std::cout << std::endl << "Press any key to close." << std::endl;
+	std::getchar();
 }

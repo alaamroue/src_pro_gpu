@@ -83,7 +83,6 @@ bool _Hyd_Parse_IO::transform_string2boolean(string my_string_flag){
 void _Hyd_Parse_IO::erase_carriageReturn(string* my_string) {
 	char one_char[1];
 	int length = my_string->length();
-	cout << "length: " << length << endl;
 	for (int i = length - 1; i >= 0; i--) {
 		my_string->copy(one_char, 1, i);
 		if (one_char[0] == '\r') {
@@ -375,6 +374,16 @@ _hyd_keyword_file _Hyd_Parse_IO::ParseNextKeyword(char *CommandList){
 	else if (FIND1("$NOINFOVALUE")	)	Keyword = eNOINFOVALUE; 
 	//file with the floodplain elements
 	else if (FIND1("!FLOODPLAINFILE"))	Keyword = eFLOODPLAINFILE;
+	//Scheme Settings
+	else if (FIND1("!SCHEME"))				Keyword = eSCHEME;
+	else if (FIND1("$SCHEME_TYPE"))			Keyword = eSCHEME_TYPE;
+	else if (FIND1("$SELECTED_DEVICE"))		Keyword = eSELECTED_DEVICE;
+	else if (FIND1("$COURANT_NUMBER"))		Keyword = eCOURANT_NUMBER;
+	else if (FIND1("$REDUCTION_WAVEFRONTS"))Keyword = eREDUCTION_WAVEFRONTS;
+	else if (FIND1("$FRICTION_STATUS"))		Keyword = eFRICTION_STATUS;
+	else if (FIND1("$WORKGROUP_SIZE_X"))	Keyword = eWORKGROUP_SIZE_X;
+	else if (FIND1("$WORKGROUP_SIZE_Y"))	Keyword = eWORKGROUP_SIZE_Y;
+	
 	//Limits for the 2d/1d calculation
 	else if (FIND1("!LIMITS")		)	Keyword = eLIMITS; 
 	else if (FIND1("$ATOL")			)	Keyword = eATOL; 

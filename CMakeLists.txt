@@ -19,7 +19,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 ##Using C++ 11
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
-set(CMAKE_CXX_FLAGS "-fpermissive")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_CXX_FLAGS "-fpermissive")
+endif()
 
 ## Set Variables
 #set(QT_DIR "C:/Qt/5.15.2/msvc2019_64/")
@@ -89,6 +91,7 @@ set(QRC_FILES
 
 set(RCFiles
     promaides.rc
+    source_code/system_hydraulic/source_code/solvergpu/CLCode.rc ##Can't add in a shared library, so it needs to be added here
 )
 
 set(PrecompiledHeaders
@@ -153,6 +156,7 @@ add_subdirectory(source_code/system_dam/)
 add_subdirectory(source_code/system_fpl/)
 add_subdirectory(source_code/system_hydraulic/)
 add_subdirectory(source_code/system_hydraulic/source_code/solver/)
+add_subdirectory(source_code/system_hydraulic/source_code/solvergpu/)
 add_subdirectory(source_code/system_madm/)
 add_subdirectory(source_code/system_risk/)
 add_subdirectory(source_code/system_sys/)
@@ -175,6 +179,7 @@ target_link_libraries(ProMaIDeS
     system_fpl
     system_hydraulic
     solver
+    solvergpu
     system_madm
     system_risk
     system_sys

@@ -51,6 +51,7 @@ set(H_FILES
 	source_code/Sys_Project.h
 	source_code/Sys_Project_Copier.h
 	source_code/Sys_Thread_Closing_Manager.h
+	source_code/Profiler.h
 	source_code/database/Data_Base.h
 	source_code/database/Sys_Database_Browser.h
 	source_code/database/Sys_Database_Projectbrowser_Wid.h
@@ -138,6 +139,7 @@ set(CPP_FILES
 	source_code/Sys_Project_Copier.cpp
 	source_code/Sys_Thread_Closing_Manager.cpp
 	source_code/Sys_Project.cpp
+	source_code/Profiler.cpp
 	source_code/database/Data_Base.cpp
 	source_code/database/Sys_Database_Browser.cpp
 	source_code/database/Sys_Database_Projectbrowser_Wid.cpp
