@@ -51,7 +51,7 @@ CExecutorControlOpenCL::~CExecutorControlOpenCL(void)
 	this->pDevices.clear();
 	delete [] this->clPlatforms;
 
-	model::log->writeLine( "The OpenCL executor is now unloaded." );
+	model::log->logInfo( "The OpenCL executor is now unloaded." );
 }
 
 /*
@@ -61,7 +61,12 @@ CExecutorControlOpenCL::~CExecutorControlOpenCL(void)
 bool CExecutorControlOpenCL::getPlatforms(void)
 {
 	if ( this->clDeviceTotal > 0 )
-		model::doError( "An attempt to obtain OpenCL platforms for a second time is invalid.", model::errorCodes::kLevelFatal );
+		model::doError(
+			"An attempt to obtain OpenCL platforms for a second time is invalid.",
+			model::errorCodes::kLevelFatal,
+			"CExecutorControlOpenCL::getPlatforms(void)",
+			"Please try to exit program and run again."
+			);
 
 	cl_int			iErrorID;
 	unsigned int	iPlatformID;
@@ -71,8 +76,10 @@ bool CExecutorControlOpenCL::getPlatforms(void)
 	if ( iErrorID != CL_SUCCESS ) 
 	{
 		model::doError( 
-			"Error obtaining the number of CL platforms.", 
-			model::errorCodes::kLevelFatal
+			"Error obtaining the number of CL platforms. Got an error [" + std::to_string(iErrorID) + "] ",
+			model::errorCodes::kLevelFatal,
+			"clGetPlatformIDs( NULL, NULL, &this->clPlatformCount )",
+			"Your system might not be supported yet"
 		);
 		return false;
 	}
@@ -85,8 +92,10 @@ bool CExecutorControlOpenCL::getPlatforms(void)
 	if ( iErrorID != CL_SUCCESS ) 
 	{
 		model::doError( 
-			"Error obtaining the CL platforms.", 
-			model::errorCodes::kLevelFatal 
+			"Error obtaining the CL platforms. Got an error [" + std::to_string(iErrorID) + "] ",
+			model::errorCodes::kLevelFatal,
+			"clGetPlatformIDs( this->clPlatformCount, this->clPlatforms, &this->clPlatformCount )",
+			"Your system might not be supported yet"
 		);
 		return false;
 	}
@@ -107,8 +116,10 @@ bool CExecutorControlOpenCL::getPlatforms(void)
 		if ( iErrorID != CL_SUCCESS ) 
 		{
 			model::doError( 
-				"Error obtaining the number of devices on each CL platform.", 
-				model::errorCodes::kLevelFatal
+				"Error obtaining the number of devices on each CL platform. Got an error [" + std::to_string(iErrorID) + "] ",
+				model::errorCodes::kLevelFatal,
+				"clGetDeviceIDs( this->clPlatforms[ iPlatformID ], CL_DEVICE_TYPE_ALL, 0, NULL, &this->platformInfo[ iPlatformID ].uiDeviceCount )",
+				"Your system might not be supported yet"
 			);
 			return false;
 		}
@@ -130,22 +141,16 @@ void CExecutorControlOpenCL::logPlatforms(void)
 	unsigned short	wColour		= model::cli::colourInfoBlock;
 
 	pLog->writeDivide();
-	pLog->writeLine( "OPENCL PLATFORMS", true, wColour );
+	pLog->logInfo("OPENCL PLATFORMS");
 
-	for ( unsigned int iPlatformID = 0; iPlatformID < this->clPlatformCount; iPlatformID++ )
+	for (unsigned int iPlatformID = 0; iPlatformID < this->clPlatformCount; iPlatformID++)
 	{
-		sPlatformNo = "  " + toStringExact( iPlatformID + 1 ) + ". ";
+		sPlatformNo = "  " + toStringExact(iPlatformID + 1) + ". ";
 
-		pLog->writeLine( 
-			sPlatformNo + this->platformInfo[ iPlatformID ].cName,
-			true,
-			wColour
-		);
-		pLog->writeLine( 
-			std::string( sPlatformNo.size(), ' ' ) + std::string( this->platformInfo[ iPlatformID ].cVersion ) + " with " + toStringExact( this->platformInfo[ iPlatformID ].uiDeviceCount ) + " device(s)" ,
-			true,
-			wColour
-		);
+		pLog->logInfo(
+			sPlatformNo + this->platformInfo[iPlatformID].cName);
+		pLog->logInfo(
+			std::string(sPlatformNo.size(), ' ') + std::string(this->platformInfo[iPlatformID].cVersion) + " with " + toStringExact(this->platformInfo[iPlatformID].uiDeviceCount) + " device(s)");
 	}
 
 	pLog->writeDivide();
@@ -158,61 +163,65 @@ void CExecutorControlOpenCL::logPlatforms(void)
 bool CExecutorControlOpenCL::createDevices(void)
 {
 	cl_int				iErrorID;
-	cl_device_id*		clDevice;
-	unsigned int		uiDeviceCount	= 0;
+	cl_device_id* clDevice;
+	unsigned int		uiDeviceCount = 0;
 
-	COCLDevice*					pDevice;
+	COCLDevice* pDevice;
 	std::vector<COCLDevice*>	pDevices;
 
-	for ( unsigned int iPlatformID = 0; iPlatformID < this->clPlatformCount; iPlatformID++ )
+	for (unsigned int iPlatformID = 0; iPlatformID < this->clPlatformCount; iPlatformID++)
 	{
-		clDevice = new cl_device_id[ this->platformInfo[ iPlatformID ].uiDeviceCount ];
+		clDevice = new cl_device_id[this->platformInfo[iPlatformID].uiDeviceCount];
 
-		iErrorID = clGetDeviceIDs( 
-			this->clPlatforms[ iPlatformID ], 
-			CL_DEVICE_TYPE_ALL, 
-			this->platformInfo[ iPlatformID ].uiDeviceCount, 
-			clDevice, 
-			NULL 
+		iErrorID = clGetDeviceIDs(
+			this->clPlatforms[iPlatformID],
+			CL_DEVICE_TYPE_ALL,
+			this->platformInfo[iPlatformID].uiDeviceCount,
+			clDevice,
+			NULL
 		);
 
-		if ( iErrorID != CL_SUCCESS ) 
+		if (iErrorID != CL_SUCCESS)
 		{
-			model::doError( 
-				"Error obtaining the devices for CL platform '" + std::string( this->platformInfo[ iPlatformID ].cName ) + "'", 
-				model::errorCodes::kLevelFatal
+			model::doError(
+				"Error obtaining the devices for CL platform '" + std::string(this->platformInfo[iPlatformID].cName) + "'",
+				model::errorCodes::kLevelFatal,
+				"clGetDeviceIDs( this->clPlatforms[iPlatformID], CL_DEVICE_TYPE_ALL, this->platformInfo[iPlatformID].uiDeviceCount, clDevice, NULL );",
+				"Your device might not be supported yet. Try to updating graphics drivers."
 			);
 			return false;
 		}
 
-		for( unsigned int iDeviceID = 0; iDeviceID < this->platformInfo[ iPlatformID ].uiDeviceCount; iDeviceID++ )
+		for (unsigned int iDeviceID = 0; iDeviceID < this->platformInfo[iPlatformID].uiDeviceCount; iDeviceID++)
 		{
 			pDevice = new COCLDevice(
-				clDevice[ iDeviceID ],
+				clDevice[iDeviceID],
 				iPlatformID,
 				uiDeviceCount,
 				this,
 				cModel
 			);
 
-			if ( pDevice->isReady() )		
+			if (pDevice->isReady())
 			{
 				// Complies with the device filters?
-				if ( 
-					pDevice->clDeviceType == CL_DEVICE_TYPE_CPU			&& ( ( this->deviceFilter & model::filters::devices::devicesCPU ) == model::filters::devices::devicesCPU ) ||
-					pDevice->clDeviceType == CL_DEVICE_TYPE_GPU			&& ( ( this->deviceFilter & model::filters::devices::devicesGPU ) == model::filters::devices::devicesGPU ) ||
-					pDevice->clDeviceType == CL_DEVICE_TYPE_ACCELERATOR && ( ( this->deviceFilter & model::filters::devices::devicesAPU ) == model::filters::devices::devicesAPU )
-				   )
+				if (
+					pDevice->clDeviceType == CL_DEVICE_TYPE_CPU && ((this->deviceFilter & model::filters::devices::devicesCPU) == model::filters::devices::devicesCPU) ||
+					pDevice->clDeviceType == CL_DEVICE_TYPE_GPU && ((this->deviceFilter & model::filters::devices::devicesGPU) == model::filters::devices::devicesGPU) ||
+					pDevice->clDeviceType == CL_DEVICE_TYPE_ACCELERATOR && ((this->deviceFilter & model::filters::devices::devicesAPU) == model::filters::devices::devicesAPU)
+					)
 				{
-					pDevices.push_back( pDevice );
+					pDevices.push_back(pDevice);
 					uiDeviceCount++;
 					pDevice->logDevice();
-				} else {
-					model::log->writeLine( "Device type is filtered." );
+				}
+				else {
+					model::log->logInfo("Device type is filtered.");
 					delete pDevice;
 				}
-			} else {
-				model::log->writeLine( "Device is not ready." );
+			}
+			else {
+				model::log->logInfo("Device is not ready.");
 				delete pDevice;
 			}
 		}
@@ -223,8 +232,8 @@ bool CExecutorControlOpenCL::createDevices(void)
 
 	delete[] clDevice;
 
-	model::log->writeLine( "The OpenCL executor is now fully loaded." );
-	this->setState( model::executorStates::executorReady );
+	model::log->logInfo("The OpenCL executor is now fully loaded.");
+	this->setState(model::executorStates::executorReady);
 
 	return true;
 }
@@ -232,49 +241,49 @@ bool CExecutorControlOpenCL::createDevices(void)
 /*
  *  Obtain the size and value for a platform info field
  */
-char* CExecutorControlOpenCL::getPlatformInfo( unsigned int uiPlatformID, cl_platform_info clInfo )
+char* CExecutorControlOpenCL::getPlatformInfo(unsigned int uiPlatformID, cl_platform_info clInfo)
 {
 	cl_int		iErrorID;
 	size_t		clSize;
 
-	iErrorID = clGetPlatformInfo( 
-		this->clPlatforms[ uiPlatformID ], 
-		clInfo, 
-		NULL, 
-		NULL, 
-		&clSize 
+	iErrorID = clGetPlatformInfo(
+		this->clPlatforms[uiPlatformID],
+		clInfo,
+		NULL,
+		NULL,
+		&clSize
 	);
 
-	char* cValue = new char[ clSize + 1 ];
+	char* cValue = new char[clSize + 1];
 
-	iErrorID = clGetPlatformInfo( 
-		this->clPlatforms[ uiPlatformID ], 
-		clInfo, 
-		clSize, 
-		cValue, 
-		NULL 
+	iErrorID = clGetPlatformInfo(
+		this->clPlatforms[uiPlatformID],
+		clInfo,
+		clSize,
+		cValue,
+		NULL
 	);
 
 	return cValue;
 }
 
 /*
- *  Get the code for a specific type of benchmark, to be compiled 
+ *  Get the code for a specific type of benchmark, to be compiled
  *  to a kernel.
  */
-OCL_RAW_CODE CExecutorControlOpenCL::getOCLCode( std::string sFilename )
+OCL_RAW_CODE CExecutorControlOpenCL::getOCLCode(std::string sFilename)
 {
-	return Util::getFileResource( sFilename.c_str(), "OpenCLCode" );
+	return Util::getFileResource(sFilename.c_str(), "OpenCLCode");
 }
 
 /*
  *  Return the currently selected device.
  */
-COCLDevice*	CExecutorControlOpenCL::getDevice()
+COCLDevice* CExecutorControlOpenCL::getDevice()
 {
 	// Verify that a device has been selected, and do so
 	// if otherwise.
-	if ( this->uiSelectedDeviceID == NULL ) 
+	if (this->uiSelectedDeviceID == NULL)
 		this->selectDevice();
 
 	return this->getDevice(
@@ -285,13 +294,13 @@ COCLDevice*	CExecutorControlOpenCL::getDevice()
 /*
  *  Fetch a device object, required because of some of the static member callbacks.
  */
-COCLDevice*	CExecutorControlOpenCL::getDevice( unsigned int uiDeviceNo )
+COCLDevice* CExecutorControlOpenCL::getDevice(unsigned int uiDeviceNo)
 {
-	if ( uiDeviceNo > getDeviceCount() ) 
+	if (uiDeviceNo > getDeviceCount())
 		return NULL;
-	if ( uiDeviceNo < 1 )
+	if (uiDeviceNo < 1)
 		return NULL;
-	return static_cast<COCLDevice*>( this->pDevices[ uiDeviceNo - 1 ] );
+	return static_cast<COCLDevice*>(this->pDevices[uiDeviceNo - 1]);
 }
 
 /*
@@ -315,34 +324,39 @@ void	CExecutorControlOpenCL::selectDevice()
 
 	// TODO: Implement some system of selecting the best device
 	//		 Until then, just pick the first one.
-	if ( this->pDevices.size() < 1 ) 
+	if (this->pDevices.size() < 1)
 	{
 		model::doError(
 			"No suitable devices could be found for running this model.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void	CExecutorControlOpenCL::selectDevice()",
+			"Please switch to a cpu simulation."
 		);
 		return;
 	}
 
 	// Select the device
-	this->selectDevice( 1 );
+	this->selectDevice(1);
 }
 
 /*
  *  Select the device specified by the parameter, i.e. force the model to use
  *  a particular device as long as it is suitable. Raise a fatal error otherwise.
  */
-void	CExecutorControlOpenCL::selectDevice( unsigned int uiDeviceNo )
+void	CExecutorControlOpenCL::selectDevice(unsigned int uiDeviceNo)
 {
-	if ( uiDeviceNo > this->pDevices.size() )
+	if (uiDeviceNo > this->pDevices.size())
 	{
 		model::doError(
 			"An invalid device was selected for execution.",
-			model::errorCodes::kLevelFatal
+			model::errorCodes::kLevelFatal,
+			"void	CExecutorControlOpenCL::selectDevice(unsigned int uiDeviceNo)",
+			"Please switch to a cpu simulation."
 		);
 		return;
-	} else {
-		model::log->writeLine(
+	}
+	else {
+		model::log->logInfo(
 			"Selected device: #" + toStringExact( uiDeviceNo )
 		);
 	}

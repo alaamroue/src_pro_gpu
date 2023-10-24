@@ -85,7 +85,9 @@ void COCLKernel::scheduleExecution()
 		model::doError(
 			"Kernel queue failed for device #" + toStringExact( this->uiDeviceID ) + ". Error " + toStringExact( iErrorID ) + ".\n" 
 			+ "  " + sName,
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void COCLKernel::scheduleExecution()",
+			"Try to restart the program or PC."
 		);
 		return;
 	}
@@ -105,7 +107,9 @@ void COCLKernel::scheduleExecution()
 			// Shouldn't ever really happen, but you never know
 			model::doError(
 				"Attaching thread callback failed for device #" + toStringExact( this->uiDeviceID ) + ".",
-				model::errorCodes::kLevelModelStop
+				model::errorCodes::kLevelModelStop,
+				"void COCLKernel::scheduleExecution()",
+				"Try to restart the program or PC."
 			);
 			return;
 		}
@@ -133,7 +137,9 @@ void COCLKernel::scheduleExecutionAndFlush()
 		// Shouldn't ever really happen, but you never know
 		model::doError(
 			"Failed flushing commands to device #" + toStringExact( this->uiDeviceID ) + ".",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void COCLKernel::scheduleExecutionAndFlush()",
+			"Try to restart the program or PC."
 		);
 		return;
 	}
@@ -148,23 +154,26 @@ bool COCLKernel::assignArguments(
 {
 	if ( this->clKernel == NULL ) return false;
 
-	model::log->writeLine("Assigning arguments for '" + this->sName + "':");
+	model::log->logInfo("Assigning arguments for '" + this->sName + "':");
 
-	for( unsigned char i = 0; i < this->uiArgumentCount; i++ )
+	for (unsigned char i = 0; i < this->uiArgumentCount; i++)
 	{
-		if ( aBuffers[ i ] == NULL )
+		if (aBuffers[i] == NULL)
 		{
-			model::log->writeLine(" " + toStringExact( i + 1 ) + ". NULL" );
+			model::log->logInfo(" " + toStringExact(i + 1) + ". NULL");
 		}
-		else if ( this->assignArgument( i, aBuffers[ i ] ) == false )
+		else if (this->assignArgument(i, aBuffers[i]) == false)
 		{
 			model::doError(
 				"Failed to assign a kernel argument for '" + this->sName + "'.",
-				model::errorCodes::kLevelModelStop
+				model::errorCodes::kLevelModelStop,
+				"bool COCLKernel::assignArguments( COCLBuffer*	aBuffers[] )",
+				"Try to restart the program or PC."
 			);
 			return false;
-		} else {
-			model::log->writeLine(" " + toStringExact( i + 1 ) + ". " + aBuffers[i]->getName() );
+		}
+		else {
+			model::log->logInfo(" " + toStringExact(i + 1) + ". " + aBuffers[i]->getName());
 		}
 	}
 
@@ -172,14 +181,14 @@ bool COCLKernel::assignArguments(
 
 	return true;
 }
-	
+
 /*
  *  Assign a single argument
  */
 bool COCLKernel::assignArgument(
-		unsigned char	ucArgumentIndex,
-		COCLBuffer*		aBuffer
-	)
+	unsigned char	ucArgumentIndex,
+	COCLBuffer* aBuffer
+)
 {
 	cl_int	iErrorID;
 	cl_mem	clBuffer = aBuffer->getBuffer();
@@ -187,11 +196,11 @@ bool COCLKernel::assignArgument(
 	iErrorID = clSetKernelArg(
 		clKernel,
 		ucArgumentIndex,
-		sizeof( &clBuffer ),
+		sizeof(&clBuffer),
 		&clBuffer
 	);
 
-	if ( iErrorID != CL_SUCCESS )
+	if (iErrorID != CL_SUCCESS)
 		return false;
 
 	return true;
@@ -211,35 +220,37 @@ void COCLKernel::prepareKernel()
 		&iErrorID
 	);
 
-	if ( iErrorID != CL_SUCCESS )
+	if (iErrorID != CL_SUCCESS)
 	{
 		model::doError(
-			"Could not prepare the kernel to run on device #" + toStringExact( this->program->device->uiDeviceNo ) + ".",
-			model::errorCodes::kLevelModelStop
+			"Could not prepare the kernel to run on device #" + toStringExact(this->program->device->uiDeviceNo) + 
+				". Got Error code: [" + std::to_string(iErrorID) + "] from clCreateKernel",
+			model::errorCodes::kLevelModelStop,
+			"void COCLKernel::prepareKernel()",
+			"Try restarting the program or PC"
 		);
-                model::doError(
-                        " Error code: " + toStringExact( iErrorID ),
-                        model::errorCodes::kLevelModelStop
-                );
 		return;
 	}
 
-	model::log->writeLine( "Kernel '" + sName + "' prepared for device #" + toStringExact( this->program->device->uiDeviceNo ) + "." );
+	model::log->logInfo("Kernel '" + sName + "' prepared for device #" + toStringExact(this->program->device->uiDeviceNo) + ".");
 
 	// Fetch the kernel details on workgroup sizes etc.
 	iErrorID = clGetKernelInfo(
 		clKernel,
 		CL_KERNEL_NUM_ARGS,
-		sizeof( cl_uint ),
+		sizeof(cl_uint),
 		&this->uiArgumentCount,
 		NULL
 	);
 
-	if ( iErrorID != CL_SUCCESS )
+	if (iErrorID != CL_SUCCESS)
 	{
 		model::doError(
-			"Could not identify argument count for '" + sName + "' kernel.",
-			model::errorCodes::kLevelModelStop
+			"Could not identify argument count for '" + sName + "' kernel." +
+			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetKernelInfo",
+			model::errorCodes::kLevelModelStop,
+			"void COCLKernel::prepareKernel()",
+			"Try restarting the program or PC"
 		);
 		return;
 	}
@@ -248,16 +259,20 @@ void COCLKernel::prepareKernel()
 		clKernel,
 		this->program->device->clDevice,
 		CL_KERNEL_COMPILE_WORK_GROUP_SIZE,
-		sizeof( size_t ) * 3,
+		sizeof(size_t) * 3,
 		&szRequiredWGSize,
 		NULL
 	);
 
-	if ( iErrorID != CL_SUCCESS )
+	if (iErrorID != CL_SUCCESS)
 	{
 		model::doError(
-			"Could not identify work-group constraints for '" + sName + "' kernel.",
-			model::errorCodes::kLevelWarning
+			"Could not identify work-group constraints for '" + sName + "' kernel." +
+			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetKernelWorkGroupInfo",
+			model::errorCodes::kLevelWarning,
+			"void COCLKernel::prepareKernel()",
+			"Try restarting the program or PC"
+
 		);
 		szGroupSize[0] = 1;	szGroupSize[1] = 1;	szGroupSize[2] = 1;
 	}
@@ -274,16 +289,19 @@ void COCLKernel::prepareKernel()
 		clKernel,
 		this->program->device->clDevice,
 		CL_KERNEL_PRIVATE_MEM_SIZE,
-		sizeof( cl_ulong ),
+		sizeof(cl_ulong),
 		&this->ulMemPrivate,
 		NULL
 	);
 
-	if ( iErrorID != CL_SUCCESS )
+	if (iErrorID != CL_SUCCESS)
 	{
 		model::doError(
-			"Could not identify private mem usage for '" + sName + "' kernel.",
-			model::errorCodes::kLevelWarning
+			"Could not identify private mem usage for '" + sName + "' kernel." +
+			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetKernelWorkGroupInfo",
+			model::errorCodes::kLevelWarning,
+			"void COCLKernel::prepareKernel()",
+			"Try restarting the program or PC"
 		);
 		this->ulMemPrivate = 0;
 	}
@@ -292,31 +310,34 @@ void COCLKernel::prepareKernel()
 		clKernel,
 		this->program->device->clDevice,
 		CL_KERNEL_LOCAL_MEM_SIZE,
-		sizeof( cl_ulong ),
+		sizeof(cl_ulong),
 		&this->ulMemLocal,
 		NULL
 	);
 
-	if ( iErrorID != CL_SUCCESS )
+	if (iErrorID != CL_SUCCESS)
 	{
 		model::doError(
-			"Could not identify local mem usage for '" + sName + "' kernel.",
-			model::errorCodes::kLevelWarning
+			"Could not identify local mem usage for '" + sName + "' kernel." +
+			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetKernelWorkGroupInfo",
+			model::errorCodes::kLevelWarning,
+			"void COCLKernel::prepareKernel()",
+			"Try restarting the program or PC"
 		);
 		this->ulMemLocal = 0;
 	}
 
-	this->arguments = new COCLBuffer*[ this->uiArgumentCount ];
-	
-	model::log->writeLine( "Kernel '" + sName + "' is defined:" ); 
-	model::log->writeLine( "  Private memory:   " + toStringExact( this->ulMemPrivate ) + " bytes" ); 
-	model::log->writeLine( "  Local memory:     " + toStringExact( this->ulMemLocal )   + " bytes" ); 
-	model::log->writeLine( "  Arguments:        " + toStringExact( this->uiArgumentCount ) ); 
-	model::log->writeLine( "  Work-group size:  [ " + toStringExact( szRequiredWGSize[0] )   + "," + 
-														 toStringExact( szRequiredWGSize[1] )   + "," +
-														 toStringExact( szRequiredWGSize[2] )   + " ]"); 
+	this->arguments = new COCLBuffer * [this->uiArgumentCount];
 
-	if ( this->uiArgumentCount == 0 )
+	model::log->logInfo("Kernel '" + sName + "' is defined:");
+	model::log->logInfo("  Private memory:   " + toStringExact(this->ulMemPrivate) + " bytes");
+	model::log->logInfo("  Local memory:     " + toStringExact(this->ulMemLocal) + " bytes");
+	model::log->logInfo("  Arguments:        " + toStringExact(this->uiArgumentCount));
+	model::log->logInfo("  Work-group size:  [ " + toStringExact(szRequiredWGSize[0]) + "," +
+		toStringExact(szRequiredWGSize[1]) + "," +
+		toStringExact(szRequiredWGSize[2]) + " ]");
+
+	if (this->uiArgumentCount == 0)
 		this->bReady = true;
 }
 
@@ -324,24 +345,24 @@ void COCLKernel::prepareKernel()
  *  Set the global size of the work
  */
 void COCLKernel::setGlobalSize(
-		cl_ulong	X,
-		cl_ulong	Y,
-		cl_ulong	Z
-	)
+	cl_ulong	X,
+	cl_ulong	Y,
+	cl_ulong	Z
+)
 {
-	X = static_cast<size_t>( ceil( static_cast<double>( X ) / this->szGroupSize[0] ) * this->szGroupSize[0] );
-	Y = static_cast<size_t>( ceil( static_cast<double>( Y ) / this->szGroupSize[1] ) * this->szGroupSize[1] );
-	Z = static_cast<size_t>( ceil( static_cast<double>( Z ) / this->szGroupSize[2] ) * this->szGroupSize[2] );
+	X = static_cast<size_t>(ceil(static_cast<double>(X) / this->szGroupSize[0]) * this->szGroupSize[0]);
+	Y = static_cast<size_t>(ceil(static_cast<double>(Y) / this->szGroupSize[1]) * this->szGroupSize[1]);
+	Z = static_cast<size_t>(ceil(static_cast<double>(Z) / this->szGroupSize[2]) * this->szGroupSize[2]);
 
 	this->szGlobalSize[0] = static_cast<size_t>(X);
 	this->szGlobalSize[1] = static_cast<size_t>(Y);
 	this->szGlobalSize[2] = static_cast<size_t>(Z);
 
-	model::log->writeLine(
+	model::log->logInfo(
 		"Global work size for '" + this->sName + "' set to [" +
-		toStringExact( this->szGlobalSize[0] ) + "," +
-		toStringExact( this->szGlobalSize[1] ) + "," +
-		toStringExact( this->szGlobalSize[2] ) + "]."
+		toStringExact(this->szGlobalSize[0]) + "," +
+		toStringExact(this->szGlobalSize[1]) + "," +
+		toStringExact(this->szGlobalSize[2]) + "]."
 	);
 }
 
@@ -349,32 +370,32 @@ void COCLKernel::setGlobalSize(
  *  Set the global offset of the work
  */
 void COCLKernel::setGlobalOffset(
-		cl_ulong	X,
-		cl_ulong	Y,
-		cl_ulong	Z
-	)
+	cl_ulong	X,
+	cl_ulong	Y,
+	cl_ulong	Z
+)
 {
-	this->szGlobalOffset[0]	= static_cast<size_t>( X );
-	this->szGlobalOffset[1]	= static_cast<size_t>( Y );
-	this->szGlobalOffset[2]	= static_cast<size_t>( Z );
+	this->szGlobalOffset[0] = static_cast<size_t>(X);
+	this->szGlobalOffset[1] = static_cast<size_t>(Y);
+	this->szGlobalOffset[2] = static_cast<size_t>(Z);
 }
 
 /*
  *  Set the work group size
  */
 void COCLKernel::setGroupSize(
-		cl_ulong	X,
-		cl_ulong	Y,
-		cl_ulong	Z
-	)
+	cl_ulong	X,
+	cl_ulong	Y,
+	cl_ulong	Z
+)
 {
-	if ( this->bGroupSizeForced ) return;
+	if (this->bGroupSizeForced) return;
 
-	this->szGroupSize[0]	= static_cast<size_t>( X );
-	this->szGroupSize[1]	= static_cast<size_t>( Y );
-	this->szGroupSize[2]	= static_cast<size_t>( Z );	
+	this->szGroupSize[0] = static_cast<size_t>(X);
+	this->szGroupSize[1] = static_cast<size_t>(Y);
+	this->szGroupSize[2] = static_cast<size_t>(Z);
 
-	model::log->writeLine(
+	model::log->logInfo(
 		"Work-group size for '" + this->sName + "' set to [" +
 		toStringExact( this->szGroupSize[0] ) + "," +
 		toStringExact( this->szGroupSize[1] ) + "," +

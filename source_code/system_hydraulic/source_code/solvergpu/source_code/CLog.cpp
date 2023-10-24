@@ -10,134 +10,31 @@
 #include "common.h"
 #include <sstream>
 
-/*
- *  Constructor
- */
-CLog::CLog(void)
-{
-	this->setDir();
-	this->setPath();
-	this->openFile();
-	//this->writeHeader();
-	this->uiDebugFileID = 1;
-	this->uiLineCount = 0;
+// Constructor
+CLog::CLog(CLoggingInterface* externalLogger_input){
+	externalLogger = nullptr;
+
+	//Check and attach to external logging functions
+	if (externalLogger_input != nullptr) {
+		default = false;
+		externalLogger = externalLogger_input;
+	}
+	else {
+		default = true;
+	}
+
 	setlocale( LC_ALL, "" );
-
-	this->writeLine( "Log component fully loaded." );
+	this->logInfo("Log component fully loaded.");
 }
 
-/*
- *  Destructor
- */
-CLog::~CLog(void)
-{
-	this->closeFile();
-	delete[] this->logDir;
-	delete[] this->logPath;
+// Destructor
+CLog::~CLog(void){
+	if (this->externalLogger != NULL)
+		delete this->externalLogger;
 }
 
-/*
- *  Open the file for write access
- */
-void CLog::openFile()
-{
-	if ( this->isFileAvailable() )
-		return;
-
-	try 
-	{
-		this->logStream.open( this->logPath );
-	} 
-	catch ( char * cError )
-	{
-		this->writeError( std::string( cError ), model::errorCodes::kLevelWarning );
-	}
-}
-
-/*
- *  Is the log available for write
- */
-bool CLog::isFileAvailable()
-{
-	// Nothing fancy, just abstracted for portability
-	return this->logStream.is_open();
-}
-
-/*
- *  Close the file safelty again
- */
-void CLog::closeFile()
-{
-	if ( !this->isFileAvailable() ) 
-		return;
-
-	this->logStream.flush();
-	this->logStream.close();
-}
-
-/*
- *  Erase the contents of the log file (to start again)
- */
-void CLog::clearFile()
-{
-	// Erase the file
-	// ...
-}
-
-/*
- *  OVERLOAD FUNCTIONS
- *  Write a single line to the log with no 2nd parameter
- */
-// Include timestamp by default
-void CLog::writeLine( std::string sLine ) { this->writeLine( sLine, true ); }
-void CLog::writeLine( std::string sLine, bool bTimestamp ) { this->writeLine( sLine, bTimestamp, model::cli::colourMain ); }
-
-/*
- *  Write a single line to the log
- */
-void CLog::writeLine(std::string sLine, bool bTimestamp, unsigned short wColour)
-{
-	time_t tNow;
-	time(&tNow);
-
-	char caTimeBuffer[50];
-	strftime(caTimeBuffer, sizeof(caTimeBuffer), "%H:%M:%S", localtime(&tNow));
-
-	std::stringstream ssLine;
-
-	if (bTimestamp)
-	{
-		//this->setColour(model::cli::colourTimestamp);
-
-		ssLine << "[" << std::string(caTimeBuffer) << "] ";
-		
-		std::cout << ssLine.str();
-	}
-
-	ssLine << sLine << std::endl;
-
-	//this->resetColour();
-	//this->setColour(wColour);
-
-	std::cout << sLine << std::endl;
-
-	sLine = ssLine.str();
-
-	if (this->isFileAvailable())
-	{
-		this->logStream << sLine;
-	}
-
-	//this->resetColour();
-}
-
-/*
- *  Write details of an error that's occured 
- *  Actually handling the error is conducted in the main
- *  sub-procedure.
- */
-void CLog::writeError( std::string sError, unsigned char cError )
-{
+// Setup details of an error that's occurred and send them to the logger to be outputted. Actual handling the error is conducted in the main sub-procedure.
+void CLog::writeError( std::string sError, unsigned char cError ){
 	std::string sErrorPrefix = "UNKNOWN";
 
 	if ( cError & model::errorCodes::kLevelFatal ) { 
@@ -151,151 +48,81 @@ void CLog::writeError( std::string sError, unsigned char cError )
 	} else if ( cError & model::errorCodes::kLevelInformation ) { 
 		sErrorPrefix = "INFO"; 
 	}
-
-	this->writeLine( "---------------------------------------------", false, model::cli::colourError );
-	this->writeLine( sErrorPrefix + ": " + sError, true, model::cli::colourError );
-	this->writeLine( "---------------------------------------------", false, model::cli::colourError );
+	this->logError(sError, sErrorPrefix);
 }
 
-/*
- *  Write the header output
- */
-void CLog::writeHeader(void)
-{
-	std::stringstream		ssHeader;
-
-	time_t tNow;
-	time( &tNow );
-	localtime( &tNow );
-
-	ssHeader << "---------------------------------------------" << std::endl;
-	ssHeader << " " << model::appName << std::endl;
-	ssHeader << " v" << model::appVersionMajor << "." << model::appVersionMinor << "." << model::appVersionRevision;
-	ssHeader << std::endl << "---------------------------------------------" << std::endl;
-	ssHeader << " " << model::appAuthor << std::endl;
-	ssHeader << " " << model::appUnit << std::endl;
-	ssHeader << " " << model::appOrganisation << std::endl;
-	ssHeader << std::endl << " Contact:     " << model::appContact << std::endl;
-	ssHeader << "---------------------------------------------" << std::endl;
-
-	std::string sLogPath = this->getPath();
-
-	if ( sLogPath.length() > 25 ) 
-		sLogPath = "..." + sLogPath.substr( sLogPath.length() - 25, 25 );
-
-	ssHeader << " Started:     " << ctime( &tNow );
-	ssHeader << " Log file:    " << sLogPath << std::endl;
-	ssHeader << " Platform:    " << model::env::platformName << std::endl;
-	ssHeader << "---------------------------------------------";
-
-	this->writeLine( ssHeader.str(), false, model::cli::colourHeader );
-	ssHeader.clear();
-}
-
-
-#include <stdio.h>
-#include <string.h>
-
-/*
- *  Set the log path to the default
- */
-void CLog::setPath()
-{
-	std::string sPath = "promaidesMultiScheme.log";
-	char*		cPath = new char[ sPath.length() + 1 ];
-
-	strcpy( cPath, sPath.c_str() );
-	this->setPath( cPath, sPath.length() );
-
-	delete[] cPath;
-}
-
-/*
- *  Set the log path to the given value
- */
-void CLog::setPath( char* sPath, size_t uiLength )
-{
-	this->logPath = new char[ uiLength + 1 ];
-	strcpy( this->logPath, sPath );
-
-	// Is it already open? Swap if so
-	// TODO: Implement this
-	// ...
-}
-
-/*
- *  Return the path back
- */
-std::string CLog::getPath()
-{
-	return this->logPath;
-}
-
-/*
- *  Set the log directory to the default
- */
-void CLog::setDir()
-{
-	std::string sDir = "/";
-
-	char*		cDir = new char[ sDir.length() + 1 ];
-	strcpy( cDir, sDir.c_str() );
-
-	this->setDir( cDir, sDir.length() );
-	delete[] cDir;
-}
-
-/*
- *  Set the log directory to the given value
- */
-void CLog::setDir( char* sDir, size_t stLength )
-{
-	this->logDir = new char[ stLength + 1 ];
-	strcpy( this->logDir, sDir );
-}
-
-/*
- *  Return the directory back
- */
-std::string CLog::getDir()
-{
-	return this->logDir;
-}
-
-/*
- *  Write a line to divide up the output, purely superficial
- */
+//Write a line to divide up the output, purely superficial
 void CLog::writeDivide()
 {
-	this->writeLine( "---------------------------------------------                           ", false );
+	this->logInfo( "---------------------------------------------                           " );
 }
 
-/*
- *  Write a debug file to the log directory
- */
-void CLog::writeDebugFile( char** cContents, unsigned int uiSegmentCount )
-{
-	std::ofstream ofsDebug;
-	std::string sFilePath = this->getDir() + "_debug" + toStringExact( this->uiDebugFileID ) + ".log";
+//Actual outputting of debug message to user
+void CLog::logDebug(const std::string& message) {
+	if (default) {
+		std::cout << "[DEBUG]: " << message << std::endl;
+	}
+	else {
+		externalLogger->logDebug(message);
+	}
+}
 
-	try 
-	{
-		ofsDebug.open( sFilePath.c_str() );
-	} 
-	catch ( char * cError )
-	{
-		this->writeError( std::string( cError ), model::errorCodes::kLevelWarning );
-		return;
+//Actual outputting of info message to user
+void CLog::logInfo(const std::string& message) {
+	if (default) {
+		std::cout << "[INFO]: " << message << std::endl;
+	}
+	else {
+		externalLogger->logInfo(message);
+	}
+}
+
+//Actual outputting of warning message to user
+void CLog::logWarning(const std::string& message) {
+	if (default) {
+		std::cout << "[WARN]: " << message << std::endl;
+	}
+	else {
+		externalLogger->logWarning(message);
+	}
+}
+
+//Actual outputting of error message to user
+void CLog::logError(const std::string& message, const std::string& errPrefix) {
+	if (default) {
+		std::cout << "---------------------------------------------" << std::endl;
+		std::cout << "[ERR]: " << "[" << errPrefix << "] " << message << std::endl;
+		std::cout << "---------------------------------------------" << std::endl;
+	}
+	else {
+		externalLogger->logError(message, errPrefix);
+	}
+}
+
+//Actual outputting of error message to user
+void CLog::writeCharToFile(char* code, const char* filename, bool addTime) {
+
+	std::string fullFilename = filename;
+
+	if (addTime) {
+		time_t t = time(0);   // get time now
+		struct tm* now = localtime(&t);
+
+		char timeBuffer[80];
+		strftime(timeBuffer, 80, "%Y-%m-%d-%H-%M-%S-", now);
+
+
+		std::string fullFilename = std::string(timeBuffer) + filename;
 	}
 
-	for( unsigned int i = 0; i < uiSegmentCount; ++i )
-		ofsDebug << cContents[ i ];
+	std::ofstream outputFile(fullFilename.c_str());
 
-	ofsDebug.close();
+	if (outputFile.is_open()) {
+		outputFile << code << std::endl;
+		outputFile.close();
+	}
+	else {
+		std::cerr << "Failed to open the file for writing." << std::endl;
+	}
 
-	++this->uiDebugFileID;
 }
-
-
-
-

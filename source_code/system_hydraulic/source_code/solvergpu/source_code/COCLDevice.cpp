@@ -33,7 +33,7 @@ COCLDevice::COCLDevice( cl_device_id clDevice, unsigned int iPlatformID, unsigne
 	this->cModel				= cModel;
 	this->callBackData.cModel	= this->cModel;
 
-	model::log->writeLine( "Querying the suitability of a discovered device." );
+	model::log->logInfo("Querying the suitability of a discovered device.");
 
 	this->getAllInfo();
 	this->createQueue();
@@ -44,9 +44,9 @@ COCLDevice::COCLDevice( cl_device_id clDevice, unsigned int iPlatformID, unsigne
  */
 COCLDevice::~COCLDevice(void)
 {
-	clFinish( this->clQueue );
-	clReleaseCommandQueue( this->clQueue );
-	clReleaseContext( this->clContext );
+	clFinish(this->clQueue);
+	clReleaseCommandQueue(this->clQueue);
+	clReleaseContext(this->clContext);
 
 	delete[] this->clDeviceMaxWorkItemSizes;
 	delete[] this->clDeviceName;
@@ -56,7 +56,7 @@ COCLDevice::~COCLDevice(void)
 	delete[] this->clDeviceOpenCLVersion;
 	delete[] this->clDeviceOpenCLDriver;
 
-	model::log->writeLine( "An OpenCL device has been released (#" + toStringExact(this->uiDeviceNo) + ")." );
+	model::log->logInfo("An OpenCL device has been released (#" + toStringExact(this->uiDeviceNo) + ").");
 }
 
 /*
@@ -64,122 +64,122 @@ COCLDevice::~COCLDevice(void)
  */
 void COCLDevice::getAllInfo()
 {
-	void*	vMemBlock;
+	void* vMemBlock;
 
 	// This is messy, but at least it doesn't memory leak...
 	// TODO: This should really use a template function for getDeviceInfo. That'd be sensible...
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_ADDRESS_BITS );
-	this->clDeviceAddressSize			= *static_cast<cl_uint*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_ADDRESS_BITS);
+	this->clDeviceAddressSize = *static_cast<cl_uint*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_AVAILABLE );
-	this->clDeviceAvailable				= *static_cast<cl_bool*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_AVAILABLE);
+	this->clDeviceAvailable = *static_cast<cl_bool*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_COMPILER_AVAILABLE );
-	this->clDeviceCompilerAvailable		= *static_cast<cl_bool*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_COMPILER_AVAILABLE);
+	this->clDeviceCompilerAvailable = *static_cast<cl_bool*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_ERROR_CORRECTION_SUPPORT );
-	this->clDeviceErrorCorrection		= *static_cast<cl_bool*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_ERROR_CORRECTION_SUPPORT);
+	this->clDeviceErrorCorrection = *static_cast<cl_bool*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_EXECUTION_CAPABILITIES );
-	this->clDeviceExecutionCapability	= *static_cast<cl_device_exec_capabilities*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_EXECUTION_CAPABILITIES);
+	this->clDeviceExecutionCapability = *static_cast<cl_device_exec_capabilities*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_GLOBAL_MEM_CACHE_SIZE );
-	this->clDeviceGlobalCacheSize		= *static_cast<cl_ulong*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_GLOBAL_MEM_CACHE_SIZE);
+	this->clDeviceGlobalCacheSize = *static_cast<cl_ulong*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_GLOBAL_MEM_CACHE_TYPE );
-	this->clDeviceGlobalCacheType		= *static_cast<cl_device_mem_cache_type*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_GLOBAL_MEM_CACHE_TYPE);
+	this->clDeviceGlobalCacheType = *static_cast<cl_device_mem_cache_type*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_GLOBAL_MEM_SIZE );
-	this->clDeviceGlobalSize			= *static_cast<cl_ulong*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_GLOBAL_MEM_SIZE);
+	this->clDeviceGlobalSize = *static_cast<cl_ulong*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_LOCAL_MEM_SIZE );
-	this->clDeviceLocalSize				= *static_cast<cl_ulong*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_LOCAL_MEM_SIZE);
+	this->clDeviceLocalSize = *static_cast<cl_ulong*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_LOCAL_MEM_TYPE );
-	this->clDeviceLocalType				= *static_cast<cl_device_local_mem_type*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_LOCAL_MEM_TYPE);
+	this->clDeviceLocalType = *static_cast<cl_device_local_mem_type*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_MAX_CLOCK_FREQUENCY );
-	this->clDeviceClockFrequency		= *static_cast<cl_uint*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_MAX_CLOCK_FREQUENCY);
+	this->clDeviceClockFrequency = *static_cast<cl_uint*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_MAX_COMPUTE_UNITS );
-	this->clDeviceComputeUnits			= *static_cast<cl_uint*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_MAX_COMPUTE_UNITS);
+	this->clDeviceComputeUnits = *static_cast<cl_uint*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_MAX_CONSTANT_ARGS );
-	this->clDeviceMaxConstants			= *static_cast<cl_uint*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_MAX_CONSTANT_ARGS);
+	this->clDeviceMaxConstants = *static_cast<cl_uint*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE );
-	this->clDeviceMaxConstantSize		= *static_cast<cl_ulong*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE);
+	this->clDeviceMaxConstantSize = *static_cast<cl_ulong*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_MAX_MEM_ALLOC_SIZE );
-	this->clDeviceMaxMemAlloc			= *static_cast<cl_ulong*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_MAX_MEM_ALLOC_SIZE);
+	this->clDeviceMaxMemAlloc = *static_cast<cl_ulong*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_GLOBAL_MEM_SIZE );
-	this->clDeviceGlobalMemSize			= *static_cast<cl_ulong*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_GLOBAL_MEM_SIZE);
+	this->clDeviceGlobalMemSize = *static_cast<cl_ulong*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_MAX_PARAMETER_SIZE );
-	this->clDeviceMaxParamSize			= *static_cast<size_t*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_MAX_PARAMETER_SIZE);
+	this->clDeviceMaxParamSize = *static_cast<size_t*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_MAX_WORK_GROUP_SIZE );
-	this->clDeviceMaxWorkGroupSize		= *static_cast<size_t*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE);
+	this->clDeviceMaxWorkGroupSize = *static_cast<size_t*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS );
-	this->clDeviceMaxWorkItemDims		= *static_cast<cl_uint*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS);
+	this->clDeviceMaxWorkItemDims = *static_cast<cl_uint*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_PROFILING_TIMER_RESOLUTION );
-	this->clDeviceTimerResolution		= *static_cast<size_t*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_PROFILING_TIMER_RESOLUTION);
+	this->clDeviceTimerResolution = *static_cast<size_t*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_QUEUE_PROPERTIES );
-	this->clDeviceQueueProperties		= *static_cast<cl_command_queue_properties*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_QUEUE_PROPERTIES);
+	this->clDeviceQueueProperties = *static_cast<cl_command_queue_properties*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_SINGLE_FP_CONFIG );
-	this->clDeviceSingleFloatConfig		= *static_cast<cl_device_fp_config*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_SINGLE_FP_CONFIG);
+	this->clDeviceSingleFloatConfig = *static_cast<cl_device_fp_config*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_DOUBLE_FP_CONFIG );
-	this->clDeviceDoubleFloatConfig		= *static_cast<cl_device_fp_config*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_DOUBLE_FP_CONFIG);
+	this->clDeviceDoubleFloatConfig = *static_cast<cl_device_fp_config*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_TYPE );
-	this->clDeviceType					= *static_cast<cl_device_type*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_TYPE);
+	this->clDeviceType = *static_cast<cl_device_type*>(vMemBlock);
 	delete[] vMemBlock;
-	vMemBlock							= this->getDeviceInfo( CL_DEVICE_MEM_BASE_ADDR_ALIGN );
-	this->clDeviceAlignBits				= *static_cast<cl_uint*>( vMemBlock );
+	vMemBlock = this->getDeviceInfo(CL_DEVICE_MEM_BASE_ADDR_ALIGN);
+	this->clDeviceAlignBits = *static_cast<cl_uint*>(vMemBlock);
 	delete[] vMemBlock;
 
-	this->clDeviceMaxWorkItemSizes		= (size_t *)this->getDeviceInfo( CL_DEVICE_MAX_WORK_ITEM_SIZES );
-	this->clDeviceName					= (char *)this->getDeviceInfo( CL_DEVICE_NAME );
-	this->clDeviceCVersion				= (char *)this->getDeviceInfo( CL_DEVICE_OPENCL_C_VERSION );
-	this->clDeviceProfile				= (char *)this->getDeviceInfo( CL_DEVICE_PROFILE );
-	this->clDeviceVendor				= (char *)this->getDeviceInfo( CL_DEVICE_VENDOR );
-	this->clDeviceOpenCLVersion			= (char *)this->getDeviceInfo( CL_DEVICE_VERSION );
-	this->clDeviceOpenCLDriver			= (char *)this->getDeviceInfo( CL_DRIVER_VERSION );
+	this->clDeviceMaxWorkItemSizes = (size_t*)this->getDeviceInfo(CL_DEVICE_MAX_WORK_ITEM_SIZES);
+	this->clDeviceName = (char*)this->getDeviceInfo(CL_DEVICE_NAME);
+	this->clDeviceCVersion = (char*)this->getDeviceInfo(CL_DEVICE_OPENCL_C_VERSION);
+	this->clDeviceProfile = (char*)this->getDeviceInfo(CL_DEVICE_PROFILE);
+	this->clDeviceVendor = (char*)this->getDeviceInfo(CL_DEVICE_VENDOR);
+	this->clDeviceOpenCLVersion = (char*)this->getDeviceInfo(CL_DEVICE_VERSION);
+	this->clDeviceOpenCLDriver = (char*)this->getDeviceInfo(CL_DRIVER_VERSION);
 }
 
 /*
  *  Obtain the size and value for a device info field
  */
-void* COCLDevice::getDeviceInfo( cl_device_info clInfo )
+void* COCLDevice::getDeviceInfo(cl_device_info clInfo)
 {
 	cl_int		iErrorID;
 	size_t		clSize;
 
-	iErrorID = clGetDeviceInfo( 
-		this->clDevice, 
-		clInfo, 
-		NULL, 
-		NULL, 
-		&clSize 
+	iErrorID = clGetDeviceInfo(
+		this->clDevice,
+		clInfo,
+		NULL,
+		NULL,
+		&clSize
 	);
 
 	if (iErrorID != CL_SUCCESS)
 		clSize = 1;
 
-	char* cValue = new char[ clSize + 1 ];
+	char* cValue = new char[clSize + 1];
 
-	iErrorID = clGetDeviceInfo( 
-		this->clDevice, 
-		clInfo, 
-		clSize, 
-		cValue, 
-		NULL 
+	iErrorID = clGetDeviceInfo(
+		this->clDevice,
+		clInfo,
+		clSize,
+		cValue,
+		NULL
 	);
 
 	if (iErrorID != CL_SUCCESS)
@@ -193,45 +193,45 @@ void* COCLDevice::getDeviceInfo( cl_device_info clInfo )
  */
 void COCLDevice::logDevice()
 {
-	CLog*		pLog			= model::log;
+	CLog* pLog = model::log;
 	std::string	sPlatformNo;
 
 	pLog->writeDivide();
 
-	unsigned short	wColour			= model::cli::colourInfoBlock;
+	unsigned short	wColour = model::cli::colourInfoBlock;
 
 	std::string sDeviceType = " UNKNOWN DEVICE TYPE";
-	if ( this->clDeviceType & CL_DEVICE_TYPE_CPU )			sDeviceType = " CENTRAL PROCESSING UNIT";
-	if ( this->clDeviceType & CL_DEVICE_TYPE_GPU )			sDeviceType = " GRAPHICS PROCESSING UNIT";
-	if ( this->clDeviceType & CL_DEVICE_TYPE_ACCELERATOR )	sDeviceType += " AND ACCELERATOR";
+	if (this->clDeviceType & CL_DEVICE_TYPE_CPU)			sDeviceType = " CENTRAL PROCESSING UNIT";
+	if (this->clDeviceType & CL_DEVICE_TYPE_GPU)			sDeviceType = " GRAPHICS PROCESSING UNIT";
+	if (this->clDeviceType & CL_DEVICE_TYPE_ACCELERATOR)	sDeviceType += " AND ACCELERATOR";
 
 	std::string sDoubleSupport = "Not supported";
-	if ( this->isDoubleCompatible() )
+	if (this->isDoubleCompatible())
 		sDoubleSupport = "Available";
 
 	std::stringstream ssGroupDimensions;
-	ssGroupDimensions << "["  << this->clDeviceMaxWorkItemSizes[0] << 
-						 ", " << this->clDeviceMaxWorkItemSizes[1] << 
-						 ", " << this->clDeviceMaxWorkItemSizes[2] << "]";
+	ssGroupDimensions << "[" << this->clDeviceMaxWorkItemSizes[0] <<
+		", " << this->clDeviceMaxWorkItemSizes[1] <<
+		", " << this->clDeviceMaxWorkItemSizes[2] << "]";
 
-	pLog->writeLine( "#" + toStringExact( this->uiDeviceNo ) + sDeviceType, true, wColour );
+	pLog->logInfo("#" + toStringExact(this->uiDeviceNo) + sDeviceType);
 
-	pLog->writeLine( "  Suitability:       " + (std::string)( this->clDeviceAvailable ? "Available" : "Unavailable" ) + ", " + (std::string)( this->clDeviceCompilerAvailable ? "Compiler found" : "No compiler available" ), true, wColour );
-	pLog->writeLine( "  Processor type:    " + std::string( this->clDeviceName ), true, wColour );
-	pLog->writeLine( "  Vendor:            " + std::string( this->clDeviceVendor ), true, wColour );
-	pLog->writeLine( "  OpenCL driver:     " + std::string( this->clDeviceOpenCLDriver ), true, wColour );
-	pLog->writeLine( "  Compute units:     " + toStringExact( this->clDeviceComputeUnits ), true, wColour );
-	pLog->writeLine( "  Profile:           " + (std::string)( std::string( this->clDeviceProfile ).compare( "FULL_PROFILE" ) == 0 ? "Full" : "Embedded" ), true, wColour );
-	pLog->writeLine( "  Clock speed:       " + toStringExact( this->clDeviceClockFrequency) + " MHz", true, wColour );
-	pLog->writeLine( "  Memory:            " + toStringExact( (unsigned int)(this->clDeviceGlobalMemSize / 1024 / 1024) ) + " Mb", true, wColour );
-	pLog->writeLine( "  OpenCL C:          " + std::string( this->clDeviceOpenCLVersion ), true, wColour );
-	pLog->writeLine( "  Max global size:   " + toStringExact( this->clDeviceGlobalSize ), true, wColour );
-	pLog->writeLine( "  Max group items:   " + toStringExact( this->clDeviceMaxWorkGroupSize ), true, wColour );
-	pLog->writeLine( "  Max group:         " + ssGroupDimensions.str(), true, wColour );
-	pLog->writeLine( "  Max constant args: " + toStringExact( this->clDeviceMaxConstants ), true, wColour );
-	pLog->writeLine( "  Max allocation:    " + toStringExact( this->clDeviceMaxMemAlloc / 1024 / 1024 ) + "MB", true, wColour );
-	pLog->writeLine( "  Max argument size: " + toStringExact( this->clDeviceMaxParamSize / 1024 ) + "kB", true, wColour );
-	pLog->writeLine( "  Double precision:  " + sDoubleSupport, true, wColour );
+	pLog->logInfo("  Suitability:       " + (std::string)(this->clDeviceAvailable ? "Available" : "Unavailable") + ", " + (std::string)(this->clDeviceCompilerAvailable ? "Compiler found" : "No compiler available"));
+	pLog->logInfo("  Processor type:    " + std::string(this->clDeviceName));
+	pLog->logInfo("  Vendor:            " + std::string(this->clDeviceVendor));
+	pLog->logInfo("  OpenCL driver:     " + std::string(this->clDeviceOpenCLDriver));
+	pLog->logInfo("  Compute units:     " + toStringExact(this->clDeviceComputeUnits));
+	pLog->logInfo("  Profile:           " + (std::string)(std::string(this->clDeviceProfile).compare("FULL_PROFILE") == 0 ? "Full" : "Embedded"));
+	pLog->logInfo("  Clock speed:       " + toStringExact(this->clDeviceClockFrequency) + " MHz");
+	pLog->logInfo("  Memory:            " + toStringExact((unsigned int)(this->clDeviceGlobalMemSize / 1024 / 1024)) + " Mb");
+	pLog->logInfo("  OpenCL C:          " + std::string(this->clDeviceOpenCLVersion));
+	pLog->logInfo("  Max global size:   " + toStringExact(this->clDeviceGlobalSize));
+	pLog->logInfo("  Max group items:   " + toStringExact(this->clDeviceMaxWorkGroupSize));
+	pLog->logInfo("  Max group:         " + ssGroupDimensions.str());
+	pLog->logInfo("  Max constant args: " + toStringExact(this->clDeviceMaxConstants));
+	pLog->logInfo("  Max allocation:    " + toStringExact(this->clDeviceMaxMemAlloc / 1024 / 1024) + "MB");
+	pLog->logInfo("  Max argument size: " + toStringExact(this->clDeviceMaxParamSize / 1024) + "kB");
+	pLog->logInfo("  Double precision:  " + sDoubleSupport);
 
 	pLog->writeDivide();
 }
@@ -243,18 +243,20 @@ void COCLDevice::createQueue()
 {
 	cl_int	iErrorID;
 
-	if ( !this->isSuitable() )
+	if (!this->isSuitable())
 	{
 		model::doError(
 			"Unsuitable device discovered. May be in use already.",
-			model::errorCodes::kLevelWarning
+			model::errorCodes::kLevelWarning,
+			"void COCLDevice::createQueue()",
+			"The selected device is busy. Check for other programs using the gpu."
 		);
 		return;
 	}
 
-	model::log->writeLine( "Creating an OpenCL device context and command queue." );
+	model::log->logInfo("Creating an OpenCL device context and command queue.");
 
-	this->clContext = clCreateContext( 
+	this->clContext = clCreateContext(
 		NULL,						// Properties (nothing special required) 
 		1,							// Number of devices
 		&this->clDevice,			// Device
@@ -263,11 +265,13 @@ void COCLDevice::createQueue()
 		&iErrorID					// Error ID pointer
 	);
 
-	if ( iErrorID != CL_SUCCESS ) 
+	if (iErrorID != CL_SUCCESS)
 	{
-		model::doError( 
-			"Error creating device context.", 
-			model::errorCodes::kLevelWarning
+		model::doError(
+			"Error creating device context. Got an error: [" + std::to_string(iErrorID) + "] from clCreateContext using device [" + this->clDeviceName + "]",
+			model::errorCodes::kLevelWarning,
+			"void COCLDevice::createQueue()",
+			"Try to restart the program or PC."
 		);
 		return;
 	}
@@ -279,16 +283,18 @@ void COCLDevice::createQueue()
 		&iErrorID
 	);
 
-	if ( iErrorID != CL_SUCCESS ) 
+	if (iErrorID != CL_SUCCESS)
 	{
-		model::doError( 
-			"Error creating device command queue.", 
-			model::errorCodes::kLevelWarning
+		model::doError(
+			"Error creating device command queue. Got an error: [" + std::to_string(iErrorID) + "] from clCreateCommandQueue using device [" + this->clDeviceName + "]",
+			model::errorCodes::kLevelWarning,
+			"void COCLDevice::createQueue()",
+			"Try to restart the program or PC."
 		);
 		return;
 	}
 
-	model::log->writeLine( "Command queue created for device successfully." );
+	model::log->logInfo("Command queue created for device successfully.");
 }
 
 /*
@@ -296,15 +302,15 @@ void COCLDevice::createQueue()
  */
 bool COCLDevice::isSuitable()
 {
-	if ( !this->clDeviceAvailable )
+	if (!this->clDeviceAvailable)
 	{
-		model::log->writeLine( "Device is not available." );
+		model::log->logInfo("Device is not available.");
 		return false;
 	}
 
-	if ( !this->clDeviceCompilerAvailable )
+	if (!this->clDeviceCompilerAvailable)
 	{
-		model::log->writeLine( "No compiler is available." );
+		model::log->logInfo("No compiler is available.");
 		return false;
 	}
 
@@ -319,23 +325,23 @@ bool COCLDevice::isSuitable()
  */
 bool COCLDevice::isReady()
 {
-	if ( !this->isSuitable() )
+	if (!this->isSuitable())
 	{
-		model::log->writeLine( "Device is not considered suitable." );
+		model::log->logInfo("Device is not considered suitable.");
 		return false;
 	}
 
-	if ( !this->clContext ||
-		 !this->clQueue ||
-		 this->bErrored == true )
+	if (!this->clContext ||
+		!this->clQueue ||
+		this->bErrored == true)
 	{
-		model::log->writeLine( "No context, queue or an error occured on device." );
-		if ( !this->clContext )
-			model::log->writeLine( " - No context" );
-		if ( !this->clQueue )
-			model::log->writeLine( " - No command queue" );
-		if ( !this->bErrored )
-			model::log->writeLine( " - Device error" );
+		model::log->logInfo("No context, queue or an error occured on device.");
+		if (!this->clContext)
+			model::log->logInfo(" - No context");
+		if (!this->clQueue)
+			model::log->logInfo(" - No command queue");
+		if (!this->bErrored)
+			model::log->logInfo(" - Device error");
 		return false;
 	}
 
@@ -347,7 +353,7 @@ bool COCLDevice::isReady()
  */
 bool COCLDevice::isFiltered()
 {
-	if ( !(execController->getDeviceFilter() & model::filters::devices::devicesGPU) &&
+	if (!(execController->getDeviceFilter() & model::filters::devices::devicesGPU) &&
 		this->clDeviceType == CL_DEVICE_TYPE_GPU)
 		return true;
 	if (!(execController->getDeviceFilter() & model::filters::devices::devicesCPU) &&
@@ -369,7 +375,7 @@ void	COCLDevice::queueBarrier()
 	// Causes crashes... for some reason... Review later.
 	return;
 	#endif
-	clEnqueueBarrier( this->clQueue );
+	clEnqueueBarrier(this->clQueue);
 }
 
 /*
@@ -379,8 +385,8 @@ void	COCLDevice::queueBarrier()
 void	COCLDevice::blockUntilFinished()
 {
 	this->bBusy = true;
-	clFlush( this->clQueue );
-	clFinish( this->clQueue );
+	clFlush(this->clQueue);
+	clFinish(this->clQueue);
 	/*
 	if (clMarkerEvent != NULL) {
 		clReleaseEvent(clMarkerEvent);
@@ -395,18 +401,18 @@ void	COCLDevice::blockUntilFinished()
  */
 bool COCLDevice::isDoubleCompatible()
 {
-	return ( this->clDeviceDoubleFloatConfig & 
-		 ( CL_FP_FMA | CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_INF_NAN | CL_FP_DENORM ) ) == 
-		 ( CL_FP_FMA | CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_INF_NAN | CL_FP_DENORM );
+	return (this->clDeviceDoubleFloatConfig &
+		(CL_FP_FMA | CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_INF_NAN | CL_FP_DENORM)) ==
+		(CL_FP_FMA | CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_INF_NAN | CL_FP_DENORM);
 }
 
 /*
  *  Release the event otherwise the 500 limit will be hit
  */
-void CL_CALLBACK COCLDevice::defaultCallback( cl_event clEvent, cl_int iStatus, void * vData )
+void CL_CALLBACK COCLDevice::defaultCallback(cl_event clEvent, cl_int iStatus, void* vData)
 {
 	//unsigned int uiDeviceNo = *(unsigned int*)vData; // Unused
-	clReleaseEvent( clEvent );
+	clReleaseEvent(clEvent);
 }
 
 /*
@@ -414,7 +420,7 @@ void CL_CALLBACK COCLDevice::defaultCallback( cl_event clEvent, cl_int iStatus, 
  */
 void COCLDevice::flushAndSetMarker()
 {
-	this->bBusy	= true;
+	this->bBusy = true;
 	clFlush(clQueue);
 	return;
 
@@ -423,9 +429,9 @@ void COCLDevice::flushAndSetMarker()
 	return;
 	#endif
 
-	if ( clMarkerEvent != NULL )
+	if (clMarkerEvent != NULL)
 	{
-		clReleaseEvent( clMarkerEvent );
+		clReleaseEvent(clMarkerEvent);
 	}
 
 	// NOTE: OpenCL 1.2 uses clEnqueueMarkerWithWaitList() instead
@@ -455,14 +461,14 @@ void	COCLDevice::flush()
 /*
  *  Mark this device as no longer being busy so we can queue some more work
  */
-void CL_CALLBACK COCLDevice::markerCallback( cl_event clEvent, cl_int iStatus, void * vData )
+void CL_CALLBACK COCLDevice::markerCallback(cl_event clEvent, cl_int iStatus, void* vData)
 {
 	//unsigned int uiDeviceNo = *(unsigned int*) vData;
-	model::CallBackData* callBackData = (model::CallBackData*) vData;
+	model::CallBackData* callBackData = (model::CallBackData*)vData;
 	unsigned int uiDeviceNo = *callBackData->DeviceNumber;
 	clReleaseEvent(clEvent);
 
-	COCLDevice* pDevice = callBackData->Executor->getDevice( uiDeviceNo );
+	COCLDevice* pDevice = callBackData->Executor->getDevice(uiDeviceNo);
 	pDevice->markerCompletion();
 }
 
@@ -472,7 +478,7 @@ void CL_CALLBACK COCLDevice::markerCallback( cl_event clEvent, cl_int iStatus, v
 void COCLDevice::markerCompletion()
 {
 	this->clMarkerEvent = NULL;
-	this->bBusy			= false;
+	this->bBusy = false;
 }
 
 /*
@@ -499,7 +505,7 @@ bool COCLDevice::isBusy()
 	if (iQueryStatus != CL_SUCCESS)
 		return true;
 
-	model::log->writeLine("Exec status for device #" + toStringExact(uiDeviceNo)+" is " + toStringExact(iStatus));
+	model::log->logInfo("Exec status for device #" + toStringExact(uiDeviceNo)+" is " + toStringExact(iStatus));
 	if (iStatus == CL_COMPLETE)
 	{
 		return false;

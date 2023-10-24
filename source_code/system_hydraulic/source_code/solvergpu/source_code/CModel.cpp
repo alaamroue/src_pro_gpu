@@ -50,8 +50,11 @@ CModel::~CModel(void)
 		delete this->domains;
 	if ( this->execController != NULL )
 		delete this->execController;
-	this->log->writeLine("The model engine is completely unloaded.");
-	delete this->log;
+	this->log->logInfo("The model engine is completely unloaded.");
+	if (this->log != NULL)
+		delete this->log;
+	if (this->profiler != NULL)
+		delete this->profiler;
 }
 
 /*
@@ -65,7 +68,7 @@ bool CModel::setExecutor(CExecutorControl* pExecutorControl)
 
 	this->execController = static_cast<CExecutorControlOpenCL*>(pExecutorControl);
 
-	if ( !this->execController->isReady() )
+	if (!this->execController->isReady())
 	{
 		this->log->writeError(
 			"The executor is not ready. Model cannot continue.",
@@ -80,7 +83,7 @@ bool CModel::setExecutor(CExecutorControl* pExecutorControl)
 /*
  *  Returns a pointer to the execution controller currently in use
  */
-CExecutorControlOpenCL* CModel::getExecutor( void )
+CExecutorControlOpenCL* CModel::getExecutor(void)
 {
 	return this->execController;
 }
@@ -88,7 +91,7 @@ CExecutorControlOpenCL* CModel::getExecutor( void )
 /*
  *  Returns a pointer to the domain class
  */
-CDomainManager* CModel::getDomainSet( void )
+CDomainManager* CModel::getDomainSet(void)
 {
 	return this->domains;
 }
@@ -119,42 +122,46 @@ void CModel::logDetails()
 	unsigned short wColour = model::cli::colourInfoBlock;
 
 	this->log->writeDivide();
-	this->log->writeLine( "SIMULATION CONFIGURATION", true, wColour );
-	this->log->writeLine( "  Name:               " + this->sModelName, true, wColour );
-	this->log->writeLine( "  Simulation length:  " + Util::secondsToTime( this->dSimulationTime ), true, wColour );
-	this->log->writeLine( "  Output frequency:   " + Util::secondsToTime( this->dOutputFrequency ), true, wColour );
-	this->log->writeLine( "  Floating-point:     " + (std::string)( this->getFloatPrecision() == model::floatPrecision::kDouble ? "Double-precision" : "Single-precision" ), true, wColour );
+	this->log->logInfo("SIMULATION CONFIGURATION");
+	this->log->logInfo("  Name:               " + this->sModelName);
+	this->log->logInfo("  Simulation length:  " + Util::secondsToTime(this->dSimulationTime));
+	this->log->logInfo("  Output frequency:   " + Util::secondsToTime(this->dOutputFrequency));
+	this->log->logInfo("  Floating-point:     " + (std::string)(this->getFloatPrecision() == model::floatPrecision::kDouble ? "Double-precision" : "Single-precision"));
 	this->log->writeDivide();
 }
 
 /*
  *  Execute the model
  */
-bool CModel::runModel( void )
+bool CModel::runModel(void)
 {
-	this->log->writeLine( "Verifying the required data before model run..." );
+	this->log->logInfo("Verifying the required data before model run...");
 
-	if ( !this->domains || !this->domains->isSetReady() )
+	if (!this->domains || !this->domains->isSetReady())
 	{
 		model::doError(
 			"The domain is not ready.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"bool CModel::runModel(void)",
+			"Please restart the program and try again."
 		);
 		return false;
 	}
-	if ( !this->execController || !this->execController->isReady() )
+	if (!this->execController || !this->execController->isReady())
 	{
 		model::doError(
 			"The executor is not ready.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"bool CModel::runModel(void)",
+			"Please restart the program and try again."
 		);
 		return false;
 	}
 
-	this->log->writeLine( "Verification is complete." );
+	this->log->logInfo("Verification is complete.");
 
 	this->log->writeDivide();
-	this->log->writeLine( "Starting a new simulation..." );
+	this->log->logInfo("Starting a new simulation...");
 
 	this->runModelPrepare();
 	//this->runModelMain();
@@ -165,7 +172,7 @@ bool CModel::runModel( void )
 /*
  *  Sets a short name for the model
  */
-void	CModel::setName( std::string sName )
+void	CModel::setName(std::string sName)
 {
 	this->sModelName = sName;
 }
@@ -173,7 +180,7 @@ void	CModel::setName( std::string sName )
 /*
  *  Sets a short name for the model
  */
-void	CModel::setDescription( std::string sDescription )
+void	CModel::setDescription(std::string sDescription)
 {
 	this->sModelDescription = sDescription;
 }
@@ -181,9 +188,9 @@ void	CModel::setDescription( std::string sDescription )
 /*
  *  Sets the total length of a simulation
  */
-void	CModel::setSimulationLength( double dLength )
+void	CModel::setSimulationLength(double dLength)
 {
-	this->dSimulationTime		= dLength;
+	this->dSimulationTime = dLength;
 }
 
 /*
@@ -197,7 +204,7 @@ double	CModel::getSimulationLength()
 /*
  *  Set the frequency of outputs
  */
-void	CModel::setOutputFrequency( double dFrequency )
+void	CModel::setOutputFrequency(double dFrequency)
 {
 	this->dOutputFrequency = dFrequency;
 }
@@ -213,12 +220,12 @@ double	CModel::getOutputFrequency()
 /*
  *  Set floating point precision
  */
-void	CModel::setFloatPrecision( unsigned char ucPrecision )
+void	CModel::setFloatPrecision(unsigned char ucPrecision)
 {
-	if ( !this->getExecutor()->getDevice()->isDoubleCompatible() )
+	if (!this->getExecutor()->getDevice()->isDoubleCompatible())
 		ucPrecision = model::floatPrecision::kSingle;
 
-	this->bDoublePrecision = ( ucPrecision == model::floatPrecision::kDouble );
+	this->bDoublePrecision = (ucPrecision == model::floatPrecision::kDouble);
 }
 
 /*
@@ -226,35 +233,35 @@ void	CModel::setFloatPrecision( unsigned char ucPrecision )
  */
 unsigned char	CModel::getFloatPrecision()
 {
-	return ( this->bDoublePrecision ? model::floatPrecision::kDouble : model::floatPrecision::kSingle );
+	return (this->bDoublePrecision ? model::floatPrecision::kDouble : model::floatPrecision::kSingle);
 }
 
 /*
  *  Write details of where model execution is currently at
  */
-void	CModel::logProgress( CBenchmark::sPerformanceMetrics* sTotalMetrics )
+void	CModel::logProgress(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 {
-	char	cTimeLine[70]      = "                                                                    X";
-	char	cCellsLine[70]     = "                                                                    X";
-	char	cTimeLine2[70]     = "                                                                    X";
-	char	cCells[70]         = "                                                                    X";
-	char	cProgressLine[70]  = "                                                                    X";
+	char	cTimeLine[70] = "                                                                    X";
+	char	cCellsLine[70] = "                                                                    X";
+	char	cTimeLine2[70] = "                                                                    X";
+	char	cCells[70] = "                                                                    X";
+	char	cProgressLine[70] = "                                                                    X";
 	char	cBatchSizeLine[70] = "                                                                    X";
-	char	cProgress[57]      = "                                                      ";
-	char	cProgessNumber[7]  = "      ";
+	char	cProgress[57] = "                                                      ";
+	char	cProgessNumber[7] = "      ";
 
-	unsigned short wColour	= model::cli::colourInfoBlock;
+	unsigned short wColour = model::cli::colourInfoBlock;
 
-	double		  dCurrentTime = ( this->dCurrentTime > this->dSimulationTime ? this->dSimulationTime : this->dCurrentTime );
+	double		  dCurrentTime = (this->dCurrentTime > this->dSimulationTime ? this->dSimulationTime : this->dCurrentTime);
 	double		  dProgress = dCurrentTime / this->dSimulationTime;
 
 	// TODO: These next bits will need modifying for when we have multiple domains
-	unsigned long long	ulCurrentCellsCalculated		   = 0;
+	unsigned long long	ulCurrentCellsCalculated = 0;
 	unsigned int		uiBatchSizeMax = 0, uiBatchSizeMin = 9999;
-	double				dSmallestTimestep				   = 9999.0;
+	double				dSmallestTimestep = 9999.0;
 
 	// Get the total number of cells calculated
-	for( unsigned int i = 0; i < domains->getDomainCount(); ++i )
+	for (unsigned int i = 0; i < domains->getDomainCount(); ++i)
 	{
 		if (domains->isDomainLocal(i))
 		{
@@ -276,40 +283,40 @@ void	CModel::logProgress( CBenchmark::sPerformanceMetrics* sTotalMetrics )
 	unsigned long ulRate = static_cast<unsigned long>(ulCurrentCellsCalculated / sTotalMetrics->dSeconds);
 
 	// Make a progress bar
-	for( unsigned char i = 0; i <= floor( 55.0f * dProgress ); i++ )
-		cProgress[ i ] = ( i >= ( floor( 55.0f * dProgress ) - 1 ) ? '>' : '=' );
+	for (unsigned char i = 0; i <= floor(55.0f * dProgress); i++)
+		cProgress[i] = (i >= (floor(55.0f * dProgress) - 1) ? '>' : '=');
 
 	// String padding stuff
-	sprintf( cTimeLine,		" Simulation time:  %-15sLowest timestep: %15s", Util::secondsToTime( dCurrentTime ).c_str(), Util::secondsToTime( dSmallestTimestep ).c_str() );
-	sprintf( cCells,		"%I64u", ulCurrentCellsCalculated );
-	sprintf( cCellsLine,	" Cells calculated: %-24s  Rate: %13s/s", cCells, toStringExact( ulRate ).c_str() );
-	sprintf( cTimeLine2,	" Processing time:  %-16sEst. remaining: %15s", Util::secondsToTime( sTotalMetrics->dSeconds ).c_str(), Util::secondsToTime( min( ( 1.0 - dProgress ) * ( sTotalMetrics->dSeconds / dProgress ), 31536000.0 ) ).c_str() );
-	sprintf( cBatchSizeLine," Batch size:       %-16s                                 ", toStringExact( uiBatchSizeMin ).c_str() );
-	sprintf( cProgessNumber,"%.1f%%", dProgress * 100 );
-	sprintf( cProgressLine, " [%-55s] %7s", cProgress, cProgessNumber );
+	sprintf(cTimeLine, " Simulation time:  %-15sLowest timestep: %15s", Util::secondsToTime(dCurrentTime).c_str(), Util::secondsToTime(dSmallestTimestep).c_str());
+	sprintf(cCells, "%I64u", ulCurrentCellsCalculated);
+	sprintf(cCellsLine, " Cells calculated: %-24s  Rate: %13s/s", cCells, toStringExact(ulRate).c_str());
+	sprintf(cTimeLine2, " Processing time:  %-16sEst. remaining: %15s", Util::secondsToTime(sTotalMetrics->dSeconds).c_str(), Util::secondsToTime(min((1.0 - dProgress) * (sTotalMetrics->dSeconds / dProgress), 31536000.0)).c_str());
+	sprintf(cBatchSizeLine, " Batch size:       %-16s                                 ", toStringExact(uiBatchSizeMin).c_str());
+	sprintf(cProgessNumber, "%.1f%%", dProgress * 100);
+	sprintf(cProgressLine, " [%-55s] %7s", cProgress, cProgessNumber);
 
 
 	model::log->writeDivide();																						// 1
-	model::log->writeLine( "                                                                  ", false, wColour );	// 2
-	model::log->writeLine( " SIMULATION PROGRESS                                              ", false, wColour );	// 3
-	model::log->writeLine( "                                                                  ", false, wColour );	// 4
-	model::log->writeLine( std::string( cTimeLine )											  , false, wColour );	// 5
-	model::log->writeLine( std::string( cCellsLine )											  , false, wColour );	// 6
-	model::log->writeLine( std::string( cTimeLine2 )											  , false, wColour );	// 7
-	model::log->writeLine( std::string( cBatchSizeLine )										  , false, wColour );	// 8
-	model::log->writeLine( "                                                                  ", false, wColour );	// 9
-	model::log->writeLine( std::string( cProgressLine )										  , false, wColour );	// 10
-	model::log->writeLine( "                                                                  ", false, wColour );	// 11
+	model::log->logInfo("                                                                  ");	// 2
+	model::log->logInfo(" SIMULATION PROGRESS                                              ");	// 3
+	model::log->logInfo("                                                                  ");	// 4
+	model::log->logInfo(std::string(cTimeLine));	// 5
+	model::log->logInfo(std::string(cCellsLine));	// 6
+	model::log->logInfo(std::string(cTimeLine2));	// 7
+	model::log->logInfo(std::string(cBatchSizeLine));	// 8
+	model::log->logInfo("                                                                  ");	// 9
+	model::log->logInfo(std::string(cProgressLine));	// 10
+	model::log->logInfo("                                                                  ");	// 11
 
-	model::log->writeLine( "             +----------+----------------+------------+----------+", false, wColour );	// 12
-	model::log->writeLine( "             |  Device  |  Avg.timestep  | Iterations | Bypassed |", false, wColour );	// 12
-	model::log->writeLine( "+------------+----------+----------------+------------+----------|", false, wColour );	// 13
-	
-	for( unsigned int i = 0; i < domains->getDomainCount(); i++ )
+	model::log->logInfo("             +----------+----------------+------------+----------+");	// 12
+	model::log->logInfo("             |  Device  |  Avg.timestep  | Iterations | Bypassed |");	// 12
+	model::log->logInfo("+------------+----------+----------------+------------+----------|");	// 13
+
+	for (unsigned int i = 0; i < domains->getDomainCount(); i++)
 	{
 		char cDomainLine[70] = "                                                                    X";
 		CDomainBase::mpiSignalDataProgress pProgress = domains->getDomain(i)->getDataProgress();
-		
+
 		// TODO: Give this it's proper name...
 		std::string sDeviceName = "REMOTE";
 
@@ -328,10 +335,10 @@ void	CModel::logProgress( CBenchmark::sPerformanceMetrics* sTotalMetrics )
 			toStringExact(pProgress.uiBatchSkipped).c_str()
 		);
 
-		model::log->writeLine( std::string( cDomainLine ), false, wColour );	// ++
+		model::log->logInfo(std::string(cDomainLine));	// ++
 	}
 
-	model::log->writeLine( "+------------+----------+----------------+------------+----------+" , false, wColour);	// 14
+	model::log->logInfo("+------------+----------+----------------+------------+----------+");	// 14
 	model::log->writeDivide();																						// 15
 
 	//this->pProgressCoords = Util::getCursorPosition();
@@ -347,7 +354,7 @@ void	CModel::logProgress( CBenchmark::sPerformanceMetrics* sTotalMetrics )
  */
 void CModel::visualiserUpdate()
 {
-	if ( this->dCurrentTime >= this->dSimulationTime - 1E-5 )
+	if (this->dCurrentTime >= this->dSimulationTime - 1E-5)
 		return;
 
 }
@@ -355,12 +362,12 @@ void CModel::visualiserUpdate()
 /*
  *  Memory read should have completed, so provided the simulation isn't over - read it back again
  */
-void CL_CALLBACK CModel::visualiserCallback( cl_event clEvent, cl_int iStatus, void * vData )
+void CL_CALLBACK CModel::visualiserCallback(cl_event clEvent, cl_int iStatus, void* vData)
 {
-	model::CallBackData* callBackData = (model::CallBackData*) vData;
+	model::CallBackData* callBackData = (model::CallBackData*)vData;
 	//TODO: The visualizer won't work becuase this is commented out
 	callBackData->cModel->visualiserUpdate();
-	clReleaseEvent( clEvent );
+	clReleaseEvent(clEvent);
 }
 
 /*
@@ -375,11 +382,11 @@ void	CModel::runModelPrepare()
 
 	this->runModelPrepareDomains();
 
-	bSynchronised		= true;
-	bAllIdle			= true;
-	dTargetTime			= 0.0;
-	dLastSyncTime		= -1.0;
-	dLastOutputTime		= 0.0;
+	bSynchronised = true;
+	bAllIdle = true;
+	dTargetTime = 0.0;
+	dLastSyncTime = -1.0;
+	dLastOutputTime = 0.0;
 }
 
 /*
@@ -397,10 +404,11 @@ void	CModel::runModelPrepareDomains()
 
 		if (domains->getDomainCount() > 1)
 		{
-			model::log->writeLine("Domain #" + toStringExact(i + 1) + " has rollback limit of " +
+			model::log->logInfo("Domain #" + toStringExact(i + 1) + " has rollback limit of " +
 				toStringExact(domains->getDomain(i)->getRollbackLimit()) + " iterations.");
-		} else {
-			model::log->writeLine("Domain #" + toStringExact(i + 1) + " is not constrained by " +
+		}
+		else {
+			model::log->logInfo("Domain #" + toStringExact(i + 1) + " is not constrained by " +
 				"overlapping.");
 		}
 	}
@@ -409,7 +417,7 @@ void	CModel::runModelPrepareDomains()
 /*
 *  Assess the current state of each domain.
 */
-void	CModel::runModelDomainAssess(bool *			bIdle)
+void	CModel::runModelDomainAssess(bool* bIdle)
 {
 	bRollbackRequired = false;
 	dEarliestTime = 0.0;
@@ -419,21 +427,22 @@ void	CModel::runModelDomainAssess(bool *			bIdle)
 	dCurrentTime = domains->getDomain(0)->getScheme()->getCurrentTime();
 
 	// Either we're not ready to sync, or we were still synced from the last run
-	if (domains->getDomain(0)->getScheme()->isRunning() || domains->getDomain(0)->getDevice()->isBusy()){
+	if (domains->getDomain(0)->getScheme()->isRunning() || domains->getDomain(0)->getDevice()->isBusy()) {
 		*bIdle = false;
-	} else {
+	}
+	else {
 		*bIdle = true;
 	}
 }
-	
+
 /*
  *  Exchange data across domains where necessary.
  */
 void	CModel::runModelDomainExchange()
 {
-#ifdef DEBUG_MPI
-	model::log->writeLine( "[DEBUG] Exchanging domain data NOW... (" + Util::secondsToTime( this->dEarliestTime ) + ")" );
-#endif
+	#ifdef DEBUG_MPI
+	model::log->logInfo("[DEBUG] Exchanging domain data NOW... (" + Util::secondsToTime(this->dEarliestTime) + ")");
+	#endif
 
 	// Swap sync zones over
 	for (unsigned int i = 0; i < domains->getDomainCount(); ++i)		// Source domain
@@ -442,21 +451,21 @@ void	CModel::runModelDomainExchange()
 		{
 			domains->getDomain(i)->getScheme()->importLinkZoneData();
 			// TODO: Above command does not actually cause import -- next line can be removed?
-			domains->getDomain(i)->getDevice()->flushAndSetMarker();		
+			domains->getDomain(i)->getDevice()->flushAndSetMarker();
 		}
 	}
-	
+
 	this->runModelBlockNode();
 }
 
 /*
 *  Synchronise the whole model across all domains.
 */
-void	CModel::runModelUpdateTarget( double dTimeBase )
+void	CModel::runModelUpdateTarget(double dTimeBase)
 {
 	// Identify the smallest batch size associated timestep
 	double dEarliestSyncProposal = this->dSimulationTime;
-	
+
 	// Only bother with all this stuff if we actually need to synchronise,
 	// otherwise run free, for as long as possible (i.e. until outputs needed)
 	if (domains->getDomainCount() > 1 &&
@@ -471,7 +480,7 @@ void	CModel::runModelUpdateTarget( double dTimeBase )
 	}
 
 	// Don't exceed an output interval if required
-	if (floor(dEarliestSyncProposal / dOutputFrequency)  > floor(dLastSyncTime / dOutputFrequency))
+	if (floor(dEarliestSyncProposal / dOutputFrequency) > floor(dLastSyncTime / dOutputFrequency))
 	{
 		dEarliestSyncProposal = (floor(dLastSyncTime / dOutputFrequency) + 1) * dOutputFrequency;
 	}
@@ -488,10 +497,10 @@ void	CModel::runModelUpdateTarget( double dTimeBase )
 */
 void	CModel::runModelSync()
 {
-	if ( bRollbackRequired ||
-		 !bSynchronised )
+	if (bRollbackRequired ||
+		!bSynchronised)
 		return;
-		
+
 	// No rollback required, thus we know the simulation time can now be increased
 	// to match the target we'd defined
 	this->dCurrentTime = dEarliestTime;
@@ -501,9 +510,6 @@ void	CModel::runModelSync()
 	if (domains->getDomainCount() <= 1)
 		this->dCurrentTime = dEarliestTime;
 
-	// Write outputs if possible
-	//this->runModelOutputs();
-		
 	// Calculate a new target time to aim for
 	//this->runModelUpdateTarget( dCurrentTime );
 
@@ -529,14 +535,14 @@ void	CModel::runModelSync()
 
 			// Save the current state back to host memory, but only if necessary
 			// for either domain sync/rollbacks or to write outputs
-			if ( 
-					( domains->getDomainCount() > 1 && this->getDomainSet()->getSyncMethod() == model::syncMethod::kSyncForecast ) ||
-					( fabs(this->dCurrentTime - dLastOutputTime - this->getOutputFrequency()) < 1E-5 && this->dCurrentTime > dLastOutputTime ) 
-			   )
+			if (
+				(domains->getDomainCount() > 1 && this->getDomainSet()->getSyncMethod() == model::syncMethod::kSyncForecast) ||
+				(fabs(this->dCurrentTime - dLastOutputTime - this->getOutputFrequency()) < 1E-5 && this->dCurrentTime > dLastOutputTime)
+				)
 			{
-#ifdef DEBUG_MPI
-				model::log->writeLine( "[DEBUG] Saving domain state for domain #" + toStringExact( i ) );
-#endif
+				#ifdef DEBUG_MPI
+				model::log->logInfo("[DEBUG] Saving domain state for domain #" + toStringExact(i));
+				#endif
 				domains->getDomain(i)->getScheme()->saveCurrentState();
 			}
 		}
@@ -544,7 +550,7 @@ void	CModel::runModelSync()
 
 	// Let devices finish
 	this->runModelBlockNode();
-	
+
 	// Exchange domain data
 	this->runModelDomainExchange();
 
@@ -575,44 +581,9 @@ void	CModel::runModelBlockGlobal()
 }
 
 /*
- *  Write output files if required.
- */
-void	CModel::runModelOutputs()
-{
-	if ( bRollbackRequired ||
-		 !bSynchronised ||
-		 !( fabs(this->dCurrentTime - dLastOutputTime - this->getOutputFrequency()) < 1E-5 && this->dCurrentTime > dLastOutputTime) )
-		return;
-
-	double* opt_h = this->getDomainSet()->getDomain(0)->readBuffers_opt_h();
-	delete[] opt_h;
-	dLastOutputTime = this->dCurrentTime;
-	
-	for (unsigned int i = 0; i < domains->getDomainCount(); ++i)
-	{
-		if (domains->isDomainLocal(i))
-			domains->getDomain(i)->getScheme()->forceTimeAdvance();
-	}
-	
-	this->runModelBlockGlobal();
-}
-
-
-/*
- *  Write output files if required.
- */
-double* CModel::getBufferOpt()
-{
-
-	double* opt_h = this->getDomainSet()->getDomain(0)->readBuffers_opt_h();
-	return opt_h;
-
-}
-
-/*
 *  Schedule new work in the simulation.
 */
-void	CModel::runModelSchedule(CBenchmark::sPerformanceMetrics * sTotalMetrics, bool * bIdle)
+void	CModel::runModelSchedule(CBenchmark::sPerformanceMetrics* sTotalMetrics, bool* bIdle)
 {
 
 	// if ALL our domains are idle
@@ -622,9 +593,9 @@ void	CModel::runModelSchedule(CBenchmark::sPerformanceMetrics * sTotalMetrics, b
 
 
 	//domains->getDomain(i)->getScheme()->forceTimestep(dGlobalTimestep);
-				
+
 			// Run a batch
-	
+
 
 	// Wait if we're syncing timesteps?
 	//if ( this->getDomainSet()->getSyncMethod() == model::syncMethod::kSyncTimestep )
@@ -634,7 +605,7 @@ void	CModel::runModelSchedule(CBenchmark::sPerformanceMetrics * sTotalMetrics, b
 /*
 *  Update UI elements (progress bars etc.)
 */
-void	CModel::runModelUI( CBenchmark::sPerformanceMetrics * sTotalMetrics )
+void	CModel::runModelUI(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 {
 	dProcessingTime = sTotalMetrics->dSeconds;
 	if (sTotalMetrics->dSeconds - dLastProgressUpdate > 0.85)
@@ -649,15 +620,17 @@ void	CModel::runModelUI( CBenchmark::sPerformanceMetrics * sTotalMetrics )
 */
 void	CModel::runModelRollback()
 {
-	if ( !bRollbackRequired ||
-		 !bAllIdle )
+	if (!bRollbackRequired ||
+		!bAllIdle)
 		return;
 
 	model::doError(
 		"Rollback invoked - code not yet ready",
-		model::errorCodes::kLevelModelStop
+		model::errorCodes::kLevelModelStop,
+		"void	CModel::runModelRollback()",
+		"EXPERIMENTAL"
 	);
-		
+
 	// Now sync'd again and ready to continue
 	bRollbackRequired = false;
 	bSynchronised = false;
@@ -665,7 +638,7 @@ void	CModel::runModelRollback()
 	// Use the data from the last run to work out how long we can run 
 	// the batch for. Same function as normal but relative to the last sync time instead.
 	this->runModelUpdateTarget(dLastSyncTime);
-	model::log->writeLine("Simulation rollback at " + Util::secondsToTime(this->dCurrentTime) + "; revised sync point is " + Util::secondsToTime(dTargetTime) + ".");
+	model::log->logInfo("Simulation rollback at " + Util::secondsToTime(this->dCurrentTime) + "; revised sync point is " + Util::secondsToTime(dTargetTime) + ".");
 
 	// ---
 	// TODO: Do we need to do an MPI reduce here...?
@@ -718,7 +691,7 @@ void	CModel::runModelMain()
 	this->logDetails();
 
 	// Track time for the whole simulation
-	model::log->writeLine( "Collecting time and performance data..." );
+	model::log->logInfo( "Collecting time and performance data..." );
 	pBenchmarkAll = new CBenchmark( true );
 	sTotalMetrics = pBenchmarkAll->getMetrics();
 
@@ -738,14 +711,14 @@ void	CModel::runModelMain()
 			bIdle
 		);
 
-		
+
 		// Perform a rollback if required
 		this->runModelRollback();
 
 		// Perform a sync if possible
 		this->runModelSync();
-		
-		// Don't proceed beyond this point if we need to rollback and we're just waiting for 
+
+		// Don't proceed beyond this point if we need to rollback and we're just waiting for
 		// devices to finish first...
 		if (bRollbackRequired)
 			continue;
@@ -783,9 +756,9 @@ void	CModel::runModelMain()
 	}
 	unsigned long ulRate = static_cast<unsigned long>(static_cast<double>(ulCurrentCellsCalculated) / sTotalMetrics->dSeconds);
 
-	model::log->writeLine( "Simulation time:     " + Util::secondsToTime( sTotalMetrics->dSeconds ) );
-	//model::log->writeLine( "Calculation rate:    " + toStringExact( floor(dCellRate) ) + " cells/sec" );
-	//model::log->writeLine( "Final volume:        " + toStringExact( static_cast<int>( dVolume ) ) + "m3" );
+	model::log->logInfo( "Simulation time:     " + Util::secondsToTime( sTotalMetrics->dSeconds ) );
+	//model::log->logInfo( "Calculation rate:    " + toStringExact( floor(dCellRate) ) + " cells/sec" );
+	//model::log->logInfo( "Final volume:        " + toStringExact( static_cast<int>( dVolume ) ) + "m3" );
 	model::log->writeDivide();
 
 	delete   pBenchmarkAll;
@@ -793,9 +766,9 @@ void	CModel::runModelMain()
 	delete[] bIdle;
 }
  */
-/*
- *  Run the actual simulation, asking each domain and schemes therein in turn etc.
- */
+ /*
+  *  Run the actual simulation, asking each domain and schemes therein in turn etc.
+  */
 void	CModel::runNext(const double next_time_point)
 {
 	bool bIdle;
@@ -807,7 +780,7 @@ void	CModel::runNext(const double next_time_point)
 	//this->logDetails();
 
 	// Track time for the whole simulation
-	//model::log->writeLine("Collecting time and performance data...");
+	//model::log->logInfo("Collecting time and performance data...");
 	pBenchmarkAll = new CBenchmark(true);
 	sTotalMetrics = pBenchmarkAll->getMetrics();
 
@@ -821,7 +794,7 @@ void	CModel::runNext(const double next_time_point)
 	// Run the main management loop
 	// ---------
 	// Even if user has forced abort, still wait until all idle state is reached
-	while (this->dCurrentTime < dTargetTime )
+	while (this->dCurrentTime < dTargetTime)
 	{
 		// Assess the overall state of the simulation at present
 		this->runModelDomainAssess(&bIdle);
@@ -834,7 +807,7 @@ void	CModel::runNext(const double next_time_point)
 		}
 
 		// Schedule new work
-		if (bIdle){
+		if (bIdle) {
 			domains->getDomain(0)->getScheme()->runSimulation(dTargetTime, sTotalMetrics->dSeconds);
 		}
 
@@ -843,8 +816,8 @@ void	CModel::runNext(const double next_time_point)
 		if (showProgess) {
 			this->runModelUI(sTotalMetrics);
 		}
-		
-		if (this->dCurrentTime  > next_time_point ) {
+
+		if (this->dCurrentTime > next_time_point) {
 			std::cout << "We are off, next point should " << next_time_point << " but we are at " << this->dCurrentTime << std::endl;
 			break;
 		}
@@ -873,9 +846,9 @@ void	CModel::runNext(const double next_time_point)
 	}
 	unsigned long ulRate = static_cast<unsigned long>(static_cast<double>(ulCurrentCellsCalculated) / sTotalMetrics->dSeconds);
 
-	//model::log->writeLine("Simulation time:     " + Util::secondsToTime(sTotalMetrics->dSeconds));
-	//model::log->writeLine( "Calculation rate:    " + toStringExact( floor(dCellRate) ) + " cells/sec" );
-	//model::log->writeLine( "Final volume:        " + toStringExact( static_cast<int>( dVolume ) ) + "m3" );
+	//model::log->logInfo("Simulation time:     " + Util::secondsToTime(sTotalMetrics->dSeconds));
+	//model::log->logInfo( "Calculation rate:    " + toStringExact( floor(dCellRate) ) + " cells/sec" );
+	//model::log->logInfo( "Final volume:        " + toStringExact( static_cast<int>( dVolume ) ) + "m3" );
 	//model::log->writeDivide();
 
 	delete   pBenchmarkAll;

@@ -88,7 +88,9 @@ bool COCLBuffer::createBuffer()
 	{
 		model::doError( 
 			"Memory buffer '" + this->sName + "' has no size.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"bool COCLBuffer::createBuffer()",
+			"Try restarting the program"
 		);
 		return false;
 	}
@@ -109,15 +111,17 @@ bool COCLBuffer::createBuffer()
 		// The model cannot continue in this case
 		model::doError(
 			"Memory buffer creation failed for '" + this->sName + "'. Error " + toStringExact( iErrorID ) + ".",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"bool COCLBuffer::createBuffer()",
+			"Try restarting the program"
 		);
 		return NULL;
 	}
 
 	this->bReady = true;
 
-	model::log->writeLine(
-		"Memory buffer created for '" + this->sName + "' with " + toStringExact( this->ulSize ) + " bytes."
+	model::log->logInfo(
+		"Memory buffer created for '" + this->sName + "' with " + toStringExact(this->ulSize) + " bytes."
 	);
 
 	return true;
@@ -128,10 +132,10 @@ bool COCLBuffer::createBuffer()
  */
 bool COCLBuffer::createBufferAndInitialise()
 {
-	this->clFlags	   |= CL_MEM_COPY_HOST_PTR;
-	this->clFlags	   |= CL_MEM_ALLOC_HOST_PTR;
+	this->clFlags |= CL_MEM_COPY_HOST_PTR;
+	this->clFlags |= CL_MEM_ALLOC_HOST_PTR;
 
-	allocateHostBlock( this->ulSize );
+	allocateHostBlock(this->ulSize);
 
 	return createBuffer();
 }
@@ -140,12 +144,12 @@ bool COCLBuffer::createBufferAndInitialise()
  *  Set the location of the host-copy of the buffer if it's not within this class instance
  */
 void COCLBuffer::setPointer(
-		void*		pLocation,
-		cl_ulong	ulSize
-	)
+	void* pLocation,
+	cl_ulong	ulSize
+)
 {
 	this->pHostBlock = pLocation;
-	this->ulSize	 = ulSize;
+	this->ulSize = ulSize;
 	bInternalBlock = false;
 }
 
@@ -153,22 +157,24 @@ void COCLBuffer::setPointer(
  *  Allocate a block of memory within this class instance
  */
 void COCLBuffer::allocateHostBlock(
-		cl_ulong	ulSize
-	)
+	cl_ulong	ulSize
+)
 {
 	try {
-		this->pHostBlock = new cl_uchar[ ulSize ]();
-	} 
-	catch ( std::bad_alloc )
+		this->pHostBlock = new cl_uchar[ulSize]();
+	}
+	catch (std::bad_alloc)
 	{
 		model::doError(
 			"Memory allocation failure for '" + this->sName + "'. Size is probably too large.",
-			model::errorCodes::kLevelFatal
+			model::errorCodes::kLevelFatal,
+			"void COCLBuffer::allocateHostBlock( cl_ulong	ulSize )",
+			"Your device might not be supported. Try a different device"
 		);
 		return;
 	}
 
-	this->ulSize	 = ulSize;
+	this->ulSize = ulSize;
 	bInternalBlock = true;
 }
 
@@ -189,9 +195,9 @@ void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBl
 
 	if (pMemBlock == NULL)
 		pMemBlock = static_cast<char*>(this->pHostBlock) + ulOffset;
-		
+
 	pDevice->markBusy();
-		
+
 	// Add a read buffer to the queue (non-blocking)
 	// Calling functions are expected to handle barriers etc.
 	cl_int	iReturn = clEnqueueReadBuffer(
@@ -203,16 +209,17 @@ void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBl
 		pMemBlock,					// Target pointer
 		NULL,						// No. of events in wait list
 		NULL,						// Wait list
-		( fCallbackRead != NULL && fCallbackRead != COCLDevice::defaultCallback ? &clEvent : NULL )					// Event pointer
+		(fCallbackRead != NULL && fCallbackRead != COCLDevice::defaultCallback ? &clEvent : NULL)					// Event pointer
 	);
 
-	if ( iReturn != CL_SUCCESS )
+	if (iReturn != CL_SUCCESS)
 	{
-		model::log->writeLine("Error code returned from memory read is " + toStringExact(iReturn));
+		model::log->logInfo("Error code returned from memory read is " + toStringExact(iReturn));
 		model::doError(
-			"Unable to read memory buffer from device back to host  " 
-			+ this->sName + " (" + toStringExact( iReturn ) + ")",
-			model::errorCodes::kLevelModelStop
+			"Unable to read memory buffer from device back to host  " + this->sName + " (" + toStringExact( iReturn ) + ")",
+			model::errorCodes::kLevelModelStop,
+			"void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock)",
+			"Something went wrong reading data from the GPU. Try restarting the program."
 		);
 	}
 
@@ -229,7 +236,9 @@ void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBl
 		{
 			model::doError(
 				"Attaching thread callback failed for device #" + toStringExact( this->uiDeviceID ) + ".",
-				model::errorCodes::kLevelModelStop
+				model::errorCodes::kLevelModelStop,
+				"void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock)",
+				"Something went wrong reading data from the GPU. Try restarting the program."
 			);
 			return;
 		}
@@ -284,7 +293,9 @@ void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemB
 			+ "  Size: " + toStringExact( ulSize ) 
 			+ "  Pointer: check COCLBUFFER.CPP" //+ toStringExact( pMemBlock )
 			+ "  Buf size: " + toStringExact( this->ulSize ),
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock )",
+			"Something went wrong writing data to the GPU. Try restarting the program."
 		);
 	}
 
@@ -302,7 +313,9 @@ void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemB
 		{
 			model::doError(
 				"Attaching thread callback failed for device #" + toStringExact( this->uiDeviceID ) + ".",
-				model::errorCodes::kLevelModelStop
+				model::errorCodes::kLevelModelStop,
+				"void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock )",
+				"Something went wrong writing data to the GPU. Try restarting the program."
 			);
 			return;
 		}

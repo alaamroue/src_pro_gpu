@@ -22,15 +22,15 @@ using std::max;
 CSchemePromaides::CSchemePromaides(void)
 {
 	// Scheme is loaded
-	model::log->writeLine( "Promaides scheme loaded for execution on OpenCL platform." );
+	model::log->logInfo("Promaides scheme loaded for execution on OpenCL platform.");
 
 	// Default setup values
-	this->bDebugOutput					= false;
-	this->uiDebugCellX					= 100;
-	this->uiDebugCellY					= 100;
+	this->bDebugOutput = false;
+	this->uiDebugCellX = 100;
+	this->uiDebugCellY = 100;
 
-	this->ucConfiguration				= model::schemeConfigurations::promaidesFormula::kCacheNone;
-	this->ucCacheConstraints			= model::cacheConstraints::promaidesFormula::kCacheActualSize;
+	this->ucConfiguration = model::schemeConfigurations::promaidesFormula::kCacheNone;
+	this->ucCacheConstraints = model::cacheConstraints::promaidesFormula::kCacheActualSize;
 }
 
 /*
@@ -39,7 +39,7 @@ CSchemePromaides::CSchemePromaides(void)
 CSchemePromaides::~CSchemePromaides(void)
 {
 	this->releaseResources();
-	model::log->writeLine( "The promaides formula scheme was unloaded from memory." );
+	model::log->logInfo("The promaides formula scheme was unloaded from memory.");
 }
 
 /*
@@ -69,7 +69,9 @@ void CSchemePromaides::prepareAll()
 	{
 		model::doError(
 			"Failed to dimension 1st-order task elements. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemePromaides::prepareAll() this->prepare1OExecDimensions()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -79,7 +81,9 @@ void CSchemePromaides::prepareAll()
 	{
 		model::doError(
 			"Failed to allocate 1st-order constants. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemePromaides::prepareAll() this->prepare1OConstants()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -89,7 +93,9 @@ void CSchemePromaides::prepareAll()
 	{
 		model::doError(
 			"Failed to prepare model codebase. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemePromaides::prepareAll() this->prepareCode()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -99,7 +105,9 @@ void CSchemePromaides::prepareAll()
 	{
 		model::doError(
 			"Failed to create 1st-order memory buffers. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemePromaides::prepareAll() this->prepare1OMemory()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -109,7 +117,9 @@ void CSchemePromaides::prepareAll()
 	{
 		model::doError(
 			"Failed to prepare general kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemePromaides::prepareAll() this->prepareGeneralKernels()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -118,7 +128,9 @@ void CSchemePromaides::prepareAll()
 	{
 		model::doError(
 			"Failed to prepare promaides kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemePromaides::prepareAll() this->preparePromaidesKernels()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -148,16 +160,16 @@ void CSchemePromaides::logDetails()
 		break;
 	}
 
-	model::log->writeLine("ProMaIDes SCHEME", true, wColour);
-	model::log->writeLine("  Timestep mode:      " + (std::string)(this->bDynamicTimestep ? "Dynamic" : "Fixed"), true, wColour);
-	model::log->writeLine("  Courant number:     " + (std::string)(this->bDynamicTimestep ? toStringExact(this->dCourantNumber) : "N/A"), true, wColour);
-	model::log->writeLine("  Initial timestep:   " + Util::secondsToTime(this->dTimestep), true, wColour);
-	model::log->writeLine("  Data reduction:     " + toStringExact(this->uiTimestepReductionWavefronts) + " divisions", true, wColour);
-	model::log->writeLine("  Configuration:      " + sConfiguration, true, wColour);
-	model::log->writeLine("  Friction effects:   " + (std::string)(this->bFrictionEffects ? "Enabled" : "Disabled"), true, wColour);
-	model::log->writeLine("  Kernel queue mode:  " + (std::string)(this->bAutomaticQueue ? "Automatic" : "Fixed size"), true, wColour);
-	model::log->writeLine((std::string)(this->bAutomaticQueue ? "  Initial queue:      " : "  Fixed queue:        ") + toStringExact(this->uiQueueAdditionSize) + " iteration(s)", true, wColour);
-	model::log->writeLine("  Debug output:       " + (std::string)(this->bDebugOutput ? "Enabled" : "Disabled"), true, wColour);
+	model::log->logInfo("ProMaIDes SCHEME");
+	model::log->logInfo("  Timestep mode:      " + (std::string)(this->bDynamicTimestep ? "Dynamic" : "Fixed"));
+	model::log->logInfo("  Courant number:     " + (std::string)(this->bDynamicTimestep ? toStringExact(this->dCourantNumber) : "N/A"));
+	model::log->logInfo("  Initial timestep:   " + Util::secondsToTime(this->dTimestep));
+	model::log->logInfo("  Data reduction:     " + toStringExact(this->uiTimestepReductionWavefronts) + " divisions");
+	model::log->logInfo("  Configuration:      " + sConfiguration);
+	model::log->logInfo("  Friction effects:   " + (std::string)(this->bFrictionEffects ? "Enabled" : "Disabled"));
+	model::log->logInfo("  Kernel queue mode:  " + (std::string)(this->bAutomaticQueue ? "Automatic" : "Fixed size"));
+	model::log->logInfo((std::string)(this->bAutomaticQueue ? "  Initial queue:      " : "  Fixed queue:        ") + toStringExact(this->uiQueueAdditionSize) + " iteration(s)");
+	model::log->logInfo("  Debug output:       " + (std::string)(this->bDebugOutput ? "Enabled" : "Disabled"));
 
 	model::log->writeDivide();
 }
@@ -193,19 +205,19 @@ bool CSchemePromaides::preparePromaidesKernels()
 {
 	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomain*					pDomain				= this->pDomain;
-	COCLDevice*		pDevice				= pExecutor->getDevice();
+	CDomain* pDomain = this->pDomain;
+	COCLDevice* pDevice = pExecutor->getDevice();
 
 	// --
 	// Promaides scheme kernels
 	// --
 
 
-	oclKernelFullTimestep = oclModel->getKernel( "pro_cacheDisabled" );
-	oclKernelFullTimestep->setGroupSize( this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY );
-	oclKernelFullTimestep->setGlobalSize( this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY );
+	oclKernelFullTimestep = oclModel->getKernel("pro_cacheDisabled");
+	oclKernelFullTimestep->setGroupSize(this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY);
+	oclKernelFullTimestep->setGlobalSize(this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY);
 	COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferCellStatesAlt, oclBufferCellManning, oclBufferUsePoleni, oclBuffer_opt_zxmax, oclBuffer_opt_cx, oclBuffer_opt_zymax, oclBuffer_opt_cy };
-	oclKernelFullTimestep->assignArguments( aryArgsFullTimestep );
+	oclKernelFullTimestep->assignArguments(aryArgsFullTimestep);
 
 
 	return bReturnState;
@@ -218,7 +230,7 @@ void CSchemePromaides::releaseResources()
 {
 	this->bReady = false;
 
-	model::log->writeLine("Releasing scheme resources held for OpenCL.");
+	model::log->logInfo("Releasing scheme resources held for OpenCL.");
 
 	this->releasePromaidesResources();
 	this->release1OResources();
@@ -231,7 +243,7 @@ void CSchemePromaides::releasePromaidesResources()
 {
 	this->bReady = false;
 
-	model::log->writeLine("Releasing Promaides scheme resources held for OpenCL.");
+	model::log->logInfo("Releasing Promaides scheme resources held for OpenCL.");
 
 	// Nothing to do?
 }

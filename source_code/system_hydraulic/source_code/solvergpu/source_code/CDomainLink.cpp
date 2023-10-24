@@ -18,9 +18,7 @@
 using std::min;
 using std::max;
 
-/*
- *  Constructor
- */
+//Constructor
 CDomainLink::CDomainLink( CDomainBase* pTarget, CDomainBase *pSource )
 {
 	this->uiTargetDomainID = pTarget->getID();
@@ -33,15 +31,13 @@ CDomainLink::CDomainLink( CDomainBase* pTarget, CDomainBase *pSource )
 	this->bSent 		= true;
 	this->uiSmallestOverlap = 999999999;
 
-	model::log->writeLine("Generating link definitions between domains #" + toStringExact(this->uiTargetDomainID + 1) 
+	model::log->logInfo("Generating link definitions between domains #" + toStringExact(this->uiTargetDomainID + 1)
 		+ " and #" + toStringExact(this->uiSourceDomainID + 1));
 
 	this->generateDefinitions( pTarget, pSource );
 }
 
-/*
- *  Destructor
- */
+//Destructor
 CDomainLink::~CDomainLink(void)
 {
 	for (unsigned int i = 0; i < linkDefs.size(); i++)
@@ -50,10 +46,7 @@ CDomainLink::~CDomainLink(void)
 	}
 }
 
-/*
- *	Return whether or not it is possible for two domains to be linked
- *	together in a CDomainLink class.
- */
+//Return whether or not it is possible for two domains to be linked together in a CDomainLink class.
 bool CDomainLink::canLink(CDomainBase* pA, CDomainBase* pB)
 {
 	CDomainBase::DomainSummary pSumA = pA->getSummary();
@@ -61,13 +54,11 @@ bool CDomainLink::canLink(CDomainBase* pA, CDomainBase* pB)
 	return false;
 }
 
-/*
- *	Import data received through MPI
- */
+//Import data received through MPI
 void	CDomainLink::pullFromMPI(double dCurrentTime, char* pData)
 {
 #ifdef DEBUG_MPI
-	model::log->writeLine("[DEBUG] Importing link data via MPI... Data time: " + Util::secondsToTime(dCurrentTime) + ", Current time: " + Util::secondsToTime(this->dValidityTime));
+	model::log->logDebug("Importing link data via MPI... Data time: " + Util::secondsToTime(dCurrentTime) + ", Current time: " + Util::secondsToTime(this->dValidityTime));
 #endif
 
 	if ( this->dValidityTime >= dCurrentTime )
@@ -88,9 +79,7 @@ void	CDomainLink::pullFromMPI(double dCurrentTime, char* pData)
 	this->dValidityTime = dCurrentTime;
 }
 
-/*
- *	Download data for the link from a memory buffer
- */
+//Download data for the link from a memory buffer
 void	CDomainLink::pullFromBuffer(double dCurrentTime, COCLBuffer* pBuffer)
 {
 	if ( this->dValidityTime >= dCurrentTime &&
@@ -103,7 +92,7 @@ void	CDomainLink::pullFromBuffer(double dCurrentTime, COCLBuffer* pBuffer)
 		for (unsigned int i = 0; i < this->linkDefs.size(); i++)
 		{
 #ifdef DEBUG_MPI
-				model::log->writeLine("[DEBUG] Should now be downloading data from buffer at time " + Util::secondsToTime(dCurrentTime));
+				model::log->logDebug("Should now be downloading data from buffer at time " + Util::secondsToTime(dCurrentTime));
 #endif
 				pBuffer->queueReadPartial(
 					this->linkDefs[i].ulOffsetSource,
@@ -117,14 +106,12 @@ void	CDomainLink::pullFromBuffer(double dCurrentTime, COCLBuffer* pBuffer)
 		
 	} else {
 #ifdef DEBUG_MPI
-		model::log->writeLine("[DEBUG] Not downloading data at " + Util::secondsToTime(dCurrentTime) + " as validity time is " + Util::secondsToTime(dValidityTime));
+		model::log->logDebug("Not downloading data at " + Util::secondsToTime(dCurrentTime) + " as validity time is " + Util::secondsToTime(dValidityTime));
 #endif
 	}
 }
 
-/*
- *	Send the data over MPI if it hasn't already been sent...
- */
+//Send the data over MPI if it hasn't already been sent...
 bool	CDomainLink::sendOverMPI()
 {
 	if ( this->bSent )
@@ -135,9 +122,7 @@ bool	CDomainLink::sendOverMPI()
 	return false;
 }
 
-/*
- *	Push data to a memory buffer
- */
+//Push data to a memory buffer
 void	CDomainLink::pushToBuffer(COCLBuffer* pBuffer)
 {
 	// Once there is a check in the sync ready code for the current timestep of each link
@@ -148,7 +133,7 @@ void	CDomainLink::pushToBuffer(COCLBuffer* pBuffer)
 	for (unsigned int i = 0; i < this->linkDefs.size(); i++)
 	{
 #ifdef DEBUG_MPI
-		model::log->writeLine("[DEBUG] Should now be pushing data to buffer at time " + Util::secondsToTime(dValidityTime) + " (" + toStringExact(this->linkDefs[i].ulSize) + " bytes)");
+		model::log->logDebug("Should now be pushing data to buffer at time " + Util::secondsToTime(dValidityTime) + " (" + toStringExact(this->linkDefs[i].ulSize) + " bytes)");
 #endif
 		pBuffer->queueWritePartial(
 			this->linkDefs[i].ulOffsetTarget,
@@ -158,9 +143,7 @@ void	CDomainLink::pushToBuffer(COCLBuffer* pBuffer)
 	}
 }
 
-/*
- *	Is this link at the specified time yet?
- */
+//Is this link at the specified time yet?
 bool	CDomainLink::isAtTime( double dCheckTime )
 {
 	if ( fabs( this->dValidityTime - dCheckTime ) > 1E-5 )
@@ -169,9 +152,7 @@ bool	CDomainLink::isAtTime( double dCheckTime )
 	return true;
 }
 
-/*
- *	Identify all the areas of contiguous memory which overlap so we know what needs exchanging
- */
+//Identify all the areas of contiguous memory which overlap so we know what needs exchanging
 void	CDomainLink::generateDefinitions(CDomainBase* pTarget, CDomainBase *pSource)
 {
 

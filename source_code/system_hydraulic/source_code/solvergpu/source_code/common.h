@@ -208,7 +208,7 @@ namespace model
 
 	extern  char*			configFile;
 	extern  char*			codeDir;
-	void					doError( std::string, unsigned char );
+	void					doError( std::string, unsigned char, std::string, std::string);
 
 
 // Executor states

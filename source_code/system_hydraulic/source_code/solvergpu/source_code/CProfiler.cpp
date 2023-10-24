@@ -28,7 +28,11 @@ void CProfiler::profile(std::string name, int flag, COCLDevice* device){
 	if (doesntExists(name)) {
 		createProfileElement(name);
 		if (flag == profilerFlags::END_PROFILING) {
-			model::doError("Profiler was set to End profiling but it was never started", model::errorCodes::kLevelWarning);
+			model::doError("Profiler for [" + name + "] was set to End profiling but it was never started. ",
+				model::errorCodes::kLevelWarning,
+				"void CProfiler::profile(std::string name, int flag, COCLDevice* device)",
+				"Please Report to the developers."
+			);
 		}
 	}
 
@@ -37,7 +41,11 @@ void CProfiler::profile(std::string name, int flag, COCLDevice* device){
 
 		if (flag == profilerFlags::START_PROFILING) {
 			if (profiledElement->isStarted == true) {
-				model::doError("Profile Element " + name + " never ended. And is now requested to start", model::errorCodes::kLevelWarning);
+				model::doError("Profile Element [" + name + "] never ended. And is now requested to start",
+					model::errorCodes::kLevelWarning,
+					"void CProfiler::profile(std::string name, int flag, COCLDevice* device)",
+					"Please Report to the developers."
+				);
 			}
 			profiledElement->isStarted = true;
 
@@ -51,7 +59,11 @@ void CProfiler::profile(std::string name, int flag, COCLDevice* device){
 		}
 		if (flag == profilerFlags::END_PROFILING) {
 			if (profiledElement->isStarted == false) {
-				model::doError("Profile Element " + name + " never started. And is now requested to end", model::errorCodes::kLevelWarning);
+				model::doError("Profile Element [" + name + "] never started. And is now requested to end",
+					model::errorCodes::kLevelWarning,
+					"void CProfiler::profile(std::string name, int flag, COCLDevice* device)",
+					"Please Report to the developers."
+				);
 			}
 			profiledElement->isStarted = false;
 
@@ -69,7 +81,11 @@ void CProfiler::profile(std::string name, int flag, COCLDevice* device){
 
 	}
 	else {
-		model::doError("Profiler couldn't find the element it was looking for", model::errorCodes::kLevelWarning);
+		model::doError("Profiler couldn't find the element [" + name + "]. ",
+			model::errorCodes::kLevelWarning,
+			"void CProfiler::profile(std::string name, int flag, COCLDevice* device)",
+			"Please Report to the developers. "
+		);
 	}
 }
 
@@ -94,7 +110,12 @@ CProfiler::ProfiledElement* CProfiler::getProfileElement(std::string name) {
 			return profiledElement;
 		}
 	}
-	model::doError("Profiler never Found the element it was looking for", model::errorCodes::kLevelWarning);
+	model::doError("Profiler never Found the element it was looking for",
+		model::errorCodes::kLevelWarning,
+		"void CProfiler::profile(std::string name, int flag, COCLDevice* device)",
+		"Please Report to the developers. "
+	);
+
 	return nullptr;
 }
 

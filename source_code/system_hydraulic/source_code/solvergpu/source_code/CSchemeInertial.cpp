@@ -22,16 +22,16 @@ using std::max;
 CSchemeInertial::CSchemeInertial(void)
 {
 	// Scheme is loaded
-	model::log->writeLine( "Inertial scheme loaded for execution on OpenCL platform." );
+	model::log->logInfo("Inertial scheme loaded for execution on OpenCL platform.");
 
 	// Default setup values
-	this->bDebugOutput					= false;
-	this->uiDebugCellX					= 100;
-	this->uiDebugCellY					= 100;
+	this->bDebugOutput = false;
+	this->uiDebugCellX = 100;
+	this->uiDebugCellY = 100;
 
-	this->ucSolverType					= model::solverTypes::kHLLC;
-	this->ucConfiguration				= model::schemeConfigurations::inertialFormula::kCacheNone;
-	this->ucCacheConstraints			= model::cacheConstraints::inertialFormula::kCacheActualSize;
+	this->ucSolverType = model::solverTypes::kHLLC;
+	this->ucConfiguration = model::schemeConfigurations::inertialFormula::kCacheNone;
+	this->ucCacheConstraints = model::cacheConstraints::inertialFormula::kCacheActualSize;
 }
 
 /*
@@ -40,7 +40,7 @@ CSchemeInertial::CSchemeInertial(void)
 CSchemeInertial::~CSchemeInertial(void)
 {
 	this->releaseResources();
-	model::log->writeLine( "The inertial formula scheme was unloaded from memory." );
+	model::log->logInfo("The inertial formula scheme was unloaded from memory.");
 }
 
 /*
@@ -70,7 +70,9 @@ void CSchemeInertial::prepareAll()
 	{
 		model::doError(
 			"Failed to dimension 1st-order task elements. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeInertial::prepareAll() this->prepare1OExecDimensions()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -80,7 +82,9 @@ void CSchemeInertial::prepareAll()
 	{
 		model::doError(
 			"Failed to allocate 1st-order constants. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeInertial::prepareAll() this->prepare1OConstants()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -90,7 +94,9 @@ void CSchemeInertial::prepareAll()
 	{
 		model::doError(
 			"Failed to allocate inertial constants. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeInertial::prepareAll() this->prepareInertialConstants()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -100,7 +106,9 @@ void CSchemeInertial::prepareAll()
 	{
 		model::doError(
 			"Failed to prepare model codebase. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeInertial::prepareAll() this->prepareCode()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -110,7 +118,9 @@ void CSchemeInertial::prepareAll()
 	{
 		model::doError(
 			"Failed to create 1st-order memory buffers. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeInertial::prepareAll() this->prepare1OMemory()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -120,7 +130,9 @@ void CSchemeInertial::prepareAll()
 	{
 		model::doError(
 			"Failed to prepare general kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeInertial::prepareAll() this->prepareGeneralKernels()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -129,7 +141,9 @@ void CSchemeInertial::prepareAll()
 	{
 		model::doError(
 			"Failed to prepare inertial kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeInertial::prepareAll() this->prepareInertialKernels()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -159,16 +173,16 @@ void CSchemeInertial::logDetails()
 		break;
 	}
 
-	model::log->writeLine("SIMPLIFIED INERTIAL FORMULATION SCHEME", true, wColour);
-	model::log->writeLine("  Timestep mode:      " + (std::string)(this->bDynamicTimestep ? "Dynamic" : "Fixed"), true, wColour);
-	model::log->writeLine("  Courant number:     " + (std::string)(this->bDynamicTimestep ? toStringExact(this->dCourantNumber) : "N/A"), true, wColour);
-	model::log->writeLine("  Initial timestep:   " + Util::secondsToTime(this->dTimestep), true, wColour);
-	model::log->writeLine("  Data reduction:     " + toStringExact(this->uiTimestepReductionWavefronts) + " divisions", true, wColour);
-	model::log->writeLine("  Configuration:      " + sConfiguration, true, wColour);
-	model::log->writeLine("  Friction effects:   " + (std::string)(this->bFrictionEffects ? "Enabled" : "Disabled"), true, wColour);
-	model::log->writeLine("  Kernel queue mode:  " + (std::string)(this->bAutomaticQueue ? "Automatic" : "Fixed size"), true, wColour);
-	model::log->writeLine((std::string)(this->bAutomaticQueue ? "  Initial queue:      " : "  Fixed queue:        ") + toStringExact(this->uiQueueAdditionSize) + " iteration(s)", true, wColour);
-	model::log->writeLine("  Debug output:       " + (std::string)(this->bDebugOutput ? "Enabled" : "Disabled"), true, wColour);
+	model::log->logInfo("SIMPLIFIED INERTIAL FORMULATION SCHEME");
+	model::log->logInfo("  Timestep mode:      " + (std::string)(this->bDynamicTimestep ? "Dynamic" : "Fixed"));
+	model::log->logInfo("  Courant number:     " + (std::string)(this->bDynamicTimestep ? toStringExact(this->dCourantNumber) : "N/A"));
+	model::log->logInfo("  Initial timestep:   " + Util::secondsToTime(this->dTimestep));
+	model::log->logInfo("  Data reduction:     " + toStringExact(this->uiTimestepReductionWavefronts) + " divisions");
+	model::log->logInfo("  Configuration:      " + sConfiguration);
+	model::log->logInfo("  Friction effects:   " + (std::string)(this->bFrictionEffects ? "Enabled" : "Disabled"));
+	model::log->logInfo("  Kernel queue mode:  " + (std::string)(this->bAutomaticQueue ? "Automatic" : "Fixed size"));
+	model::log->logInfo((std::string)(this->bAutomaticQueue ? "  Initial queue:      " : "  Fixed queue:        ") + toStringExact(this->uiQueueAdditionSize) + " iteration(s)");
+	model::log->logInfo("  Debug output:       " + (std::string)(this->bDebugOutput ? "Enabled" : "Disabled"));
 
 	model::log->writeDivide();
 }
@@ -234,28 +248,28 @@ bool CSchemeInertial::prepareInertialKernels()
 {
 	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomain*					pDomain				= this->pDomain;
-	COCLDevice*		pDevice				= pExecutor->getDevice();
+	CDomain* pDomain = this->pDomain;
+	COCLDevice* pDevice = pExecutor->getDevice();
 
 	// --
 	// Inertial scheme kernels
 	// --
 
-	if ( this->ucConfiguration == model::schemeConfigurations::inertialFormula::kCacheNone )
+	if (this->ucConfiguration == model::schemeConfigurations::inertialFormula::kCacheNone)
 	{
-		oclKernelFullTimestep = oclModel->getKernel( "ine_cacheDisabled" );
-		oclKernelFullTimestep->setGroupSize( this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY );
-		oclKernelFullTimestep->setGlobalSize( this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY );
+		oclKernelFullTimestep = oclModel->getKernel("ine_cacheDisabled");
+		oclKernelFullTimestep->setGroupSize(this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY);
+		oclKernelFullTimestep->setGlobalSize(this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY);
 		COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferCellStatesAlt, oclBufferCellManning, oclBufferUsePoleni, oclBuffer_opt_zxmax, oclBuffer_opt_cx, oclBuffer_opt_zymax, oclBuffer_opt_cy };
-		oclKernelFullTimestep->assignArguments( aryArgsFullTimestep );
+		oclKernelFullTimestep->assignArguments(aryArgsFullTimestep);
 	}
-	if ( this->ucConfiguration == model::schemeConfigurations::inertialFormula::kCacheEnabled )
+	if (this->ucConfiguration == model::schemeConfigurations::inertialFormula::kCacheEnabled)
 	{
-		oclKernelFullTimestep = oclModel->getKernel( "ine_cacheEnabled" );
-		oclKernelFullTimestep->setGroupSize( this->ulCachedWorkgroupSizeX, this->ulCachedWorkgroupSizeY );
-		oclKernelFullTimestep->setGlobalSize( this->ulCachedGlobalSizeX, this->ulCachedGlobalSizeY );
-		COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferCellStatesAlt, oclBufferCellManning };	
-		oclKernelFullTimestep->assignArguments( aryArgsFullTimestep );
+		oclKernelFullTimestep = oclModel->getKernel("ine_cacheEnabled");
+		oclKernelFullTimestep->setGroupSize(this->ulCachedWorkgroupSizeX, this->ulCachedWorkgroupSizeY);
+		oclKernelFullTimestep->setGlobalSize(this->ulCachedGlobalSizeX, this->ulCachedGlobalSizeY);
+		COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferCellStatesAlt, oclBufferCellManning };
+		oclKernelFullTimestep->assignArguments(aryArgsFullTimestep);
 	}
 
 	return bReturnState;
@@ -268,7 +282,7 @@ void CSchemeInertial::releaseResources()
 {
 	this->bReady = false;
 
-	model::log->writeLine("Releasing scheme resources held for OpenCL.");
+	model::log->logInfo("Releasing scheme resources held for OpenCL.");
 
 	this->releaseInertialResources();
 	this->release1OResources();
@@ -281,7 +295,7 @@ void CSchemeInertial::releaseInertialResources()
 {
 	this->bReady = false;
 
-	model::log->writeLine("Releasing inertial scheme resources held for OpenCL.");
+	model::log->logInfo("Releasing inertial scheme resources held for OpenCL.");
 
 	// Nothing to do?
 }

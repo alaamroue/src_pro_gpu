@@ -144,7 +144,7 @@ int model::loadConfiguration()
 			//Boundary Condition
 			ourCartesianDomain->setBoundaryCondition(ulCellID, 0.0001);
 			//Poleni Condition
-			ourCartesianDomain->setPoleniConditionX(ulCellID, 0.0001);
+			//ourCartesianDomain->setPoleniConditionX(ulCellID, 0.0001);
 			//Coupling Condition
 			//ourCartesianDomain->setCouplingCondition(ulCellID, 0.0);
 
@@ -156,10 +156,6 @@ int model::loadConfiguration()
 
 	return model::appReturnCodes::kAppSuccess;
 }
-
-
-
-
 
 /*
  *  Model is complete.
@@ -184,17 +180,14 @@ void model::doPause()
 /*
  *  Raise an error message and deal with it accordingly.
  */
-void model::doError( std::string sError, unsigned char cError )
+void model::doError( std::string sError, unsigned char cError, std::string, std::string)
 {
 	model::log->writeError( sError, cError );
-	if ( cError & model::errorCodes::kLevelModelStop )
-		std::cout << "model forceAbort was requested by a function." << std::endl;
-	if ( cError & model::errorCodes::kLevelFatal )
-	{
+	if (cError & model::errorCodes::kLevelModelStop)
+		model::log->logInfo("model forceAbort was requested by a function.");
+	if ( cError & model::errorCodes::kLevelFatal ){
 		model::doPause();
 		exit( model::appReturnCodes::kAppFatal );
-
-		
 	}
 }
 

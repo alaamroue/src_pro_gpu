@@ -31,6 +31,7 @@ set(H_FILES
 	source_code/system/Hyd_Parse_Glob.h
 	source_code/system/Hyd_Observation_Point.h
 	source_code/system/Hyd_Observation_Point_Manager.h
+	source_code/system/Hyd_SolverGPU_LoggingWrapper.h
 	source_code/models/floodplain/Hyd_Model_Floodplain.h
 	source_code/models/floodplain/Hyd_Param_FP.h
 	source_code/models/floodplain/Hyd_Parse_FP.h
@@ -138,6 +139,7 @@ set(CPP_FILES
 	source_code/system/Hyd_Parse_Glob.cpp
 	source_code/system/Hyd_Observation_Point.cpp
 	source_code/system/Hyd_Observation_Point_Manager.cpp
+	source_code/system/Hyd_SolverGPU_LoggingWrapper.cpp
 	source_code/models/floodplain/Hyd_Model_Floodplain.cpp
 	source_code/models/floodplain/Hyd_Param_FP.cpp
 	source_code/models/floodplain/Hyd_Parse_FP.cpp

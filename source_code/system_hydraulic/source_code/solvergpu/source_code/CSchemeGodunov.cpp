@@ -27,69 +27,73 @@ using std::max;
 CSchemeGodunov::CSchemeGodunov()
 {
 	// Scheme is loaded
-	model::log->writeLine( "Godunov-type scheme loaded for execution on OpenCL platform." );
+	model::log->logInfo("Godunov-type scheme loaded for execution on OpenCL platform.");
 
 	// Default setup values
-	this->bRunning						= false;
-	this->bThreadRunning				= false;
-	this->bThreadTerminated				= false;
-	this->bDebugOutput					= false;
-	this->uiDebugCellX					= 9999;
-	this->uiDebugCellY					= 9999;
+	this->bRunning = false;
+	this->bThreadRunning = false;
+	this->bThreadTerminated = false;
+	this->bDebugOutput = false;
+	this->uiDebugCellX = 9999;
+	this->uiDebugCellY = 9999;
 
-	this->dCurrentTime					= 0.0;
-	this->dThresholdVerySmall			= 1E-10;
-	this->dThresholdQuiteSmall			= this->dThresholdVerySmall * 10;
-	this->bFrictionInFluxKernel			= true;
-	this->bIncludeBoundaries			= false;
+	this->dCurrentTime = 0.0;
+	this->dThresholdVerySmall = 1E-10;
+	this->dThresholdQuiteSmall = this->dThresholdVerySmall * 10;
+	this->bFrictionInFluxKernel = true;
+	this->bIncludeBoundaries = false;
 	this->uiTimestepReductionWavefronts = 200;
 
-	this->ucSolverType					= model::solverTypes::kHLLC;
-	this->ucConfiguration				= model::schemeConfigurations::godunovType::kCacheNone;
-	this->ucCacheConstraints			= model::cacheConstraints::godunovType::kCacheActualSize;
+	this->ucSolverType = model::solverTypes::kHLLC;
+	this->ucConfiguration = model::schemeConfigurations::godunovType::kCacheNone;
+	this->ucCacheConstraints = model::cacheConstraints::godunovType::kCacheActualSize;
 
-	this->ulCachedWorkgroupSizeX		= 0;
-	this->ulCachedWorkgroupSizeY		= 0;
-	this->ulNonCachedWorkgroupSizeX		= 0;
-	this->ulNonCachedWorkgroupSizeY		= 0;
+	this->ulCachedWorkgroupSizeX = 0;
+	this->ulCachedWorkgroupSizeY = 0;
+	this->ulNonCachedWorkgroupSizeX = 0;
+	this->ulNonCachedWorkgroupSizeY = 0;
 
-	this->dBoundaryTimeSeries			= NULL;
-	this->fBoundaryTimeSeries			= NULL;
-	this->uiBoundaryParameters			= NULL;
-	this->ulBoundaryRelationCells		= NULL;
-	this->uiBoundaryRelationSeries		= NULL;
+	this->dBoundaryTimeSeries = NULL;
+	this->fBoundaryTimeSeries = NULL;
+	this->uiBoundaryParameters = NULL;
+	this->ulBoundaryRelationCells = NULL;
+	this->uiBoundaryRelationSeries = NULL;
 
 	// Default null values for OpenCL objects
-	oclModel							= NULL;
-	oclKernelFullTimestep				= NULL;
-	oclKernelBoundary					= NULL;
-	oclKernelFriction					= NULL;
-	oclKernelTimestepReduction			= NULL;
-	oclKernelTimeAdvance				= NULL;
-	oclKernelResetCounters				= NULL;
-	oclKernelTimestepUpdate				= NULL;
-	oclBufferCellStates					= NULL;
-	oclBufferCellStatesAlt				= NULL;
-	oclBufferCellManning				= NULL;
-	oclBufferCellBoundary				= NULL;
-	oclBufferUsePoleni					= NULL;
-	oclBuffer_opt_zxmax					= NULL;
-	oclBuffer_opt_cx					= NULL;
-	oclBuffer_opt_zymax					= NULL;
-	oclBuffer_opt_cy					= NULL;
-	oclBufferCellBed					= NULL;
-	oclBufferTimestep					= NULL;
-	oclBufferTimestepReduction			= NULL;
-	oclBufferTime						= NULL;
-	oclBufferTimeTarget					= NULL;
-	oclBufferTimeHydrological			= NULL;
-	oclBufferCouplingIDs				= NULL;
-	oclBufferCouplingValues				= NULL;
+	oclModel = NULL;
+	oclKernelFullTimestep = NULL;
+	oclKernelBoundary = NULL;
+	oclKernelFriction = NULL;
+	oclKernelTimestepReduction = NULL;
+	oclKernelTimeAdvance = NULL;
+	oclKernelResetCounters = NULL;
+	oclKernelTimestepUpdate = NULL;
+	oclBufferCellStates = NULL;
+	oclBufferCellStatesAlt = NULL;
+	oclBufferCellManning = NULL;
+	oclBufferCellBoundary = NULL;
+	oclBufferUsePoleni = NULL;
+	oclBuffer_opt_zxmax = NULL;
+	oclBuffer_opt_cx = NULL;
+	oclBuffer_opt_zymax = NULL;
+	oclBuffer_opt_cy = NULL;
+	oclBufferCellBed = NULL;
+	oclBufferTimestep = NULL;
+	oclBufferTimestepReduction = NULL;
+	oclBufferTime = NULL;
+	oclBufferTimeTarget = NULL;
+	oclBufferTimeHydrological = NULL;
+	oclBufferCouplingIDs = NULL;
+	oclBufferCouplingValues = NULL;
 
-	if ( this->bDebugOutput )
-		model::doError( "Debug mode is enabled!", model::errorCodes::kLevelWarning );
+	if (this->bDebugOutput)
+		model::doError("Debug mode is enabled!",
+			model::errorCodes::kLevelWarning,
+			"CSchemeGodunov::CSchemeGodunov()",
+			"Additional information will be printed."
+		);
 
-	model::log->writeLine( "Populated scheme with default settings." );
+	model::log->logInfo("Populated scheme with default settings.");
 }
 
 /*
@@ -98,7 +102,7 @@ CSchemeGodunov::CSchemeGodunov()
 CSchemeGodunov::~CSchemeGodunov(void)
 {
 	this->releaseResources();
-	model::log->writeLine( "The Godunov scheme class was unloaded from memory." );
+	model::log->logInfo("The Godunov scheme class was unloaded from memory.");
 }
 
 /*
@@ -130,36 +134,36 @@ void CSchemeGodunov::logDetails()
 	model::log->writeDivide();
 	unsigned short wColour = model::cli::colourInfoBlock;
 
-	std::string sSolver			= "Undefined";
-	switch( this->ucSolverType )
+	std::string sSolver = "Undefined";
+	switch (this->ucSolverType)
 	{
 	case model::solverTypes::kHLLC:
-			sSolver = "HLLC (Approximate)";
+		sSolver = "HLLC (Approximate)";
 		break;
 	}
 
-	std::string sConfiguration	= "Undefined";
-	switch( this->ucConfiguration )
+	std::string sConfiguration = "Undefined";
+	switch (this->ucConfiguration)
 	{
 	case model::schemeConfigurations::godunovType::kCacheNone:
-			sConfiguration = "No local caching";
+		sConfiguration = "No local caching";
 		break;
 	case model::schemeConfigurations::godunovType::kCacheEnabled:
-			sConfiguration = "Original state caching";
+		sConfiguration = "Original state caching";
 		break;
 	}
 
-	model::log->writeLine( "GODUNOV-TYPE 1ST-ORDER-ACCURATE SCHEME", true, wColour );
-	model::log->writeLine( "  Timestep mode:      " + (std::string)( this->bDynamicTimestep ? "Dynamic" : "Fixed" ), true, wColour );
-	model::log->writeLine( "  Courant number:     " + (std::string)( this->bDynamicTimestep ? toStringExact( this->dCourantNumber ) : "N/A" ), true, wColour );
-	model::log->writeLine( "  Initial timestep:   " + Util::secondsToTime( this->dTimestep ), true, wColour );
-	model::log->writeLine( "  Data reduction:     " + toStringExact(this->uiTimestepReductionWavefronts) + " divisions", true, wColour);
-	model::log->writeLine( "  Riemann solver:     " + sSolver, true, wColour );
-	model::log->writeLine( "  Configuration:      " + sConfiguration, true, wColour );
-	model::log->writeLine( "  Friction effects:   " + (std::string)( this->bFrictionEffects ? "Enabled" : "Disabled" ), true, wColour );
-	model::log->writeLine( "  Kernel queue mode:  " + (std::string)( this->bAutomaticQueue ? "Automatic" : "Fixed size" ), true, wColour );
-	model::log->writeLine( (std::string)( this->bAutomaticQueue ? "  Initial queue:      " : "  Fixed queue:        " ) + toStringExact( this->uiQueueAdditionSize ) + " iteration(s)", true, wColour );
-	model::log->writeLine( "  Debug output:       " + (std::string)( this->bDebugOutput ? "Enabled" : "Disabled" ), true, wColour );
+	model::log->logInfo("GODUNOV-TYPE 1ST-ORDER-ACCURATE SCHEME");
+	model::log->logInfo("  Timestep mode:      " + (std::string)(this->bDynamicTimestep ? "Dynamic" : "Fixed"));
+	model::log->logInfo("  Courant number:     " + (std::string)(this->bDynamicTimestep ? toStringExact(this->dCourantNumber) : "N/A"));
+	model::log->logInfo("  Initial timestep:   " + Util::secondsToTime(this->dTimestep));
+	model::log->logInfo("  Data reduction:     " + toStringExact(this->uiTimestepReductionWavefronts) + " divisions");
+	model::log->logInfo("  Riemann solver:     " + sSolver);
+	model::log->logInfo("  Configuration:      " + sConfiguration);
+	model::log->logInfo("  Friction effects:   " + (std::string)(this->bFrictionEffects ? "Enabled" : "Disabled"));
+	model::log->logInfo("  Kernel queue mode:  " + (std::string)(this->bAutomaticQueue ? "Automatic" : "Fixed size"));
+	model::log->logInfo((std::string)(this->bAutomaticQueue ? "  Initial queue:      " : "  Fixed queue:        ") + toStringExact(this->uiQueueAdditionSize) + " iteration(s)");
+	model::log->logInfo("  Debug output:       " + (std::string)(this->bDebugOutput ? "Enabled" : "Disabled"));
 
 	model::log->writeDivide();
 }
@@ -169,7 +173,7 @@ void CSchemeGodunov::logDetails()
  */
 void CSchemeGodunov::prepareAll()
 {
-	model::log->writeLine( "Starting to prepare program for Godunov-type scheme." );
+	model::log->logInfo("Starting to prepare program for Godunov-type scheme.");
 
 	this->releaseResources();
 
@@ -179,69 +183,81 @@ void CSchemeGodunov::prepareAll()
 	);
 
 	// Run-time tracking values
-	this->ulCurrentCellsCalculated		= 0;
-	this->dCurrentTimestep				= this->dTimestep;
-	this->dCurrentTime					= 0;
+	this->ulCurrentCellsCalculated = 0;
+	this->dCurrentTimestep = this->dTimestep;
+	this->dCurrentTime = 0;
 
 	// Forcing single precision?
-	this->oclModel->setForcedSinglePrecision(cModel->getFloatPrecision() == model::floatPrecision::kSingle );
+	this->oclModel->setForcedSinglePrecision(cModel->getFloatPrecision() == model::floatPrecision::kSingle);
 
 	// OpenCL elements
-	if ( !this->prepare1OExecDimensions() ) 
-	{ 
+	if (!this->prepare1OExecDimensions())
+	{
 		model::doError(
 			"Failed to dimension task. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeGodunov::prepareAll() this->prepare1OExecDimensions()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
 	}
 
-	if ( !this->prepare1OConstants() ) 
-	{ 
+	if (!this->prepare1OConstants())
+	{
 		model::doError(
 			"Failed to allocate constants. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeGodunov::prepareAll() this->prepare1OConstants()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
 	}
 
-	if ( !this->prepareCode() ) 
-	{ 
+	if (!this->prepareCode())
+	{
 		model::doError(
 			"Failed to prepare model codebase. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeGodunov::prepareAll() this->prepareCode()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
 	}
 
-	if ( !this->prepare1OMemory() ) 
-	{ 
+	if (!this->prepare1OMemory())
+	{
 		model::doError(
 			"Failed to create memory buffers. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeGodunov::prepareAll() this->prepare1OMemory()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
 	}
 
-	if ( !this->prepareGeneralKernels() ) 
-	{ 
+	if (!this->prepareGeneralKernels())
+	{
 		model::doError(
 			"Failed to prepare general kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeGodunov::prepareAll() this->prepareGeneralKernels()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
 	}
 
-	if ( !this->prepare1OKernels() ) 
-	{ 
+	if (!this->prepare1OKernels())
+	{
 		model::doError(
 			"Failed to prepare kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeGodunov::prepareAll() this->prepare1OKernels()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -259,19 +275,19 @@ bool CSchemeGodunov::prepareCode()
 {
 	bool bReturnState = true;
 
-	oclModel->appendCodeFromResource( "CLDomainCartesian_H" );
-	oclModel->appendCodeFromResource( "CLFriction_H" );
-	oclModel->appendCodeFromResource( "CLSolverHLLC_H" );
-	oclModel->appendCodeFromResource( "CLDynamicTimestep_H" );
-	oclModel->appendCodeFromResource( "CLSchemeGodunov_H" );
-	oclModel->appendCodeFromResource( "CLBoundaries_H" );
+	oclModel->appendCodeFromResource("CLDomainCartesian_H");
+	oclModel->appendCodeFromResource("CLFriction_H");
+	oclModel->appendCodeFromResource("CLSolverHLLC_H");
+	oclModel->appendCodeFromResource("CLDynamicTimestep_H");
+	oclModel->appendCodeFromResource("CLSchemeGodunov_H");
+	oclModel->appendCodeFromResource("CLBoundaries_H");
 
-	oclModel->appendCodeFromResource( "CLDomainCartesian_C" );
-	oclModel->appendCodeFromResource( "CLFriction_C" );
-	oclModel->appendCodeFromResource( "CLSolverHLLC_C" );
-	oclModel->appendCodeFromResource( "CLDynamicTimestep_C" );
-	oclModel->appendCodeFromResource( "CLSchemeGodunov_C" );
-	oclModel->appendCodeFromResource( "CLBoundaries_C" );
+	oclModel->appendCodeFromResource("CLDomainCartesian_C");
+	oclModel->appendCodeFromResource("CLFriction_C");
+	oclModel->appendCodeFromResource("CLSolverHLLC_C");
+	oclModel->appendCodeFromResource("CLDynamicTimestep_C");
+	oclModel->appendCodeFromResource("CLSchemeGodunov_C");
+	oclModel->appendCodeFromResource("CLBoundaries_C");
 
 	bReturnState = oclModel->compileProgram();
 
@@ -281,7 +297,7 @@ bool CSchemeGodunov::prepareCode()
 /*
  *  Set the dry cell threshold depth
  */
-void	CSchemeGodunov::setDryThreshold( double dThresholdDepth )
+void	CSchemeGodunov::setDryThreshold(double dThresholdDepth)
 {
 	this->dThresholdVerySmall = dThresholdDepth;
 	this->dThresholdQuiteSmall = dThresholdDepth * 10;
@@ -298,7 +314,7 @@ double	CSchemeGodunov::getDryThreshold()
 /*
  *  Set number of wavefronts used in reductions
  */
-void	CSchemeGodunov::setReductionWavefronts( unsigned int uiWavefronts )
+void	CSchemeGodunov::setReductionWavefronts(unsigned int uiWavefronts)
 {
 	this->uiTimestepReductionWavefronts = uiWavefronts;
 }
@@ -314,7 +330,7 @@ unsigned int	CSchemeGodunov::getReductionWavefronts()
 /*
  *  Set the Riemann solver to use
  */
-void	CSchemeGodunov::setRiemannSolver( unsigned char ucRiemannSolver )
+void	CSchemeGodunov::setRiemannSolver(unsigned char ucRiemannSolver)
 {
 	this->ucSolverType = ucRiemannSolver;
 }
@@ -330,7 +346,7 @@ unsigned char	CSchemeGodunov::getRiemannSolver()
 /*
  *  Set the cache configuration to use
  */
-void	CSchemeGodunov::setCacheMode( unsigned char ucCacheMode )
+void	CSchemeGodunov::setCacheMode(unsigned char ucCacheMode)
 {
 	this->ucConfiguration = ucCacheMode;
 }
@@ -346,19 +362,27 @@ unsigned char	CSchemeGodunov::getCacheMode()
 /*
  *  Set the cache size
  */
-void	CSchemeGodunov::setCachedWorkgroupSize( unsigned char ucSize ) 
-	{ this->ulCachedWorkgroupSizeX = ucSize; this->ulCachedWorkgroupSizeY = ucSize; }
-void	CSchemeGodunov::setCachedWorkgroupSize( unsigned char ucSizeX, unsigned char ucSizeY ) 
-	{ this->ulCachedWorkgroupSizeX = ucSizeX; this->ulCachedWorkgroupSizeY = ucSizeY; }
-void	CSchemeGodunov::setNonCachedWorkgroupSize( unsigned char ucSize ) 
-	{ this->ulNonCachedWorkgroupSizeX = ucSize; this->ulNonCachedWorkgroupSizeY = ucSize; }
-void	CSchemeGodunov::setNonCachedWorkgroupSize( unsigned char ucSizeX, unsigned char ucSizeY ) 
-	{ this->ulNonCachedWorkgroupSizeX = ucSizeX; this->ulNonCachedWorkgroupSizeY = ucSizeY; }
+void	CSchemeGodunov::setCachedWorkgroupSize(unsigned char ucSize)
+{
+	this->ulCachedWorkgroupSizeX = ucSize; this->ulCachedWorkgroupSizeY = ucSize;
+}
+void	CSchemeGodunov::setCachedWorkgroupSize(unsigned char ucSizeX, unsigned char ucSizeY)
+{
+	this->ulCachedWorkgroupSizeX = ucSizeX; this->ulCachedWorkgroupSizeY = ucSizeY;
+}
+void	CSchemeGodunov::setNonCachedWorkgroupSize(unsigned char ucSize)
+{
+	this->ulNonCachedWorkgroupSizeX = ucSize; this->ulNonCachedWorkgroupSizeY = ucSize;
+}
+void	CSchemeGodunov::setNonCachedWorkgroupSize(unsigned char ucSizeX, unsigned char ucSizeY)
+{
+	this->ulNonCachedWorkgroupSizeX = ucSizeX; this->ulNonCachedWorkgroupSizeY = ucSizeY;
+}
 
 /*
  *  Set the cache constraints
  */
-void	CSchemeGodunov::setCacheConstraints( unsigned char ucCacheConstraints )
+void	CSchemeGodunov::setCacheConstraints(unsigned char ucCacheConstraints)
 {
 	this->ucCacheConstraints = ucCacheConstraints;
 }
@@ -377,46 +401,46 @@ unsigned char	CSchemeGodunov::getCacheConstraints()
 bool CSchemeGodunov::prepare1OExecDimensions()
 {
 	bool						bReturnState = true;
-	CExecutorControlOpenCL*		pExecutor	 = cModel->getExecutor();
-	COCLDevice*		pDevice		 = pExecutor->getDevice();
-	CDomainCartesian*			pDomain		 = static_cast<CDomainCartesian*>( this->pDomain );
+	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
+	COCLDevice* pDevice = pExecutor->getDevice();
+	CDomainCartesian* pDomain = static_cast<CDomainCartesian*>(this->pDomain);
 
 	// --
 	// Maximum permissible work-group dimensions for this device
 	// --
 
-	cl_ulong	ulConstraintWGTotal = (cl_ulong)floor( sqrt( static_cast<double> ( pDevice->clDeviceMaxWorkGroupSize ) ) );
-	cl_ulong	ulConstraintWGDim   = min( pDevice->clDeviceMaxWorkItemSizes[0], pDevice->clDeviceMaxWorkItemSizes[1] );
-	cl_ulong	ulConstraintWG		= min( ulConstraintWGDim, ulConstraintWGTotal );
+	cl_ulong	ulConstraintWGTotal = (cl_ulong)floor(sqrt(static_cast<double> (pDevice->clDeviceMaxWorkGroupSize)));
+	cl_ulong	ulConstraintWGDim = min(pDevice->clDeviceMaxWorkItemSizes[0], pDevice->clDeviceMaxWorkItemSizes[1]);
+	cl_ulong	ulConstraintWG = min(ulConstraintWGDim, ulConstraintWGTotal);
 
 	// --
 	// Main scheme kernels with/without caching (2D)
 	// --
 
-	if ( this->ulNonCachedWorkgroupSizeX == 0 )
+	if (this->ulNonCachedWorkgroupSizeX == 0)
 		ulNonCachedWorkgroupSizeX = ulConstraintWG;
-	if ( this->ulNonCachedWorkgroupSizeY == 0 )
+	if (this->ulNonCachedWorkgroupSizeY == 0)
 		ulNonCachedWorkgroupSizeY = ulConstraintWG;
 
-	ulNonCachedGlobalSizeX	= pDomain->getCols();
-	ulNonCachedGlobalSizeY	= pDomain->getRows();
+	ulNonCachedGlobalSizeX = pDomain->getCols();
+	ulNonCachedGlobalSizeY = pDomain->getRows();
 
-	if ( this->ulCachedWorkgroupSizeX == 0 )
+	if (this->ulCachedWorkgroupSizeX == 0)
 		ulCachedWorkgroupSizeX = ulConstraintWG +
-							 ( this->ucCacheConstraints == model::cacheConstraints::musclHancock::kCacheAllowUndersize ? -1 : 0 );
-	if ( this->ulCachedWorkgroupSizeY == 0 )
+		(this->ucCacheConstraints == model::cacheConstraints::musclHancock::kCacheAllowUndersize ? -1 : 0);
+	if (this->ulCachedWorkgroupSizeY == 0)
 		ulCachedWorkgroupSizeY = ulConstraintWG;
 
-	ulCachedGlobalSizeX	= static_cast<unsigned long>( ceil( pDomain->getCols() * 
-						  ( this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheEnabled ? static_cast<double>( ulCachedWorkgroupSizeX ) / static_cast<double>( ulCachedWorkgroupSizeX - 2 ) : 1.0 ) ) );
-	ulCachedGlobalSizeY	= static_cast<unsigned long>( ceil( pDomain->getRows() * 
-						  ( this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheEnabled ? static_cast<double>( ulCachedWorkgroupSizeY ) / static_cast<double>( ulCachedWorkgroupSizeY - 2 ) : 1.0 ) ) );
+	ulCachedGlobalSizeX = static_cast<unsigned long>(ceil(pDomain->getCols() *
+		(this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheEnabled ? static_cast<double>(ulCachedWorkgroupSizeX) / static_cast<double>(ulCachedWorkgroupSizeX - 2) : 1.0)));
+	ulCachedGlobalSizeY = static_cast<unsigned long>(ceil(pDomain->getRows() *
+		(this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheEnabled ? static_cast<double>(ulCachedWorkgroupSizeY) / static_cast<double>(ulCachedWorkgroupSizeY - 2) : 1.0)));
 
 	// --
 	// Optimized Coupling
 	// --
-	this->bUseOptimizedBoundary	= pDomain->getSummary().bUseOptimizedBoundary;
-	this->ulCouplingArraySize	= pDomain->getSummary().ulCouplingArraySize;
+	this->bUseOptimizedBoundary = pDomain->getSummary().bUseOptimizedBoundary;
+	this->ulCouplingArraySize = pDomain->getSummary().ulCouplingArraySize;
 
 
 	// --
@@ -426,7 +450,7 @@ bool CSchemeGodunov::prepare1OExecDimensions()
 	// TODO: May need to make this configurable?!
 	ulReductionWorkgroupSize = min(static_cast<size_t>(512), pDevice->clDeviceMaxWorkGroupSize);
 	//ulReductionWorkgroupSize = pDevice->clDeviceMaxWorkGroupSize / 2;
-	ulReductionGlobalSize = static_cast<unsigned long>( ceil( ( static_cast<double>(pDomain->getCellCount()) / this->uiTimestepReductionWavefronts ) / ulReductionWorkgroupSize ) * ulReductionWorkgroupSize );
+	ulReductionGlobalSize = static_cast<unsigned long>(ceil((static_cast<double>(pDomain->getCellCount()) / this->uiTimestepReductionWavefronts) / ulReductionWorkgroupSize) * ulReductionWorkgroupSize);
 
 	return bReturnState;
 }
@@ -436,70 +460,71 @@ bool CSchemeGodunov::prepare1OExecDimensions()
  */
 bool CSchemeGodunov::prepare1OConstants()
 {
-	CDomainCartesian*	pDomain	= static_cast<CDomainCartesian*>( this->pDomain );
+	CDomainCartesian* pDomain = static_cast<CDomainCartesian*>(this->pDomain);
 
 	// --
 	// Dry cell threshold depths
 	// --
-	oclModel->registerConstant( "VERY_SMALL",			toStringExact( this->dThresholdVerySmall ) );
-	oclModel->registerConstant( "QUITE_SMALL",			toStringExact( this->dThresholdQuiteSmall ) );
+	oclModel->registerConstant("VERY_SMALL", toStringExact(this->dThresholdVerySmall));
+	oclModel->registerConstant("QUITE_SMALL", toStringExact(this->dThresholdQuiteSmall));
 
 	// --
 	// Debug mode 
 	// --
 
-	if ( this->bDebugOutput )
+	if (this->bDebugOutput)
 	{
-		oclModel->registerConstant( "DEBUG_OUTPUT",		"1" );
-		oclModel->registerConstant( "DEBUG_CELLX",		std::to_string( this->uiDebugCellX ) );
-		oclModel->registerConstant( "DEBUG_CELLY",		std::to_string( this->uiDebugCellY ) );
-	} else {
-		oclModel->removeConstant( "DEBUG_OUTPUT" );
-		oclModel->removeConstant( "DEBUG_CELLX" );
-		oclModel->removeConstant( "DEBUG_CELLY" );
+		oclModel->registerConstant("DEBUG_OUTPUT", "1");
+		oclModel->registerConstant("DEBUG_CELLX", std::to_string(this->uiDebugCellX));
+		oclModel->registerConstant("DEBUG_CELLY", std::to_string(this->uiDebugCellY));
+	}
+	else {
+		oclModel->removeConstant("DEBUG_OUTPUT");
+		oclModel->removeConstant("DEBUG_CELLX");
+		oclModel->removeConstant("DEBUG_CELLY");
 	}
 
 	// --
 	// Work-group size requirements
 	// --
 
-	if ( this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheNone )
+	if (this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheNone)
 	{
 		oclModel->registerConstant(
 			"REQD_WG_SIZE_FULL_TS",
-			"__attribute__((reqd_work_group_size(" + std::to_string( this->ulNonCachedWorkgroupSizeX )  + ", " + std::to_string( this->ulNonCachedWorkgroupSizeY )  + ", 1)))"
+			"__attribute__((reqd_work_group_size(" + std::to_string(this->ulNonCachedWorkgroupSizeX) + ", " + std::to_string(this->ulNonCachedWorkgroupSizeY) + ", 1)))"
 		);
 	}
-	if ( this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheEnabled )
+	if (this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheEnabled)
 	{
 		oclModel->registerConstant(
 			"REQD_WG_SIZE_FULL_TS",
-			"__attribute__((reqd_work_group_size(" + std::to_string( this->ulNonCachedWorkgroupSizeX )  + ", " + std::to_string( this->ulNonCachedWorkgroupSizeY )  + ", 1)))"
+			"__attribute__((reqd_work_group_size(" + std::to_string(this->ulNonCachedWorkgroupSizeX) + ", " + std::to_string(this->ulNonCachedWorkgroupSizeY) + ", 1)))"
 		);
 	}
 
 	oclModel->registerConstant(
 		"REQD_WG_SIZE_LINE",
-		"__attribute__((reqd_work_group_size(" + std::to_string( this->ulReductionWorkgroupSize )  + ", 1, 1)))"
+		"__attribute__((reqd_work_group_size(" + std::to_string(this->ulReductionWorkgroupSize) + ", 1, 1)))"
 	);
 
 	// --
 	// Size of local cache arrays
 	// --
 
-	switch( this->ucCacheConstraints )
+	switch (this->ucCacheConstraints)
 	{
 	case model::cacheConstraints::godunovType::kCacheActualSize:
-			oclModel->registerConstant( "GTS_DIM1", std::to_string( this->ulCachedWorkgroupSizeX ) );
-			oclModel->registerConstant( "GTS_DIM2", std::to_string( this->ulCachedWorkgroupSizeY ) );
+		oclModel->registerConstant("GTS_DIM1", std::to_string(this->ulCachedWorkgroupSizeX));
+		oclModel->registerConstant("GTS_DIM2", std::to_string(this->ulCachedWorkgroupSizeY));
 		break;
 	case model::cacheConstraints::godunovType::kCacheAllowUndersize:
-			oclModel->registerConstant( "GTS_DIM1", std::to_string( this->ulCachedWorkgroupSizeX ) );
-			oclModel->registerConstant( "GTS_DIM2", std::to_string( this->ulCachedWorkgroupSizeY ) );
+		oclModel->registerConstant("GTS_DIM1", std::to_string(this->ulCachedWorkgroupSizeX));
+		oclModel->registerConstant("GTS_DIM2", std::to_string(this->ulCachedWorkgroupSizeY));
 		break;
 	case model::cacheConstraints::godunovType::kCacheAllowOversize:
-			oclModel->registerConstant( "GTS_DIM1", std::to_string( this->ulCachedWorkgroupSizeX ) );
-			oclModel->registerConstant( "GTS_DIM2", std::to_string( this->ulCachedWorkgroupSizeY == 16 ? 17 : ulCachedWorkgroupSizeY ) );
+		oclModel->registerConstant("GTS_DIM1", std::to_string(this->ulCachedWorkgroupSizeX));
+		oclModel->registerConstant("GTS_DIM2", std::to_string(this->ulCachedWorkgroupSizeY == 16 ? 17 : ulCachedWorkgroupSizeY));
 		break;
 	}
 
@@ -507,13 +532,14 @@ bool CSchemeGodunov::prepare1OConstants()
 	// CFL/fixed timestep
 	// --
 
-	if ( this->bDynamicTimestep )
+	if (this->bDynamicTimestep)
 	{
-		oclModel->registerConstant( "TIMESTEP_DYNAMIC",	"1" );
-		oclModel->removeConstant( "TIMESTEP_FIXED" );
-	} else {
-		oclModel->registerConstant( "TIMESTEP_FIXED",	std::to_string(this->dTimestep) );
-		oclModel->removeConstant( "TIMESTEP_DYNAMIC" );
+		oclModel->registerConstant("TIMESTEP_DYNAMIC", "1");
+		oclModel->removeConstant("TIMESTEP_FIXED");
+	}
+	else {
+		oclModel->registerConstant("TIMESTEP_FIXED", std::to_string(this->dTimestep));
+		oclModel->removeConstant("TIMESTEP_DYNAMIC");
 	}
 
 	if (this->bFrictionEffects)
@@ -524,35 +550,35 @@ bool CSchemeGodunov::prepare1OConstants()
 		oclModel->removeConstant("FRICTION_ENABLED");
 	}
 
-	if ( this->bFrictionInFluxKernel )
+	if (this->bFrictionInFluxKernel)
 	{
-		oclModel->registerConstant( "FRICTION_IN_FLUX_KERNEL",	"1" );
+		oclModel->registerConstant("FRICTION_IN_FLUX_KERNEL", "1");
 	}
 
 	// --
 	// Timestep reduction and simulation parameters
 	// --
-	oclModel->registerConstant( "TIMESTEP_WORKERS",		std::to_string( this->ulReductionGlobalSize ) );
-	oclModel->registerConstant( "TIMESTEP_GROUPSIZE",	std::to_string( this->ulReductionWorkgroupSize ) );
-	oclModel->registerConstant( "SCHEME_ENDTIME",		std::to_string( cModel->getSimulationLength() ) );
-	oclModel->registerConstant( "SCHEME_OUTPUTTIME",	std::to_string( cModel->getOutputFrequency() ) );
-	oclModel->registerConstant( "COURANT_NUMBER",		std::to_string( this->dCourantNumber ) );
+	oclModel->registerConstant("TIMESTEP_WORKERS", std::to_string(this->ulReductionGlobalSize));
+	oclModel->registerConstant("TIMESTEP_GROUPSIZE", std::to_string(this->ulReductionWorkgroupSize));
+	oclModel->registerConstant("SCHEME_ENDTIME", std::to_string(cModel->getSimulationLength()));
+	oclModel->registerConstant("SCHEME_OUTPUTTIME", std::to_string(cModel->getOutputFrequency()));
+	oclModel->registerConstant("COURANT_NUMBER", std::to_string(this->dCourantNumber));
 
 	// --
 	// Domain details (size, resolution, etc.)
 	// --
 
 	double	dResolutionX, dResolutionY;
-	pDomain->getCellResolution( &dResolutionX, &dResolutionY);
+	pDomain->getCellResolution(&dResolutionX, &dResolutionY);
 
 	unsigned long ulOptimizedCouplingArraySize = pDomain->getSummary().ulCouplingArraySize;
 
-	oclModel->registerConstant( "DOMAIN_CELLCOUNT",		std::to_string( pDomain->getCellCount() ) );
-	oclModel->registerConstant( "DOMAIN_COLS",			std::to_string( pDomain->getCols() ) );
-	oclModel->registerConstant( "DOMAIN_ROWS",			std::to_string( pDomain->getRows() ) );
-	oclModel->registerConstant( "DOMAIN_DELTAX",		std::to_string( dResolutionX ));
-	oclModel->registerConstant( "DOMAIN_DELTAY",		std::to_string( dResolutionY ));
-	oclModel->registerConstant( "COUPLING_ARRAY_SIZE",  std::to_string( ulOptimizedCouplingArraySize ));
+	oclModel->registerConstant("DOMAIN_CELLCOUNT", std::to_string(pDomain->getCellCount()));
+	oclModel->registerConstant("DOMAIN_COLS", std::to_string(pDomain->getCols()));
+	oclModel->registerConstant("DOMAIN_ROWS", std::to_string(pDomain->getRows()));
+	oclModel->registerConstant("DOMAIN_DELTAX", std::to_string(dResolutionX));
+	oclModel->registerConstant("DOMAIN_DELTAY", std::to_string(dResolutionY));
+	oclModel->registerConstant("COUPLING_ARRAY_SIZE", std::to_string(ulOptimizedCouplingArraySize));
 
 	return true;
 }
@@ -562,10 +588,10 @@ bool CSchemeGodunov::prepare1OConstants()
  */
 bool CSchemeGodunov::prepare1OMemory()
 {
-	bool						bReturnState		= true;
+	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomain*					pDomain				= this->pDomain;
-	COCLDevice*					pDevice				= pExecutor->getDevice();
+	CDomain* pDomain = this->pDomain;
+	COCLDevice* pDevice = pExecutor->getDevice();
 
 	unsigned char ucFloatSize = (cModel->getFloatPrecision() == model::floatPrecision::kSingle ? sizeof(cl_float) : sizeof(cl_double));
 
@@ -573,18 +599,19 @@ bool CSchemeGodunov::prepare1OMemory()
 	// Batch tracking data
 	// --
 
-	oclBufferBatchTimesteps	 = new COCLBuffer( "Batch timesteps cumulative", oclModel, false, true, ucFloatSize, true );
-	oclBufferBatchSuccessful = new COCLBuffer( "Batch successful iterations", oclModel, false, true, sizeof(cl_uint), true );
-	oclBufferBatchSkipped	 = new COCLBuffer( "Batch skipped iterations", oclModel, false, true, sizeof(cl_uint), true );
+	oclBufferBatchTimesteps = new COCLBuffer("Batch timesteps cumulative", oclModel, false, true, ucFloatSize, true);
+	oclBufferBatchSuccessful = new COCLBuffer("Batch successful iterations", oclModel, false, true, sizeof(cl_uint), true);
+	oclBufferBatchSkipped = new COCLBuffer("Batch skipped iterations", oclModel, false, true, sizeof(cl_uint), true);
 
 	if (cModel->getFloatPrecision() == model::floatPrecision::kSingle)
 	{
-		*( oclBufferBatchTimesteps->getHostBlock<float*>() )	= 0.0f;
-	} else {
-		*( oclBufferBatchTimesteps->getHostBlock<double*>() )	= 0.0;
+		*(oclBufferBatchTimesteps->getHostBlock<float*>()) = 0.0f;
 	}
-	*( oclBufferBatchSuccessful->getHostBlock<cl_uint*>() )		= 0;
-	*( oclBufferBatchSkipped->getHostBlock<cl_uint*>() )		= 0;
+	else {
+		*(oclBufferBatchTimesteps->getHostBlock<double*>()) = 0.0;
+	}
+	*(oclBufferBatchSuccessful->getHostBlock<cl_uint*>()) = 0;
+	*(oclBufferBatchSkipped->getHostBlock<cl_uint*>()) = 0;
 
 	oclBufferBatchTimesteps->createBuffer();
 	oclBufferBatchSuccessful->createBuffer();
@@ -594,17 +621,17 @@ bool CSchemeGodunov::prepare1OMemory()
 	// Domain and cell state data
 	// --
 
-	void* pCellStates		= NULL;
-	void* pBedElevations	= NULL;
-	void* pManningValues	= NULL;
-	void* pBoundaryValues	= NULL;
-	void* pPoleniValues		= NULL;
-	void* pOpt_zxmax		= NULL;
-	void* pOpt_cx			= NULL;
-	void* pOpt_zymax		= NULL;
-	void* pOpt_cy			= NULL;
-	void* pCouplingIDs		= NULL;
-	void* pCouplingValues	= NULL;
+	void* pCellStates = NULL;
+	void* pBedElevations = NULL;
+	void* pManningValues = NULL;
+	void* pBoundaryValues = NULL;
+	void* pPoleniValues = NULL;
+	void* pOpt_zxmax = NULL;
+	void* pOpt_cx = NULL;
+	void* pOpt_zymax = NULL;
+	void* pOpt_cy = NULL;
+	void* pCouplingIDs = NULL;
+	void* pCouplingValues = NULL;
 
 	pDomain->createStoreBuffers(
 		&pCellStates,
@@ -621,38 +648,39 @@ bool CSchemeGodunov::prepare1OMemory()
 		ucFloatSize
 	);
 
-	oclBufferCellStates		= new COCLBuffer( "Cell states",			oclModel, false, true );
-	oclBufferCellStatesAlt	= new COCLBuffer( "Cell states (alternate)",oclModel, false, true );
-	oclBufferCellManning	= new COCLBuffer( "Manning coefficients",	oclModel, true,	 true );
+	oclBufferCellStates = new COCLBuffer("Cell states", oclModel, false, true);
+	oclBufferCellStatesAlt = new COCLBuffer("Cell states (alternate)", oclModel, false, true);
+	oclBufferCellManning = new COCLBuffer("Manning coefficients", oclModel, true, true);
 	if (this->bUseOptimizedBoundary == false) {
-		oclBufferCellBoundary	= new COCLBuffer( "Boundary Values",		oclModel, false, true );
-	}else {
-		oclBufferCouplingIDs	= new COCLBuffer( "Coupling IDs",		oclModel, true, true );
-		oclBufferCouplingValues = new COCLBuffer( "Coupling Values",		oclModel, false, true );
+		oclBufferCellBoundary = new COCLBuffer("Boundary Values", oclModel, false, true);
 	}
-	oclBufferUsePoleni		= new COCLBuffer( "Poleni Booleans",			oclModel, true,	 true );
-	oclBuffer_opt_zxmax		= new COCLBuffer( "opt_zxmax Values",		oclModel, true,	 true );
-	oclBuffer_opt_cx		= new COCLBuffer( "opt_cx Values",			oclModel, true,	 true );
-	oclBuffer_opt_zymax		= new COCLBuffer( "opt_zymax Values",		oclModel, true,	 true );
-	oclBuffer_opt_cy		= new COCLBuffer( "opt_cy Values",			oclModel, true,	 true );
-	oclBufferCellBed		= new COCLBuffer( "Bed elevations",			oclModel, true,  true );
+	else {
+		oclBufferCouplingIDs = new COCLBuffer("Coupling IDs", oclModel, true, true);
+		oclBufferCouplingValues = new COCLBuffer("Coupling Values", oclModel, false, true);
+	}
+	oclBufferUsePoleni = new COCLBuffer("Poleni Booleans", oclModel, true, true);
+	oclBuffer_opt_zxmax = new COCLBuffer("opt_zxmax Values", oclModel, true, true);
+	oclBuffer_opt_cx = new COCLBuffer("opt_cx Values", oclModel, true, true);
+	oclBuffer_opt_zymax = new COCLBuffer("opt_zymax Values", oclModel, true, true);
+	oclBuffer_opt_cy = new COCLBuffer("opt_cy Values", oclModel, true, true);
+	oclBufferCellBed = new COCLBuffer("Bed elevations", oclModel, true, true);
 
-	oclBufferCellStates	  ->setPointer( pCellStates,	 ucFloatSize * 4 * pDomain->getCellCount() );
-	oclBufferCellStatesAlt->setPointer( pCellStates,	 ucFloatSize * 4 * pDomain->getCellCount() );
-	oclBufferCellManning  ->setPointer( pManningValues,  ucFloatSize * pDomain->getCellCount() );
+	oclBufferCellStates->setPointer(pCellStates, ucFloatSize * 4 * pDomain->getCellCount());
+	oclBufferCellStatesAlt->setPointer(pCellStates, ucFloatSize * 4 * pDomain->getCellCount());
+	oclBufferCellManning->setPointer(pManningValues, ucFloatSize * pDomain->getCellCount());
 	if (this->bUseOptimizedBoundary == false) {
 		oclBufferCellBoundary->setPointer(pBoundaryValues, ucFloatSize * pDomain->getCellCount());
 	}
 	else {
-		oclBufferCouplingIDs->setPointer( pCouplingIDs, sizeof(cl_ulong) * this->ulCouplingArraySize);
-		oclBufferCouplingValues->setPointer( pCouplingValues, ucFloatSize * this->ulCouplingArraySize);
+		oclBufferCouplingIDs->setPointer(pCouplingIDs, sizeof(cl_ulong) * this->ulCouplingArraySize);
+		oclBufferCouplingValues->setPointer(pCouplingValues, ucFloatSize * this->ulCouplingArraySize);
 	}
-	oclBufferUsePoleni    ->setPointer( pPoleniValues,	 sizeof(sUsePoleni) * pDomain->getCellCount() );
-	oclBuffer_opt_zxmax   ->setPointer( pOpt_zxmax,		 ucFloatSize * pDomain->getCellCount() );
-	oclBuffer_opt_cx      ->setPointer( pOpt_cx,		 ucFloatSize * pDomain->getCellCount() );
-	oclBuffer_opt_zymax   ->setPointer( pOpt_zymax,		 ucFloatSize * pDomain->getCellCount() );
-	oclBuffer_opt_cy      ->setPointer( pOpt_cy,		 ucFloatSize * pDomain->getCellCount() );
-	oclBufferCellBed      ->setPointer( pBedElevations,  ucFloatSize * pDomain->getCellCount() );
+	oclBufferUsePoleni->setPointer(pPoleniValues, sizeof(sUsePoleni) * pDomain->getCellCount());
+	oclBuffer_opt_zxmax->setPointer(pOpt_zxmax, ucFloatSize * pDomain->getCellCount());
+	oclBuffer_opt_cx->setPointer(pOpt_cx, ucFloatSize * pDomain->getCellCount());
+	oclBuffer_opt_zymax->setPointer(pOpt_zymax, ucFloatSize * pDomain->getCellCount());
+	oclBuffer_opt_cy->setPointer(pOpt_cy, ucFloatSize * pDomain->getCellCount());
+	oclBufferCellBed->setPointer(pBedElevations, ucFloatSize * pDomain->getCellCount());
 
 	oclBufferCellStates->createBuffer();
 	oclBufferCellStatesAlt->createBuffer();
@@ -675,23 +703,24 @@ bool CSchemeGodunov::prepare1OMemory()
 	// Timesteps and current simulation time
 	// --
 
-	oclBufferTimestep			= new COCLBuffer( "Timestep", oclModel, false, true, ucFloatSize, true );
-	oclBufferTime				= new COCLBuffer( "Time",	  oclModel, false, true, ucFloatSize, true );
-	oclBufferTimeTarget			= new COCLBuffer( "Target time (sync)",	  oclModel, false, true, ucFloatSize, true );
-	oclBufferTimeHydrological	= new COCLBuffer("Time (hydrological)", oclModel, false, true, ucFloatSize, true);
+	oclBufferTimestep = new COCLBuffer("Timestep", oclModel, false, true, ucFloatSize, true);
+	oclBufferTime = new COCLBuffer("Time", oclModel, false, true, ucFloatSize, true);
+	oclBufferTimeTarget = new COCLBuffer("Target time (sync)", oclModel, false, true, ucFloatSize, true);
+	oclBufferTimeHydrological = new COCLBuffer("Time (hydrological)", oclModel, false, true, ucFloatSize, true);
 
 	// We duplicate the time and timestep variables if we're using single-precision so we have copies in both formats
 	if (cModel->getFloatPrecision() == model::floatPrecision::kSingle)
 	{
-		*( oclBufferTime->getHostBlock<float*>()     )			= static_cast<cl_float>( this->dCurrentTime );
-		*( oclBufferTimestep->getHostBlock<float*>() )			= static_cast<cl_float>( this->dCurrentTimestep );
+		*(oclBufferTime->getHostBlock<float*>()) = static_cast<cl_float>(this->dCurrentTime);
+		*(oclBufferTimestep->getHostBlock<float*>()) = static_cast<cl_float>(this->dCurrentTimestep);
 		*(oclBufferTimeHydrological->getHostBlock<float*>()) = 0.0f;
-		*( oclBufferTimeTarget->getHostBlock<float*>() )		= 0.0f;
-	} else {
-		*( oclBufferTime->getHostBlock<double*>()     )			= this->dCurrentTime;
-		*( oclBufferTimestep->getHostBlock<double*>() )			= this->dCurrentTimestep;
+		*(oclBufferTimeTarget->getHostBlock<float*>()) = 0.0f;
+	}
+	else {
+		*(oclBufferTime->getHostBlock<double*>()) = this->dCurrentTime;
+		*(oclBufferTimestep->getHostBlock<double*>()) = this->dCurrentTimestep;
 		*(oclBufferTimeHydrological->getHostBlock<double*>()) = 0.0;
-		*( oclBufferTimeTarget->getHostBlock<double*>() )		= 0.0;
+		*(oclBufferTimeTarget->getHostBlock<double*>()) = 0.0;
 	}
 
 	oclBufferTimestep->createBuffer();
@@ -703,14 +732,14 @@ bool CSchemeGodunov::prepare1OMemory()
 	// Timestep reduction global array
 	// --
 
-	oclBufferTimestepReduction = new COCLBuffer( "Timestep reduction scratch", oclModel, false, true, this->ulReductionGlobalSize * ucFloatSize, true );
+	oclBufferTimestepReduction = new COCLBuffer("Timestep reduction scratch", oclModel, false, true, this->ulReductionGlobalSize * ucFloatSize, true);
 	oclBufferTimestepReduction->createBuffer();
 
 	// TODO: Check buffers were created successfully before returning a positive response
 
 	// VISUALISER STUFF
 	// TODO: Make this a bit better, put it somewhere else, etc.
-	oclBufferCellStates->setCallbackRead( CModel::visualiserCallback );
+	oclBufferCellStates->setCallbackRead(CModel::visualiserCallback);
 
 	return bReturnState;
 }
@@ -740,8 +769,8 @@ bool CSchemeGodunov::prepareGeneralKernels()
 	oclKernelTimestepUpdate->setGlobalSize(1, 1, 1);
 	oclKernelResetCounters->setGroupSize(1, 1, 1);
 	oclKernelResetCounters->setGlobalSize(1, 1, 1);
-	oclKernelTimestepReduction->setGroupSize( this->ulReductionWorkgroupSize );
-	oclKernelTimestepReduction->setGlobalSize( this->ulReductionGlobalSize );
+	oclKernelTimestepReduction->setGroupSize(this->ulReductionWorkgroupSize);
+	oclKernelTimestepReduction->setGlobalSize(this->ulReductionGlobalSize);
 
 	COCLBuffer* aryArgsTimeAdvance[] = { oclBufferTime, oclBufferTimestep, oclBufferTimeHydrological, oclBufferTimestepReduction, oclBufferCellStates, oclBufferCellBed, oclBufferTimeTarget, oclBufferBatchTimesteps, oclBufferBatchSuccessful, oclBufferBatchSkipped };
 	COCLBuffer* aryArgsTimestepUpdate[] = { oclBufferTime, oclBufferTimestep, oclBufferTimestepReduction, oclBufferTimeTarget, oclBufferBatchTimesteps };
@@ -756,7 +785,7 @@ bool CSchemeGodunov::prepareGeneralKernels()
 	// --
 	// Boundary Kernel
 	// --
-	if(this->bUseOptimizedBoundary == false){
+	if (this->bUseOptimizedBoundary == false) {
 		// Normal Boundary for rain
 		CDomainCartesian* cd = (CDomainCartesian*)pDomain;
 		//TODO: Alaa fix group size
@@ -774,10 +803,10 @@ bool CSchemeGodunov::prepareGeneralKernels()
 	}
 	else {
 		// Coupling only Bound
-		CDomainCartesian* cd = (CDomainCartesian*) pDomain;
+		CDomainCartesian* cd = (CDomainCartesian*)pDomain;
 		oclKernelBoundary = oclModel->getKernel("bdy_Promaides_by_id");
 		oclKernelBoundary->setGroupSize(8);
-		oclKernelBoundary->setGlobalSize(8*ceil(this->ulCouplingArraySize/8.0));
+		oclKernelBoundary->setGlobalSize(8 * ceil(this->ulCouplingArraySize / 8.0));
 
 		COCLBuffer* aryArgsBdy[] = { oclBufferCouplingIDs, oclBufferCouplingValues, oclBufferTimestep ,oclBufferCellStates, oclBufferCellBed };
 
@@ -789,12 +818,12 @@ bool CSchemeGodunov::prepareGeneralKernels()
 	// Friction Kernel
 	// --
 
-	oclKernelFriction			= oclModel->getKernel( "per_Friction" );
-	oclKernelFriction->setGroupSize( this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY );
-	oclKernelFriction->setGlobalSize( this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY );
+	oclKernelFriction = oclModel->getKernel("per_Friction");
+	oclKernelFriction->setGroupSize(this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY);
+	oclKernelFriction->setGlobalSize(this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY);
 
 	COCLBuffer* aryArgsFriction[] = { oclBufferTimestep, oclBufferCellStates, oclBufferCellBed, oclBufferCellManning, oclBufferTime };
-	oclKernelFriction->assignArguments( aryArgsFriction );
+	oclKernelFriction->assignArguments(aryArgsFriction);
 
 	return bReturnState;
 }
@@ -804,30 +833,30 @@ bool CSchemeGodunov::prepareGeneralKernels()
  */
 bool CSchemeGodunov::prepare1OKernels()
 {
-	bool						bReturnState		= true;
+	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomain*					pDomain				= this->pDomain;
-	COCLDevice*		pDevice				= pExecutor->getDevice();
+	CDomain* pDomain = this->pDomain;
+	COCLDevice* pDevice = pExecutor->getDevice();
 
 	// --
 	// Godunov-type scheme kernels
 	// --
 
-	if ( this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheNone )
+	if (this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheNone)
 	{
-		oclKernelFullTimestep = oclModel->getKernel( "gts_cacheDisabled" );
-		oclKernelFullTimestep->setGroupSize( this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY );
-		oclKernelFullTimestep->setGlobalSize( this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY );
+		oclKernelFullTimestep = oclModel->getKernel("gts_cacheDisabled");
+		oclKernelFullTimestep->setGroupSize(this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY);
+		oclKernelFullTimestep->setGlobalSize(this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY);
 		COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferCellStatesAlt, oclBufferCellManning, oclBufferUsePoleni, oclBuffer_opt_zxmax, oclBuffer_opt_zymax };
-		oclKernelFullTimestep->assignArguments( aryArgsFullTimestep );
+		oclKernelFullTimestep->assignArguments(aryArgsFullTimestep);
 	}
-	if ( this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheEnabled )
+	if (this->ucConfiguration == model::schemeConfigurations::godunovType::kCacheEnabled)
 	{
-		oclKernelFullTimestep = oclModel->getKernel( "gts_cacheEnabled" );
-		oclKernelFullTimestep->setGroupSize( this->ulCachedWorkgroupSizeX, this->ulCachedWorkgroupSizeY );
-		oclKernelFullTimestep->setGlobalSize( this->ulCachedGlobalSizeX, this->ulCachedGlobalSizeY );
+		oclKernelFullTimestep = oclModel->getKernel("gts_cacheEnabled");
+		oclKernelFullTimestep->setGroupSize(this->ulCachedWorkgroupSizeX, this->ulCachedWorkgroupSizeY);
+		oclKernelFullTimestep->setGlobalSize(this->ulCachedGlobalSizeX, this->ulCachedGlobalSizeY);
 		COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferCellStatesAlt, oclBufferCellManning };
-		oclKernelFullTimestep->assignArguments( aryArgsFullTimestep );
+		oclKernelFullTimestep->assignArguments(aryArgsFullTimestep);
 	}
 
 	return bReturnState;
@@ -840,7 +869,7 @@ void CSchemeGodunov::releaseResources()
 {
 	this->bReady = false;
 
-	model::log->writeLine("Releasing scheme resources held for OpenCL.");
+	model::log->logInfo("Releasing scheme resources held for OpenCL.");
 
 	this->release1OResources();
 }
@@ -852,75 +881,75 @@ void CSchemeGodunov::release1OResources()
 {
 	this->bReady = false;
 
-	model::log->writeLine("Releasing 1st-order scheme resources held for OpenCL.");
+	model::log->logInfo("Releasing 1st-order scheme resources held for OpenCL.");
 
-	if ( this->oclModel != NULL )							delete oclModel;
-	if ( this->oclKernelFullTimestep != NULL )				delete oclKernelFullTimestep;
-	if ( this->oclKernelBoundary != NULL )					delete oclKernelBoundary;
-	if ( this->oclKernelFriction != NULL )					delete oclKernelFriction;
-	if ( this->oclKernelTimestepReduction != NULL )			delete oclKernelTimestepReduction;
-	if ( this->oclKernelTimeAdvance != NULL )				delete oclKernelTimeAdvance;
-	if ( this->oclKernelTimestepUpdate != NULL )			delete oclKernelTimestepUpdate;
-	if ( this->oclKernelResetCounters != NULL )				delete oclKernelResetCounters;
-	if ( this->oclBufferCellStates != NULL )				delete oclBufferCellStates;
-	if ( this->oclBufferCellStatesAlt != NULL )				delete oclBufferCellStatesAlt;
-	if ( this->oclBufferCellManning != NULL )				delete oclBufferCellManning;
-	if ( this->oclBufferCellBoundary != NULL )				delete oclBufferCellBoundary;
-	if ( this->oclBufferCouplingIDs != NULL )				delete oclBufferCouplingIDs;
-	if ( this->oclBufferCouplingValues != NULL )			delete oclBufferCouplingValues;
-	if ( this->oclBufferUsePoleni != NULL )					delete oclBufferUsePoleni;
-	if ( this->oclBuffer_opt_zxmax != NULL )				delete oclBuffer_opt_zxmax;
-	if ( this->oclBuffer_opt_cx != NULL )					delete oclBuffer_opt_cx;
-	if ( this->oclBuffer_opt_zymax != NULL )				delete oclBuffer_opt_zymax;
-	if ( this->oclBuffer_opt_cy != NULL )					delete oclBuffer_opt_cy;
-	if ( this->oclBufferCellBed != NULL )					delete oclBufferCellBed;
-	if ( this->oclBufferTimestep != NULL )					delete oclBufferTimestep;
-	if ( this->oclBufferTimestepReduction != NULL )			delete oclBufferTimestepReduction;
-	if ( this->oclBufferTime != NULL )						delete oclBufferTime;
-	if ( this->oclBufferTimeTarget != NULL )				delete oclBufferTimeTarget;
+	if (this->oclModel != NULL)							delete oclModel;
+	if (this->oclKernelFullTimestep != NULL)				delete oclKernelFullTimestep;
+	if (this->oclKernelBoundary != NULL)					delete oclKernelBoundary;
+	if (this->oclKernelFriction != NULL)					delete oclKernelFriction;
+	if (this->oclKernelTimestepReduction != NULL)			delete oclKernelTimestepReduction;
+	if (this->oclKernelTimeAdvance != NULL)				delete oclKernelTimeAdvance;
+	if (this->oclKernelTimestepUpdate != NULL)			delete oclKernelTimestepUpdate;
+	if (this->oclKernelResetCounters != NULL)				delete oclKernelResetCounters;
+	if (this->oclBufferCellStates != NULL)				delete oclBufferCellStates;
+	if (this->oclBufferCellStatesAlt != NULL)				delete oclBufferCellStatesAlt;
+	if (this->oclBufferCellManning != NULL)				delete oclBufferCellManning;
+	if (this->oclBufferCellBoundary != NULL)				delete oclBufferCellBoundary;
+	if (this->oclBufferCouplingIDs != NULL)				delete oclBufferCouplingIDs;
+	if (this->oclBufferCouplingValues != NULL)			delete oclBufferCouplingValues;
+	if (this->oclBufferUsePoleni != NULL)					delete oclBufferUsePoleni;
+	if (this->oclBuffer_opt_zxmax != NULL)				delete oclBuffer_opt_zxmax;
+	if (this->oclBuffer_opt_cx != NULL)					delete oclBuffer_opt_cx;
+	if (this->oclBuffer_opt_zymax != NULL)				delete oclBuffer_opt_zymax;
+	if (this->oclBuffer_opt_cy != NULL)					delete oclBuffer_opt_cy;
+	if (this->oclBufferCellBed != NULL)					delete oclBufferCellBed;
+	if (this->oclBufferTimestep != NULL)					delete oclBufferTimestep;
+	if (this->oclBufferTimestepReduction != NULL)			delete oclBufferTimestepReduction;
+	if (this->oclBufferTime != NULL)						delete oclBufferTime;
+	if (this->oclBufferTimeTarget != NULL)				delete oclBufferTimeTarget;
 	if (this->oclBufferTimeHydrological != NULL)			delete oclBufferTimeHydrological;
 
-	oclModel						= NULL;
-	oclKernelFullTimestep			= NULL;
+	oclModel = NULL;
+	oclKernelFullTimestep = NULL;
 	oclKernelBoundary = NULL;
-	oclKernelFriction				= NULL;
-	oclKernelTimestepReduction		= NULL;
-	oclKernelTimeAdvance			= NULL;
-	oclKernelResetCounters			= NULL;
-	oclKernelTimestepUpdate			= NULL;
-	oclBufferCellStates				= NULL;
-	oclBufferCellStatesAlt			= NULL;
-	oclBufferCellManning			= NULL;
-	oclBufferCellBoundary			= NULL;
-	oclBufferCouplingIDs			= NULL;
-	oclBufferCouplingValues			= NULL;
-	oclBufferUsePoleni				= NULL;
-	oclBuffer_opt_zxmax				= NULL;
-	oclBuffer_opt_cx				= NULL;
-	oclBuffer_opt_zymax				= NULL;
-	oclBuffer_opt_cy				= NULL;
-	oclBufferCellBed				= NULL;
-	oclBufferTimestep				= NULL;
-	oclBufferTimestepReduction		= NULL;
-	oclBufferTime					= NULL;
-	oclBufferTimeTarget				= NULL;
+	oclKernelFriction = NULL;
+	oclKernelTimestepReduction = NULL;
+	oclKernelTimeAdvance = NULL;
+	oclKernelResetCounters = NULL;
+	oclKernelTimestepUpdate = NULL;
+	oclBufferCellStates = NULL;
+	oclBufferCellStatesAlt = NULL;
+	oclBufferCellManning = NULL;
+	oclBufferCellBoundary = NULL;
+	oclBufferCouplingIDs = NULL;
+	oclBufferCouplingValues = NULL;
+	oclBufferUsePoleni = NULL;
+	oclBuffer_opt_zxmax = NULL;
+	oclBuffer_opt_cx = NULL;
+	oclBuffer_opt_zymax = NULL;
+	oclBuffer_opt_cy = NULL;
+	oclBufferCellBed = NULL;
+	oclBufferTimestep = NULL;
+	oclBufferTimestepReduction = NULL;
+	oclBufferTime = NULL;
+	oclBufferTimeTarget = NULL;
 	oclBufferTimeHydrological = NULL;
 
-	if ( this->bIncludeBoundaries )
+	if (this->bIncludeBoundaries)
 	{
-		delete [] this->dBoundaryTimeSeries;
-		delete [] this->fBoundaryTimeSeries;
-		delete [] this->uiBoundaryParameters;
-		if ( this->ulBoundaryRelationCells != NULL )
-			delete [] this->ulBoundaryRelationCells;
-		if ( this->uiBoundaryRelationSeries != NULL )
-			delete [] this->uiBoundaryRelationSeries;
+		delete[] this->dBoundaryTimeSeries;
+		delete[] this->fBoundaryTimeSeries;
+		delete[] this->uiBoundaryParameters;
+		if (this->ulBoundaryRelationCells != NULL)
+			delete[] this->ulBoundaryRelationCells;
+		if (this->uiBoundaryRelationSeries != NULL)
+			delete[] this->uiBoundaryRelationSeries;
 	}
-	this->dBoundaryTimeSeries		= NULL;
-	this->fBoundaryTimeSeries		= NULL;
-	this->ulBoundaryRelationCells	= NULL;
-	this->uiBoundaryRelationSeries	= NULL;
-	this->uiBoundaryParameters		= NULL;
+	this->dBoundaryTimeSeries = NULL;
+	this->fBoundaryTimeSeries = NULL;
+	this->ulBoundaryRelationCells = NULL;
+	this->uiBoundaryRelationSeries = NULL;
+	this->uiBoundaryParameters = NULL;
 }
 
 /*
@@ -930,10 +959,10 @@ void	CSchemeGodunov::prepareSimulation()
 {
 
 	// Initial volume in the domain
-	model::log->writeLine( "Initial domain volume: " + toStringExact( abs((int)(this->pDomain->getVolume()) ) ) + "m3" );
+	model::log->logInfo("Initial domain volume: " + toStringExact(abs((int)(this->pDomain->getVolume()))) + "m3");
 
 	// Copy the initial conditions
-	model::log->writeLine( "Copying domain data to device..." );
+	model::log->logInfo("Copying domain data to device...");
 	oclBufferCellStates->queueWriteAll();
 	oclBufferCellStatesAlt->queueWriteAll();
 	oclBufferCellBed->queueWriteAll();
@@ -956,21 +985,21 @@ void	CSchemeGodunov::prepareSimulation()
 	this->pDomain->getDevice()->blockUntilFinished();
 
 	// Sort out memory alternation
-	bUseAlternateKernel		= false;
-	bOverrideTimestep		= false;
-	bDownloadLinks			= false;
-	bImportLinks			= false;
-	bUseForcedTimeAdvance	= true;
-	bCellStatesSynced		= true;
+	bUseAlternateKernel = false;
+	bOverrideTimestep = false;
+	bDownloadLinks = false;
+	bImportLinks = false;
+	bUseForcedTimeAdvance = true;
+	bCellStatesSynced = true;
 
 	// Need a timer...
 	dBatchStartedTime = 0.0;
 
 	// Zero counters
-	ulCurrentCellsCalculated	= 0;
-	uiIterationsSinceSync		= 0;
+	ulCurrentCellsCalculated = 0;
+	uiIterationsSinceSync = 0;
 	uiIterationsSinceProgressCheck = 0;
-	dLastSyncTime				= 0.0;
+	dLastSyncTime = 0.0;
 
 	// States
 	bRunning = false;
@@ -1007,21 +1036,21 @@ void CSchemeGodunov::runBatchThread()
 	this->bThreadTerminated = false;
 
 	#ifdef PLATFORM_WIN
-		HANDLE hThread = CreateThread(
-			NULL,
-			0,
-			(LPTHREAD_START_ROUTINE)CSchemeGodunov::Threaded_runBatchLaunch,
-			this,
-			0,
-			NULL
-		);
-		CloseHandle(hThread);
+	HANDLE hThread = CreateThread(
+		NULL,
+		0,
+		(LPTHREAD_START_ROUTINE)CSchemeGodunov::Threaded_runBatchLaunch,
+		this,
+		0,
+		NULL
+	);
+	CloseHandle(hThread);
 	#endif
 	#ifdef PLATFORM_UNIX
-		pthread_t tid;
-		int result = pthread_create(&tid, 0, CSchemeGodunov::Threaded_runBatchLaunch, this);
-		if (result == 0)
-			pthread_detach(tid);
+	pthread_t tid;
+	int result = pthread_create(&tid, 0, CSchemeGodunov::Threaded_runBatchLaunch, this);
+	if (result == 0)
+		pthread_detach(tid);
 	#endif
 
 }
@@ -1037,9 +1066,9 @@ void CSchemeGodunov::Threaded_runBatch()
 	while (this->bThreadRunning)
 	{
 		// Are we expected to run?
-		if  (!this->bRunning || this->pDomain->getDevice()->isBusy())
+		if (!this->bRunning || this->pDomain->getDevice()->isBusy())
 		{
-			if ( this->pDomain->getDevice()->isBusy() )
+			if (this->pDomain->getDevice()->isBusy())
 			{
 				this->pDomain->getDevice()->blockUntilFinished();
 			}
@@ -1078,9 +1107,9 @@ void CSchemeGodunov::Threaded_runBatch()
 			 //	oclKernelTimestepUpdate->scheduleExecution();
 			 //}
 
-			if ( dCurrentTime + dCurrentTimestep > dTargetTime )
+			if (dCurrentTime + dCurrentTimestep > dTargetTime)
 			{
-				this->dCurrentTimestep  = dTargetTime - dCurrentTime;
+				this->dCurrentTimestep = dTargetTime - dCurrentTime;
 				this->bOverrideTimestep = true;
 				std::cout << "Override Timestep Requested" << std::endl;
 			}
@@ -1091,7 +1120,7 @@ void CSchemeGodunov::Threaded_runBatch()
 		}
 
 		// Have we been asked to override the timestep at the start of this batch?
-		if ( this->dCurrentTime < dTargetTime && this->bOverrideTimestep ){
+		if (this->dCurrentTime < dTargetTime && this->bOverrideTimestep) {
 
 			std::cout << "Override Timestep Requested...This shouldn't happen" << std::endl;
 
@@ -1114,7 +1143,7 @@ void CSchemeGodunov::Threaded_runBatch()
 		}
 
 		// Have we been asked to import new data?
-		if (this->bImportLinks){
+		if (this->bImportLinks) {
 
 			this->bImportLinks = false;
 
@@ -1179,7 +1208,7 @@ void CSchemeGodunov::Threaded_runBatch()
 
 		// Schedule a batch-load of work for the device
 		// Do we need to run any work?
-		if ( this->dCurrentTime < dTargetTime ) {
+		if (this->dCurrentTime < dTargetTime) {
 			for (unsigned int i = 0; i < uiQueueAmount; i++)
 			{
 
@@ -1234,36 +1263,40 @@ void CSchemeGodunov::Threaded_runBatch()
 /*
  *  Runs the actual simulation until completion or error
  */
-void	CSchemeGodunov::runSimulation( double dTargetTime, double dRealTime )
+void	CSchemeGodunov::runSimulation(double dTargetTime, double dRealTime)
 {
 	// Wait for current work to finish
 	if (this->bRunning || this->pDomain->getDevice()->isBusy())
 		return;
 
 	// Has the target time changed?
-	if ( this->dTargetTime != dTargetTime )
-		setTargetTime( dTargetTime );
+	if (this->dTargetTime != dTargetTime)
+		setTargetTime(dTargetTime);
 
 	// No target time? Can't run anything yet then, need to calculate one
 	if (dTargetTime <= 0.0)
 		return;
 
 	// If we've already hit our sync time but the other domains haven't, don't bother scheduling any work
-	if ( this->dCurrentTime > dTargetTime )
+	if (this->dCurrentTime > dTargetTime)
 	{
 		// TODO: Consider downloading the data at this point?
 		// but need to accommodate for rollbacks... difficult...
 
 		// This is bad. But it might happen...
-		model::doError("Simulation has exceeded target time",model::errorCodes::kLevelWarning);
-		model::log->writeLine("Current time:   "  + toStringExact( dCurrentTime ) + ", Target time:  " + toStringExact( dTargetTime ));
-		model::log->writeLine("Last sync point: "  + toStringExact( dLastSyncTime ));
+		model::doError("Simulation has exceeded target time",
+			model::errorCodes::kLevelWarning,
+			"void	CSchemeGodunov::runSimulation(double dTargetTime, double dRealTime)",
+			"Try working with a different device."
+		);
+		model::log->logInfo("Current time:   " + toStringExact(dCurrentTime) + ", Target time:  " + toStringExact(dTargetTime));
+		model::log->logInfo("Last sync point: " + toStringExact(dLastSyncTime));
 		return;
 	}
 
 	// Calculate a new batch size
-	if (  this->bAutomaticQueue		&&
-		  dRealTime > 1E-5          &&
+	if (this->bAutomaticQueue &&
+		dRealTime > 1E-5 &&
 		cModel->getDomainSet()->getSyncMethod() != model::syncMethod::kSyncTimestep)
 	{
 		// We're aiming for a seconds worth of work to be carried out
@@ -1308,7 +1341,7 @@ void	CSchemeGodunov::cleanupSimulation()
 /*
  *  Rollback the simulation to the last successful round
  */
-void	CSchemeGodunov::rollbackSimulation( double dCurrentTime, double dTargetTime )
+void	CSchemeGodunov::rollbackSimulation(double dCurrentTime, double dTargetTime)
 {
 	// Wait until any pending tasks have completed first...
 	this->getDomain()->getDevice()->blockUntilFinished();
@@ -1321,10 +1354,11 @@ void	CSchemeGodunov::rollbackSimulation( double dCurrentTime, double dTargetTime
 	// Update the time
 	if (cModel->getFloatPrecision() == model::floatPrecision::kSingle)
 	{
-		*( oclBufferTime->getHostBlock<float*>() )	= static_cast<cl_float>( dCurrentTime );
-		*( oclBufferTimeTarget->getHostBlock<float*>() ) = static_cast<cl_float> (dTargetTime );
-	} else {
-		*( oclBufferTime->getHostBlock<double*>() )	= dCurrentTime;
+		*(oclBufferTime->getHostBlock<float*>()) = static_cast<cl_float>(dCurrentTime);
+		*(oclBufferTimeTarget->getHostBlock<float*>()) = static_cast<cl_float> (dTargetTime);
+	}
+	else {
+		*(oclBufferTime->getHostBlock<double*>()) = dCurrentTime;
 		*(oclBufferTimeTarget->getHostBlock<double*>()) = dTargetTime;
 	}
 
@@ -1336,7 +1370,7 @@ void	CSchemeGodunov::rollbackSimulation( double dCurrentTime, double dTargetTime
 
 	// Schedule timestep calculation again
 	// Timestep reduction
-	if ( this->bDynamicTimestep )
+	if (this->bDynamicTimestep)
 	{
 		oclKernelTimestepReduction->scheduleExecution();
 		pDomain->getDevice()->queueBarrier();
@@ -1357,7 +1391,7 @@ void	CSchemeGodunov::rollbackSimulation( double dCurrentTime, double dTargetTime
 /*
  *  Is the simulation a failure requiring a rollback?
  */
-bool	CSchemeGodunov::isSimulationFailure( double dExpectedTargetTime )
+bool	CSchemeGodunov::isSimulationFailure(double dExpectedTargetTime)
 {
 	if (bRunning)
 		return false;
@@ -1370,19 +1404,21 @@ bool	CSchemeGodunov::isSimulationFailure( double dExpectedTargetTime )
 
 	// This shouldn't happen
 	if (cModel->getDomainSet()->getSyncMethod() == model::syncMethod::kSyncTimestep &&
-		 uiBatchSuccessful > pDomain->getRollbackLimit() )
+		uiBatchSuccessful > pDomain->getRollbackLimit())
 		return true;
 
 	// This also shouldn't happen... but might...
 	if (this->dCurrentTime > dExpectedTargetTime + 1E-5)
 	{
-		model::doError(
-			"Scheme has exceeded target sync time. Rolling back...",
-			model::errorCodes::kLevelWarning
-		);
-		model::log->writeLine(
+		model::log->logInfo(
 			"Current time: " + toStringExact(dCurrentTime) +
 			", target time: " + toStringExact(dExpectedTargetTime)
+		);
+		model::doError(
+			"Scheme has exceeded target sync time. Rolling back...",
+			model::errorCodes::kLevelWarning,
+			"bool	CSchemeGodunov::isSimulationFailure(double dExpectedTargetTime)",
+			"Please contact the developers"
 		);
 		return true;
 	}
@@ -1402,7 +1438,7 @@ void	CSchemeGodunov::forceTimeAdvance()
 /*
  *  Is the simulation ready to be synchronised?
  */
-bool	CSchemeGodunov::isSimulationSyncReady( double dExpectedTargetTime )
+bool	CSchemeGodunov::isSimulationSyncReady(double dExpectedTargetTime)
 {
 	// Check whether we're still busy or failure occured
 	//if ( isSimulationFailure() )
@@ -1416,11 +1452,12 @@ bool	CSchemeGodunov::isSimulationSyncReady( double dExpectedTargetTime )
 	if (cModel->getDomainSet()->getSyncMethod() == model::syncMethod::kSyncTimestep)
 	{
 		// Any criteria required for timestep-based sync?
-	} else {
-		if ( dExpectedTargetTime - dCurrentTime > 1E-5 )
+	}
+	else {
+		if (dExpectedTargetTime - dCurrentTime > 1E-5)
 		{
 			#ifdef DEBUG_MPI
-			model::log->writeLine( "Expected target: " + toStringExact( dExpectedTargetTime ) + " Current time: " + toStringExact( dCurrentTime ) );
+			model::log->logInfo("Expected target: " + toStringExact(dExpectedTargetTime) + " Current time: " + toStringExact(dCurrentTime));
 			#endif
 			return false;
 		}
@@ -1434,7 +1471,7 @@ bool	CSchemeGodunov::isSimulationSyncReady( double dExpectedTargetTime )
 	if (cModel->getDomainSet()->getSyncMethod() == model::syncMethod::kSyncTimestep &&
 		uiIterationsSinceSync < this->pDomain->getRollbackLimit() - 1 &&
 		dExpectedTargetTime - dCurrentTime > 1E-5 &&
-		 dCurrentTime > 0.0 )
+		dCurrentTime > 0.0)
 		return false;
 
 	//if ( uiIterationsSinceSync < this->pDomain->getRollbackLimit() )
@@ -1442,7 +1479,7 @@ bool	CSchemeGodunov::isSimulationSyncReady( double dExpectedTargetTime )
 
 	// Assume success
 	#ifdef DEBUG_MPI
-		//model::log->writeLine( "Domain is considered sync ready" );
+		//model::log->logInfo( "Domain is considered sync ready" );
 	#endif
 
 	return true;
@@ -1453,33 +1490,36 @@ bool	CSchemeGodunov::isSimulationSyncReady( double dExpectedTargetTime )
  */
 void	CSchemeGodunov::scheduleIteration(
 	bool			bUseAlternateKernel,
-				COCLDevice*		pDevice,
-				CDomain*		pDomain
+	COCLDevice* pDevice,
+	CDomain* pDomain
 )
 {
 	// Re-set the kernel arguments to use the correct cell state buffer
 	// Very carefully watch the index of arguments assignment, there are no safety checks for them
-	if ( bUseAlternateKernel )
+	if (bUseAlternateKernel)
 	{
-		oclKernelFullTimestep->assignArgument( 2, oclBufferCellStatesAlt );			// Src
-		oclKernelFullTimestep->assignArgument( 3, oclBufferCellStates );			// Dst
+		oclKernelFullTimestep->assignArgument(2, oclBufferCellStatesAlt);			// Src
+		oclKernelFullTimestep->assignArgument(3, oclBufferCellStates);			// Dst
 		if (this->bUseOptimizedBoundary == false) {
 			oclKernelBoundary->assignArgument(3, oclBufferCellStates);					// Dst
-		}else {
+		}
+		else {
 			oclKernelBoundary->assignArgument(3, oclBufferCellStates);					// Dst
 		}
-		oclKernelFriction->assignArgument( 1, oclBufferCellStates );				// Dst
-		oclKernelTimestepReduction->assignArgument( 0, oclBufferCellStates );		// Dst
-	} else {
-		oclKernelFullTimestep->assignArgument( 2, oclBufferCellStates );			// Src
-		oclKernelFullTimestep->assignArgument( 3, oclBufferCellStatesAlt );			// Dst
+		oclKernelFriction->assignArgument(1, oclBufferCellStates);				// Dst
+		oclKernelTimestepReduction->assignArgument(0, oclBufferCellStates);		// Dst
+	}
+	else {
+		oclKernelFullTimestep->assignArgument(2, oclBufferCellStates);			// Src
+		oclKernelFullTimestep->assignArgument(3, oclBufferCellStatesAlt);			// Dst
 		if (this->bUseOptimizedBoundary == false) {
 			oclKernelBoundary->assignArgument(3, oclBufferCellStatesAlt);				// Dst
-		}else {
+		}
+		else {
 			oclKernelBoundary->assignArgument(3, oclBufferCellStatesAlt);				// Dst
 		}
-		oclKernelFriction->assignArgument( 1, oclBufferCellStatesAlt );				// Dst
-		oclKernelTimestepReduction->assignArgument( 0, oclBufferCellStatesAlt );	// Dst
+		oclKernelFriction->assignArgument(1, oclBufferCellStatesAlt);				// Dst
+		oclKernelTimestepReduction->assignArgument(0, oclBufferCellStatesAlt);	// Dst
 	}
 
 	// Run the boundary kernels (each bndy has its own kernel now)
@@ -1495,7 +1535,7 @@ void	CSchemeGodunov::scheduleIteration(
 	this->cModel->profiler->profile("oclKernelFullTimestep", CProfiler::profilerFlags::END_PROFILING, this->pDomain->getDevice());
 
 	// Friction
-	if ( this->bFrictionEffects && !this->bFrictionInFluxKernel )
+	if (this->bFrictionEffects && !this->bFrictionInFluxKernel)
 	{
 		oclKernelFriction->scheduleExecution();
 		pDevice->queueBarrier();
@@ -1510,7 +1550,7 @@ void	CSchemeGodunov::scheduleIteration(
 
 	this->cModel->profiler->profile("oclKernelTimestepReduction", CProfiler::profilerFlags::START_PROFILING);
 	// Timestep reduction
-	if ( this->bDynamicTimestep )
+	if (this->bDynamicTimestep)
 	{
 		oclKernelTimestepReduction->scheduleExecution();
 		pDevice->queueBarrier();
@@ -1535,10 +1575,11 @@ void CSchemeGodunov::readDomainAll()
 {
 
 	this->cModel->profiler->profile("readDomainAll", CProfiler::profilerFlags::START_PROFILING);
-	if ( bUseAlternateKernel )
+	if (bUseAlternateKernel)
 	{
 		oclBufferCellStatesAlt->queueReadAll();
-	} else {
+	}
+	else {
 		oclBufferCellStates->queueReadAll();
 	}
 	this->cModel->profiler->profile("readDomainAll", CProfiler::profilerFlags::END_PROFILING, this->pDomain->getDevice());
@@ -1604,13 +1645,13 @@ void CSchemeGodunov::saveCurrentState()
 /*
  *  Set the target sync time
  */
-void CSchemeGodunov::setTargetTime( double dTime )
+void CSchemeGodunov::setTargetTime(double dTime)
 {
 	if (dTime == this->dTargetTime)
 		return;
 
 	#ifdef DEBUG_MPI
-	model::log->writeLine("[DEBUG] Received request to set target to " + toStringExact(dTime));
+	model::log->logInfo("[DEBUG] Received request to set target to " + toStringExact(dTime));
 	#endif
 	this->dTargetTime = dTime;
 	//this->dLastSyncTime = this->dCurrentTime;

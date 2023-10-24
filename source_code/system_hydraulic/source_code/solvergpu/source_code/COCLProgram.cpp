@@ -65,20 +65,20 @@ bool COCLProgram::compileProgram(
 	// For intel debugging only!
 	//this->sCompileParameters += " -g";
 
-	model::log->writeLine( "Compiling a new program for device #" + toStringExact( this->device->getDeviceID() ) + "." );
+	model::log->logInfo("Compiling a new program for device #" + toStringExact(this->device->getDeviceID()) + ".");
 
 	// Should we add standard elements to the code stack first?
-	if ( bIncludeStandardElements )
+	if (bIncludeStandardElements)
 	{
-		this->prependCodeFromResource( "CLUniversalHeader_H" );						// Standard header with things like gravitational acceleration.
-		this->prependCode( this->getExtensionsHeader() );							// Required for double-precision etc.
-		this->prependCode( this->getConstantsHeader() );							// Domain constant data (i.e. rows, cols etc.)
+		this->prependCodeFromResource("CLUniversalHeader_H");						// Standard header with things like gravitational acceleration.
+		this->prependCode(this->getExtensionsHeader());							// Required for double-precision etc.
+		this->prependCode(this->getConstantsHeader());							// Domain constant data (i.e. rows, cols etc.)
 	}
 
-	cl_uint			uiStackLength	= static_cast<cl_uint>( oclCodeStack.size() );
-	OCL_RAW_CODE*	orcCode			= new char* [ uiStackLength ];
-	for ( unsigned int i = 0; i < uiStackLength; i++ )
-		orcCode[ i ] = oclCodeStack[ i ];
+	cl_uint			uiStackLength = static_cast<cl_uint>(oclCodeStack.size());
+	OCL_RAW_CODE* orcCode = new char* [uiStackLength];
+	for (unsigned int i = 0; i < uiStackLength; i++)
+		orcCode[i] = oclCodeStack[i];
 
 	clProgram = clCreateProgramWithSource(
 		this->clContext,
@@ -88,11 +88,15 @@ bool COCLProgram::compileProgram(
 		&iErrorID
 	);
 
-	if ( iErrorID != CL_SUCCESS )
+	if (iErrorID != CL_SUCCESS)
 	{
+
 		model::doError(
-			"Could not create a program to run on device #" + toStringExact( this->device->getDeviceID() ) + ".",
-			model::errorCodes::kLevelModelStop
+			"Could not create a program to run on device #" + toStringExact(this->device->getDeviceID()) + "." +
+			" Got Error code: [" + std::to_string(iErrorID) + "] from clCreateProgramWithSource",
+			model::errorCodes::kLevelModelStop,
+			"bool COCLProgram::compileProgram( bool bIncludeStandardElements )",
+			"Your device might not be supported."
 		);
 		return false;
 	}
@@ -106,33 +110,43 @@ bool COCLProgram::compileProgram(
 		NULL																			// Callback data
 	);
 
-	if ( iErrorID != CL_SUCCESS )
+	if (iErrorID != CL_SUCCESS)
 	{
+
+
+		model::log->logInfo(this->getCompileLog());
+		model::log->writeCharToFile(*orcCode, "failedBuildLog.txt");
+		model::log->logInfo("The source code has been written to failedBuildLog.txt. Please check it for errors.");
+
 		model::doError(
-			"Could not build the program to run on device #" + toStringExact( this->device->getDeviceID() ) + ".",
-			model::errorCodes::kLevelModelStop
+			"Could not build the program to run on device #" + toStringExact(this->device->getDeviceID()) + "." +
+			" Got Error code: [" + std::to_string(iErrorID) + "] from clBuildProgram",
+			model::errorCodes::kLevelModelStop,
+			"bool COCLProgram::compileProgram( bool bIncludeStandardElements )",
+			"Please contact the developers. See log above."
 		);
-		model::log->writeDivide();
-		model::log->writeLine( this->getCompileLog(), false );
-		model::log->writeDivide();
-		model::log->writeDebugFile( orcCode, uiStackLength );
 		return false;
 	}
 
-	model::log->writeLine( "Program successfully compiled for device #" + toStringExact( this->device->getDeviceID() ) + "." );
+	model::log->logInfo("Program successfully compiled for device #" + toStringExact(this->device->getDeviceID()) + ".");
 
 	std::string sBuildLog = this->getCompileLog();
-	if ( sBuildLog.length() > 0 )
+	if (sBuildLog.length() > 0)
 	{
-		model::doError( "Some messages were reported while building.", model::errorCodes::kLevelWarning );
-		model::log->writeDivide();
-		model::log->writeLine( sBuildLog, false );
-		model::log->writeDivide();
+		model::log->logInfo(sBuildLog);
+		model::log->writeCharToFile(*orcCode, "WarningBuildLog.txt");
+		model::log->logInfo("The source code has been written to WarningBuildLog.txt. Please check it.");
+
+		model::doError("Some messages were reported while building.",
+			model::errorCodes::kLevelWarning,
+			"bool COCLProgram::compileProgram( bool bIncludeStandardElements )",
+			"See log above."
+		);
 	}
 
 	// Write debug file containing the concatenated code
 	// TODO: Make debug outputs configurable/optional/debug only
-	model::log->writeDebugFile( orcCode, uiStackLength );
+	//model::log->writeDebugFile( orcCode, uiStackLength );
 
 	delete[] orcCode;
 
@@ -238,10 +252,13 @@ std::string COCLProgram::getCompileLog()
 	{
 		// The model cannot continue in this case
 		model::doError(
-			"Could not obtain a build log for the program on device #" + toStringExact( this->device->getDeviceID() ) + ".",
-			model::errorCodes::kLevelModelStop
+			"Could not obtain a build log for the program on device #" + toStringExact( this->device->getDeviceID() ) + "." +
+			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetProgramBuildInfo",
+			model::errorCodes::kLevelModelStop,
+			"std::string COCLProgram::getCompileLog()",
+			"Please check error code"
 		);
-		return "An error occured";
+		return "An error occurred";
 	}
 
 	char* cBuildLog = new char[ szLogLength + 1 ];
@@ -259,10 +276,13 @@ std::string COCLProgram::getCompileLog()
 	{
 		// The model cannot continue in this case
 		model::doError(
-			"Could not obtain a build log for the program on device #" + toStringExact( this->device->getDeviceID() ) + ".",
-			model::errorCodes::kLevelModelStop
+			"Could not obtain a build log for the program on device #" + toStringExact( this->device->getDeviceID() ) + "." +
+			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetProgramBuildInfo",
+			model::errorCodes::kLevelModelStop,
+			"std::string COCLProgram::getCompileLog()",
+			"Please check error code"
 		);
-		return "An error occured";
+		return "An error occurred";
 	}
 
 	cBuildLog[ szLogLength ] = 0;
@@ -374,7 +394,9 @@ OCL_RAW_CODE	COCLProgram::getExtensionsHeader()
 		// Send warning to log
 		model::doError(
 			"Double-precision will be handled as single-precision.",
-			model::errorCodes::kLevelWarning
+			model::errorCodes::kLevelWarning,
+			"OCL_RAW_CODE	COCLProgram::getExtensionsHeader()",
+			"This might cause some problems, down the line."
 		);
 
 		// Create an alias and treat doubles as floats

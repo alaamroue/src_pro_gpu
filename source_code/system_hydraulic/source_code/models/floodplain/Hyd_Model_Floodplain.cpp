@@ -1311,37 +1311,36 @@ void Hyd_Model_Floodplain::solve_model_gpu(const double next_time_point, const s
 
 
 		// OLD CODE ............................................... Better for inertial Scheme
-		/*
+		
 		// Read water depth values and set them to element
-		profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::START_PROFILING);
-		double* opt_h_gpu = pManager->getDomainSet()->getDomain(0)->readBuffers_opt_h();
-		profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::END_PROFILING);
+		//profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::START_PROFILING);
+		std::unique_ptr<double[]> opt_h_gpu = std::make_unique<double[]>(this->NEQ);
+		pManager->getDomainSet()->getDomain(0)->readBuffers_opt_h(opt_h_gpu.get());
+		//profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::END_PROFILING);
 
-		profiler->profile("update_ds_dt", Profiler::profilerFlags::START_PROFILING);
+		//profiler->profile("update_ds_dt", Profiler::profilerFlags::START_PROFILING);
 		//update ds_dt value (Used for Output and Display)
 		for (int i = 0; i < this->NEQ; i++) {
 				this->floodplain_elems[i].element_type->set_ds2dt_value(opt_h_gpu[i] - this->floodplain_elems[i].element_type->get_h_value());
 		}
-		profiler->profile("update_ds_dt", Profiler::profilerFlags::END_PROFILING);
+		//profiler->profile("update_ds_dt", Profiler::profilerFlags::END_PROFILING);
 
-		profiler->profile("update_h_value", Profiler::profilerFlags::START_PROFILING);
+		//profiler->profile("update_h_value", Profiler::profilerFlags::START_PROFILING);
 		//Update h_value and s_value used for everything
 		for (int i = 0; i < this->NEQ; i++) {
 				this->floodplain_elems[i].element_type->set_solver_result_value(opt_h_gpu[i]);
 		}
-		profiler->profile("update_h_value", Profiler::profilerFlags::END_PROFILING);
+		//profiler->profile("update_h_value", Profiler::profilerFlags::END_PROFILING);
 
-		delete[] opt_h_gpu;
-
-		profiler->profile("calculate_ds_dt", Profiler::profilerFlags::START_PROFILING);
+		//profiler->profile("calculate_ds_dt", Profiler::profilerFlags::START_PROFILING);
 		//uses values from set_solver_result_value to calculate velocity
 		for (int i = 0; i < this->NEQ; i++) {
 			this->floodplain_elems[i].element_type->calculate_ds_dt();
 		}
-		profiler->profile("calculate_ds_dt", Profiler::profilerFlags::END_PROFILING);
-		*/
-		///New Code..................... Better for Godunov Scheme
+		//profiler->profile("calculate_ds_dt", Profiler::profilerFlags::END_PROFILING);
 		
+		///New Code..................... Better for Godunov Scheme
+		/*
 		double** results = pManager->getDomainSet()->getDomain(0)->readBuffers_h_vx_vy();
 		double* opt_h_gpu = results[0];
 		double* opt_v_x_gpu = results[1];
@@ -1371,6 +1370,7 @@ void Hyd_Model_Floodplain::solve_model_gpu(const double next_time_point, const s
 		delete[] opt_v_x_gpu;
 		delete[] opt_v_y_gpu;
 		delete[] results;
+		*/
 		
 
 	}

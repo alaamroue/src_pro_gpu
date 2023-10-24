@@ -22,32 +22,32 @@ using std::max;
  */
 CSchemeMUSCLHancock::CSchemeMUSCLHancock(void)
 {
-	model::log->writeLine( "MUSCL-Hancock scheme loaded for execution on OpenCL platform." );
+	model::log->logInfo("MUSCL-Hancock scheme loaded for execution on OpenCL platform.");
 
-	this->bDebugOutput					= false;
-	this->uiDebugCellX					= 100;
-	this->uiDebugCellY					= 100;
+	this->bDebugOutput = false;
+	this->uiDebugCellX = 100;
+	this->uiDebugCellY = 100;
 
-	this->ucSolverType					= model::solverTypes::kHLLC;
-	this->ucConfiguration				= model::schemeConfigurations::musclHancock::kCachePrediction;
-	this->ucCacheConstraints			= model::cacheConstraints::musclHancock::kCacheActualSize;
+	this->ucSolverType = model::solverTypes::kHLLC;
+	this->ucConfiguration = model::schemeConfigurations::musclHancock::kCachePrediction;
+	this->ucCacheConstraints = model::cacheConstraints::musclHancock::kCacheActualSize;
 
-	this->ulCachedWorkgroupSizeX		= 0;
-	this->ulCachedWorkgroupSizeY		= 0;
-	this->ulNonCachedWorkgroupSizeX		= 0;
-	this->ulNonCachedWorkgroupSizeY		= 0;
+	this->ulCachedWorkgroupSizeX = 0;
+	this->ulCachedWorkgroupSizeY = 0;
+	this->ulNonCachedWorkgroupSizeX = 0;
+	this->ulNonCachedWorkgroupSizeY = 0;
 
-	this->dBoundaryTimeSeries			= NULL;
-	this->ulBoundaryRelationCells		= NULL;
-	this->uiBoundaryRelationSeries		= NULL;
-	this->bContiguousFaceData			= false;
+	this->dBoundaryTimeSeries = NULL;
+	this->ulBoundaryRelationCells = NULL;
+	this->uiBoundaryRelationSeries = NULL;
+	this->bContiguousFaceData = false;
 
-	oclKernelHalfTimestep				= NULL;
-	oclBufferFaceExtrapolations			= NULL;
-	oclBufferFaceExtrapolationN			= NULL;
-	oclBufferFaceExtrapolationE			= NULL;
-	oclBufferFaceExtrapolationS			= NULL;
-	oclBufferFaceExtrapolationW			= NULL;		
+	oclKernelHalfTimestep = NULL;
+	oclBufferFaceExtrapolations = NULL;
+	oclBufferFaceExtrapolationN = NULL;
+	oclBufferFaceExtrapolationE = NULL;
+	oclBufferFaceExtrapolationS = NULL;
+	oclBufferFaceExtrapolationW = NULL;
 }
 
 /*
@@ -56,7 +56,7 @@ CSchemeMUSCLHancock::CSchemeMUSCLHancock(void)
 CSchemeMUSCLHancock::~CSchemeMUSCLHancock(void)
 {
 	this->releaseResources();
-	model::log->writeLine( "The MUSCL-Hancock scheme was unloaded from memory." );
+	model::log->logInfo("The MUSCL-Hancock scheme was unloaded from memory.");
 }
 
 /*
@@ -100,7 +100,9 @@ void CSchemeMUSCLHancock::prepareAll()
 	{
 		model::doError(
 			"Failed to dimension 1st-order task elements. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeMUSCLHancock::prepareAll() this->prepare1OExecDimensions()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -109,7 +111,9 @@ void CSchemeMUSCLHancock::prepareAll()
 	{
 		model::doError(
 			"Failed to dimension 2nd-order task elements. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeMUSCLHancock::prepareAll() this->prepare2OExecDimensions()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -119,7 +123,9 @@ void CSchemeMUSCLHancock::prepareAll()
 	{
 		model::doError(
 			"Failed to allocate 1st-order constants. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeMUSCLHancock::prepareAll() this->prepare1OConstants()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -128,7 +134,9 @@ void CSchemeMUSCLHancock::prepareAll()
 	{
 		model::doError(
 			"Failed to allocate 2nd-order constants. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeMUSCLHancock::prepareAll() this->prepare2OConstants()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -138,7 +146,9 @@ void CSchemeMUSCLHancock::prepareAll()
 	{
 		model::doError(
 			"Failed to prepare model codebase. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeMUSCLHancock::prepareAll() this->prepareCode()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -148,7 +158,9 @@ void CSchemeMUSCLHancock::prepareAll()
 	{
 		model::doError(
 			"Failed to create 1st-order memory buffers. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeMUSCLHancock::prepareAll() this->prepare1OMemory()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -157,7 +169,9 @@ void CSchemeMUSCLHancock::prepareAll()
 	{
 		model::doError(
 			"Failed to create 2nd-order memory buffers. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeMUSCLHancock::prepareAll() this->prepare2OMemory()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -167,7 +181,9 @@ void CSchemeMUSCLHancock::prepareAll()
 	{
 		model::doError(
 			"Failed to prepare general kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeMUSCLHancock::prepareAll() this->prepareGeneralKernels()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -176,7 +192,9 @@ void CSchemeMUSCLHancock::prepareAll()
 	{
 		model::doError(
 			"Failed to prepare 2nd-order kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop
+			model::errorCodes::kLevelModelStop,
+			"void CSchemeMUSCLHancock::prepareAll() this->prepare2OKernels()",
+			"Check previous errors"
 		);
 		this->releaseResources();
 		return;
@@ -216,17 +234,17 @@ void CSchemeMUSCLHancock::logDetails()
 		break;
 	}
 
-	model::log->writeLine("MUSCL-HANCOCK 2ND-ORDER-ACCURATE SCHEME", true, wColour);
-	model::log->writeLine("  Timestep mode:      " + (std::string)(this->bDynamicTimestep ? "Dynamic" : "Fixed"), true, wColour);
-	model::log->writeLine("  Courant number:     " + (std::string)(this->bDynamicTimestep ? toStringExact(this->dCourantNumber) : "N/A"), true, wColour);
-	model::log->writeLine("  Initial timestep:   " + Util::secondsToTime(this->dTimestep), true, wColour);
-	model::log->writeLine("  Data reduction:     " + toStringExact(this->uiTimestepReductionWavefronts) + " divisions", true, wColour);
-	model::log->writeLine("  Riemann solver:     " + sSolver, true, wColour);
-	model::log->writeLine("  Configuration:      " + sConfiguration, true, wColour);
-	model::log->writeLine("  Friction effects:   " + (std::string)(this->bFrictionEffects ? "Enabled" : "Disabled"), true, wColour);
-	model::log->writeLine("  Kernel queue mode:  " + (std::string)(this->bAutomaticQueue ? "Automatic" : "Fixed size"), true, wColour);
-	model::log->writeLine((std::string)(this->bAutomaticQueue ? "  Initial queue:      " : "  Fixed queue:        ") + toStringExact(this->uiQueueAdditionSize) + " iteration(s)", true, wColour);
-	model::log->writeLine("  Debug output:       " + (std::string)(this->bDebugOutput ? "Enabled" : "Disabled"), true, wColour);
+	model::log->logInfo("MUSCL-HANCOCK 2ND-ORDER-ACCURATE SCHEME");
+	model::log->logInfo("  Timestep mode:      " + (std::string)(this->bDynamicTimestep ? "Dynamic" : "Fixed"));
+	model::log->logInfo("  Courant number:     " + (std::string)(this->bDynamicTimestep ? toStringExact(this->dCourantNumber) : "N/A"));
+	model::log->logInfo("  Initial timestep:   " + Util::secondsToTime(this->dTimestep));
+	model::log->logInfo("  Data reduction:     " + toStringExact(this->uiTimestepReductionWavefronts) + " divisions");
+	model::log->logInfo("  Riemann solver:     " + sSolver);
+	model::log->logInfo("  Configuration:      " + sConfiguration);
+	model::log->logInfo("  Friction effects:   " + (std::string)(this->bFrictionEffects ? "Enabled" : "Disabled"));
+	model::log->logInfo("  Kernel queue mode:  " + (std::string)(this->bAutomaticQueue ? "Automatic" : "Fixed size"));
+	model::log->logInfo((std::string)(this->bAutomaticQueue ? "  Initial queue:      " : "  Fixed queue:        ") + toStringExact(this->uiQueueAdditionSize) + " iteration(s)");
+	model::log->logInfo("  Debug output:       " + (std::string)(this->bDebugOutput ? "Enabled" : "Disabled"));
 
 	model::log->writeDivide();
 }
@@ -419,68 +437,70 @@ bool CSchemeMUSCLHancock::prepare2OKernels()
 {
 	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomain*					pDomain				= this->pDomain;
-	COCLDevice*					pDevice				= pExecutor->getDevice();
+	CDomain* pDomain = this->pDomain;
+	COCLDevice* pDevice = pExecutor->getDevice();
 
 	// --
 	// MUSCL-Hancock main scheme kernels
 	// --
 
-	if ( this->ucConfiguration == model::schemeConfigurations::musclHancock::kCacheMaximum )
+	if (this->ucConfiguration == model::schemeConfigurations::musclHancock::kCacheMaximum)
 	{
 
-			oclKernelFullTimestep = oclModel->getKernel( "mch_cacheMaximum" );
-			oclKernelFullTimestep->setGroupSize( this->ulCachedWorkgroupSizeX, this->ulCachedWorkgroupSizeY );
-			oclKernelFullTimestep->setGlobalSize( this->ulCachedGlobalSizeX, this->ulCachedGlobalSizeY );
+		oclKernelFullTimestep = oclModel->getKernel("mch_cacheMaximum");
+		oclKernelFullTimestep->setGroupSize(this->ulCachedWorkgroupSizeX, this->ulCachedWorkgroupSizeY);
+		oclKernelFullTimestep->setGlobalSize(this->ulCachedGlobalSizeX, this->ulCachedGlobalSizeY);
 
-			COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellStates, oclBufferCellBed, oclBufferCellManning };	
-			oclKernelFullTimestep->assignArguments( aryArgsFullTimestep );
+		COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellStates, oclBufferCellBed, oclBufferCellManning };
+		oclKernelFullTimestep->assignArguments(aryArgsFullTimestep);
 
 	}
-	else if ( this->ucConfiguration == model::schemeConfigurations::musclHancock::kCachePrediction )
+	else if (this->ucConfiguration == model::schemeConfigurations::musclHancock::kCachePrediction)
 	{
 
-		oclKernelHalfTimestep = oclModel->getKernel( "mch_1st_cachePrediction" );
-		oclKernelHalfTimestep->setGroupSize( this->ulCachedWorkgroupSizeX, this->ulCachedWorkgroupSizeY );
-		oclKernelHalfTimestep->setGlobalSize( this->ulCachedGlobalSizeX, this->ulCachedGlobalSizeY );
-		oclKernelFullTimestep = oclModel->getKernel( "mch_2nd_cacheNone" );
-		oclKernelFullTimestep->setGroupSize( this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY );
-		oclKernelFullTimestep->setGlobalSize( this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY );
+		oclKernelHalfTimestep = oclModel->getKernel("mch_1st_cachePrediction");
+		oclKernelHalfTimestep->setGroupSize(this->ulCachedWorkgroupSizeX, this->ulCachedWorkgroupSizeY);
+		oclKernelHalfTimestep->setGlobalSize(this->ulCachedGlobalSizeX, this->ulCachedGlobalSizeY);
+		oclKernelFullTimestep = oclModel->getKernel("mch_2nd_cacheNone");
+		oclKernelFullTimestep->setGroupSize(this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY);
+		oclKernelFullTimestep->setGlobalSize(this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY);
 
-		if ( this->bContiguousFaceData )
+		if (this->bContiguousFaceData)
 		{
-			COCLBuffer* aryArgsHalfTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferFaceExtrapolations };	
-			COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellStates, oclBufferCellBed, oclBufferCellManning, oclBufferFaceExtrapolations };	
-			oclKernelHalfTimestep->assignArguments( aryArgsHalfTimestep );
-			oclKernelFullTimestep->assignArguments( aryArgsFullTimestep );
-		} else {
-			COCLBuffer* aryArgsHalfTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferFaceExtrapolationN, oclBufferFaceExtrapolationE, oclBufferFaceExtrapolationS, oclBufferFaceExtrapolationW };	
-			COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellStates, oclBufferCellBed, oclBufferCellManning, oclBufferFaceExtrapolationN, oclBufferFaceExtrapolationE, oclBufferFaceExtrapolationS, oclBufferFaceExtrapolationW };	
-			oclKernelHalfTimestep->assignArguments( aryArgsHalfTimestep );
-			oclKernelFullTimestep->assignArguments( aryArgsFullTimestep );
+			COCLBuffer* aryArgsHalfTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferFaceExtrapolations };
+			COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellStates, oclBufferCellBed, oclBufferCellManning, oclBufferFaceExtrapolations };
+			oclKernelHalfTimestep->assignArguments(aryArgsHalfTimestep);
+			oclKernelFullTimestep->assignArguments(aryArgsFullTimestep);
 		}
-	} 
-	else 
+		else {
+			COCLBuffer* aryArgsHalfTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferFaceExtrapolationN, oclBufferFaceExtrapolationE, oclBufferFaceExtrapolationS, oclBufferFaceExtrapolationW };
+			COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellStates, oclBufferCellBed, oclBufferCellManning, oclBufferFaceExtrapolationN, oclBufferFaceExtrapolationE, oclBufferFaceExtrapolationS, oclBufferFaceExtrapolationW };
+			oclKernelHalfTimestep->assignArguments(aryArgsHalfTimestep);
+			oclKernelFullTimestep->assignArguments(aryArgsFullTimestep);
+		}
+	}
+	else
 	{
 
-		oclKernelHalfTimestep = oclModel->getKernel( "mch_1st_cacheNone" );
-		oclKernelHalfTimestep->setGroupSize( this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY );
-		oclKernelHalfTimestep->setGlobalSize( this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY );
-		oclKernelFullTimestep = oclModel->getKernel( "mch_2nd_cacheNone" );
-		oclKernelFullTimestep->setGroupSize( this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY );
-		oclKernelFullTimestep->setGlobalSize( this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY );
+		oclKernelHalfTimestep = oclModel->getKernel("mch_1st_cacheNone");
+		oclKernelHalfTimestep->setGroupSize(this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY);
+		oclKernelHalfTimestep->setGlobalSize(this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY);
+		oclKernelFullTimestep = oclModel->getKernel("mch_2nd_cacheNone");
+		oclKernelFullTimestep->setGroupSize(this->ulNonCachedWorkgroupSizeX, this->ulNonCachedWorkgroupSizeY);
+		oclKernelFullTimestep->setGlobalSize(this->ulNonCachedGlobalSizeX, this->ulNonCachedGlobalSizeY);
 
-		if ( this->bContiguousFaceData )
+		if (this->bContiguousFaceData)
 		{
-			COCLBuffer* aryArgsHalfTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferFaceExtrapolations };	
-			COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellStates, oclBufferCellBed, oclBufferCellManning, oclBufferFaceExtrapolations };	
-			oclKernelHalfTimestep->assignArguments( aryArgsHalfTimestep );
-			oclKernelFullTimestep->assignArguments( aryArgsFullTimestep );
-		} else {
-			COCLBuffer* aryArgsHalfTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferFaceExtrapolationN, oclBufferFaceExtrapolationE, oclBufferFaceExtrapolationS, oclBufferFaceExtrapolationW };	
-			COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellStates, oclBufferCellBed, oclBufferCellManning, oclBufferFaceExtrapolationN, oclBufferFaceExtrapolationE, oclBufferFaceExtrapolationS, oclBufferFaceExtrapolationW };	
-			oclKernelHalfTimestep->assignArguments( aryArgsHalfTimestep );
-			oclKernelFullTimestep->assignArguments( aryArgsFullTimestep );
+			COCLBuffer* aryArgsHalfTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferFaceExtrapolations };
+			COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellStates, oclBufferCellBed, oclBufferCellManning, oclBufferFaceExtrapolations };
+			oclKernelHalfTimestep->assignArguments(aryArgsHalfTimestep);
+			oclKernelFullTimestep->assignArguments(aryArgsFullTimestep);
+		}
+		else {
+			COCLBuffer* aryArgsHalfTimestep[] = { oclBufferTimestep, oclBufferCellBed, oclBufferCellStates, oclBufferFaceExtrapolationN, oclBufferFaceExtrapolationE, oclBufferFaceExtrapolationS, oclBufferFaceExtrapolationW };
+			COCLBuffer* aryArgsFullTimestep[] = { oclBufferTimestep, oclBufferCellStates, oclBufferCellBed, oclBufferCellManning, oclBufferFaceExtrapolationN, oclBufferFaceExtrapolationE, oclBufferFaceExtrapolationS, oclBufferFaceExtrapolationW };
+			oclKernelHalfTimestep->assignArguments(aryArgsHalfTimestep);
+			oclKernelFullTimestep->assignArguments(aryArgsFullTimestep);
 		}
 
 	}
@@ -495,7 +515,7 @@ void CSchemeMUSCLHancock::releaseResources()
 {
 	this->bReady = false;
 
-	model::log->writeLine("Releasing scheme resources held for OpenCL.");
+	model::log->logInfo("Releasing scheme resources held for OpenCL.");
 
 	this->release2OResources();
 	this->release1OResources();
@@ -508,7 +528,7 @@ void CSchemeMUSCLHancock::release2OResources()
 {
 	this->bReady = false;
 
-	model::log->writeLine("Releasing 2nd-order scheme resources held for OpenCL.");
+	model::log->logInfo("Releasing 2nd-order scheme resources held for OpenCL.");
 
 	if ( this->oclKernelHalfTimestep != NULL )				delete oclKernelHalfTimestep;
 	if ( this->oclBufferFaceExtrapolations != NULL )		delete oclBufferFaceExtrapolations;

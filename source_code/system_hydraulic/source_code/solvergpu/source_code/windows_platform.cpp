@@ -19,7 +19,9 @@ char*	Util::getFileResource( const char * sName, const char * sType )
 	if ( hModule == NULL )
 		model::doError(
 			"The module handle could not be obtained.",
-			model::errorCodes::kLevelFatal
+			model::errorCodes::kLevelFatal,
+			"char*	Util::getFileResource( const char * sName, const char * sType )",
+			"HMODULE hModule = GetModuleHandle( NULL ) returned null"
 		);
 
 	HRSRC hResource = FindResource( hModule, static_cast<LPCSTR>(sName), static_cast<LPCSTR>(sType) );
@@ -28,7 +30,9 @@ char*	Util::getFileResource( const char * sName, const char * sType )
 	{
 		model::doError(
 			"Could not obtain a requested resource.",
-			model::errorCodes::kLevelWarning
+			model::errorCodes::kLevelWarning,
+			"char*	Util::getFileResource( const char * sName, const char * sType )",
+			"FindResource couldn't find resource [" + std::string(sName) + "] with type [" + std::string(sType) + "]"
 		);
 		return "";
 	}
@@ -39,7 +43,9 @@ char*	Util::getFileResource( const char * sName, const char * sType )
 	{
 		model::doError(
 			"Could not load a requested resource value.",
-			model::errorCodes::kLevelWarning
+			model::errorCodes::kLevelWarning,
+			"char*	Util::getFileResource( const char * sName, const char * sType )",
+			"LoadResource: Found the resource but couldn't Load it. Name: [" + std::string(sName) + "] .Type: [" + std::string(sType) + "]"
 		);
 		return "";
 	}
@@ -54,7 +60,9 @@ char*	Util::getFileResource( const char * sName, const char * sType )
 	{
 		model::doError(
 			"Could not obtain a pointer for a requested resource.",
-			model::errorCodes::kLevelWarning
+			model::errorCodes::kLevelWarning,
+			"char*	Util::getFileResource( const char * sName, const char * sType )",
+			"LoadResource: Found the resource and loaded it But couldn't lock it. Name: [" + std::string(sName) + "] .Type: [" + std::string(sType) + "]"
 		);
 		return "";
 	}

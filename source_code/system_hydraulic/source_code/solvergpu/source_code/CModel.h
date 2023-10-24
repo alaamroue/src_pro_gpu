@@ -52,7 +52,6 @@ class CModel
 		void					runModelDomainExchange(void);					// Exchange domain data
 		void					runModelUpdateTarget(double);					// Calculate a new target time
 		void					runModelSync(void);								// Synchronise domain and timestep data
-		void					runModelOutputs(void);							// Process outputs
 		void					runModelMPI(void);								// Process MPI queue etc.
 		void					runModelSchedule( CBenchmark::sPerformanceMetrics *, bool * );	// Schedule work
 		void					runModelUI( CBenchmark::sPerformanceMetrics * );// Update progress data etc.
@@ -73,7 +72,6 @@ class CModel
 		void					logProgress( CBenchmark::sPerformanceMetrics* );// Write the progress bar etc.
 		static void CL_CALLBACK	visualiserCallback( cl_event, cl_int, void * );	// Callback event used when memory reads complete, for visualisation updates
 		void					runNext(const double);
-		double*					getBufferOpt();
 
 		// Public variables
 		void					setLogger(CLog*);								// Sets the logger class 

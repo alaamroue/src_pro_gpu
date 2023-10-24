@@ -14,6 +14,8 @@
 #include "Hyd_Param_Global.h" 
 //class of Instationary boundary conditions
 #include "Hyd_Instationary_Boundary.h"
+//Class of the wrapper required to catch messages from the GPU Solver
+#include "Hyd_SolverGPU_LoggingWrapper.h"
 
 //system_sys_ classes
 #include "_Sys_Common_System.h"

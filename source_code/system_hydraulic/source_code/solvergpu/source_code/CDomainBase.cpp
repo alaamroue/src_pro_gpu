@@ -14,9 +14,7 @@
 #include "CDomainLink.h"
 
 
-/*
- *  Constructor
- */
+//Constructor
 CDomainBase::CDomainBase(void)
 {
 	this->bPrepared			= false;
@@ -30,24 +28,16 @@ CDomainBase::CDomainBase(void)
 	pDataProgress.uiBatchSuccessful = 0;
 }
 
-/*
- *  Destructor
- */
+//Destructor
 CDomainBase::~CDomainBase(void)
 {
 	for (unsigned int uiID = 0; uiID < links.size(); ++uiID)
 		delete links[uiID];
 
-	model::log->writeLine("The domain base has been released.");
+	model::log->logInfo("The domain base has been released.");
 }
 
-
-/*
- *  Helper function that create a new class of the appropriate type
- *  for the domain we have.
- *
- *  Create a domain of the specified type
- */
+//Helper function that create a new class of the appropriate type for the domain we have.Create a domain of the specified type 
 CDomainBase* CDomainBase::createDomain(unsigned char cType)
 {
 	// Skeleton for remote?
@@ -63,31 +53,27 @@ CDomainBase* CDomainBase::createDomain(unsigned char cType)
 	}
 
 	model::doError(
-		"Unrecognised domain data store type identifier passed for creation",
-		model::errorCodes::kLevelFatal
+		"Unrecognized domain data store type identifier passed for creation",
+		model::errorCodes::kLevelFatal,
+		"CDomainBase* CDomainBase::createDomain(unsigned char cType)",
+		"Please contact the developers"
 	);
 	return NULL;
 }
 
-/*
- *  Is this domain ready to be used for a model run?
- */
+//Is this domain ready to be used for a model run?
 bool	CDomainBase::isInitialised()
 {
 	return true;
 }
 
-/*
- *  Return the total number of cells in the domain
- */
+//Return the total number of cells in the domain
 unsigned long	CDomainBase::getCellCount()
 {
 	return this->ulCellCount;
 }
 
-/*
- *	Fetch summary information for this domain
- */
+//Fetch summary information for this domain
 CDomainBase::DomainSummary CDomainBase::getSummary()
 {
 	CDomainBase::DomainSummary pSummary;
@@ -97,25 +83,19 @@ CDomainBase::DomainSummary CDomainBase::getSummary()
 	return pSummary;
 }
 
-/*
- *	Add a new link to another domain
- */
+//Add a new link to another domain
 void CDomainBase::addLink(CDomainLink* pLink)
 {
 	links.push_back(pLink);
 }
 
-/*
- *	Add a new link which is dependent on this domain
- */
+//Add a new link which is dependent on this domain
 void CDomainBase::addDependentLink(CDomainLink* pLink)
 {
 	dependentLinks.push_back(pLink);
 }
 
-/*
- *	Fetch a link with a specific domain
- */
+//Fetch a link with a specific domain
 CDomainLink* CDomainBase::getLinkFrom( unsigned int uiSourceDomainID )
 {
 	for (unsigned int i = 0; i < links.size(); i++)
@@ -127,29 +107,21 @@ CDomainLink* CDomainBase::getLinkFrom( unsigned int uiSourceDomainID )
 	return NULL;
 }
 
-
-/*
- *	Fetch a cell ID based on Cartesian assumption and data held in the summary
- */
+//Fetch a cell ID based on Cartesian assumption and data held in the summary
 unsigned long	CDomainBase::getCellID(unsigned long ulX, unsigned long ulY)
 {
 	DomainSummary pSummary = this->getSummary();
 	return (ulY * pSummary.ulColCount) + ulX;
 }
 
-
-/*
- *  Fetch the X and Y indices for a cell using its ID
- */
+//Fetch the X and Y indices for a cell using its ID
 void	CDomainBase::getCellIndices(unsigned long ulID, unsigned long* lIdxX, unsigned long* lIdxY)
 {
 	*lIdxX = ulID % this->getSummary().ulColCount;
 	*lIdxY = (ulID - *lIdxX) / this->getSummary().ulColCount;
 }
 
-/*
- *  Fetch the ID for a neighboring cell in the domain
- */
+//Fetch the ID for a neighboring cell in the domain
 unsigned long	CDomainBase::getNeighbourID(unsigned long ulCellID, unsigned char ucDirection)
 {
 	unsigned long lIdxX = 0;
@@ -175,9 +147,7 @@ unsigned long	CDomainBase::getNeighbourID(unsigned long ulCellID, unsigned char 
 	return getCellID(lIdxX, lIdxY);
 }
 
-/*
- * Identify a suitable rollback limit automatically
- */
+//Identify a suitable rollback limit automatically
 void CDomainBase::setRollbackLimit()
 {
 	unsigned int uiLimit = 999999999;
@@ -191,9 +161,7 @@ void CDomainBase::setRollbackLimit()
 	uiRollbackLimit = uiLimit;
 }
 
-/*
- *	When a domain is told to rollback, any link state data becomes invalid
- */
+//When a domain is told to rollback, any link state data becomes invalid
 void CDomainBase::markLinkStatesInvalid()
 {
 	for (unsigned int i = 0; i < links.size(); i++)
@@ -202,9 +170,7 @@ void CDomainBase::markLinkStatesInvalid()
 	}
 }
 
-/*
- *	Are all our links at the specified time?
- */
+//Are all our links at the specified time?
 bool CDomainBase::isLinkSetAtTime( double dCheckTime )
 {
 	for (unsigned int i = 0; i < links.size(); i++)
@@ -216,9 +182,7 @@ bool CDomainBase::isLinkSetAtTime( double dCheckTime )
 	return true;
 }
 
-/*
- *	Send our link data to other nodes
- */
+//Send our link data to other nodes
 bool CDomainBase::sendLinkData()
 {
 	bool bAlreadySent = true;

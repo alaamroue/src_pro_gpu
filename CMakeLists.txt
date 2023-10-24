@@ -56,6 +56,7 @@ message("")
 #list(APPEND CMAKE_PREFIX_PATH ${QT_DIR})
 set(CMAKE_PREFIX_PATH ${QT_DIR} )
 message("CMAKE_PREFIX_PATH Include set to: " ${CMAKE_PREFIX_PATH})
+message("CMAKE_MODULE_PATH  Include set to: " ${CMAKE_MODULE_PATH})
 
 
 ###########################################################################

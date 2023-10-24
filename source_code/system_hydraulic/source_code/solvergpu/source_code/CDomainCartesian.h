@@ -37,7 +37,6 @@ class CDomainCartesian : public CDomain
 		void			prepareDomain();										// Create memory structures etc.
 		void			logDetails();											// Log details about the domain
 		// - Specific to cartesian grids
-		void			imposeBoundaryModification(unsigned char, unsigned char); // Adjust the topography to impose boundary conditions
 		void			setCellResolution( double, double);						// Set cell resolution
 		void			getCellResolution( double* , double*);					// Fetch cell resolution
 		void			setUnits( char* );										// Set the units
@@ -58,10 +57,10 @@ class CDomainCartesian : public CDomain
 
 		virtual unsigned long	getCellID( unsigned long, unsigned long );		// Get the cell ID using an X and Y index
 		double			getVolume();											// Calculate the amount of volume in all the cells
-		double**		readBuffers_h_vx_vy();									// Read GPU Buffers (All three Values)
-		double*			readBuffers_opt_h();									// Read GPU Buffers (Water Depth: Surface Level - Bed Elevation)
-		double*			readBuffers_v_x();										// Read GPU Buffers (Velocity in X)
-		double*			readBuffers_v_y();										// Read GPU Buffers (Velocity in Y)
+		void			readBuffers_h_vx_vy(double**);							// Read GPU Buffers (All three Values)
+		void			readBuffers_opt_h(double*);								// Read GPU Buffers (Water Depth: Surface Level - Bed Elevation)
+		void			readBuffers_v_x(double*);								// Read GPU Buffers (Velocity in X)
+		void			readBuffers_v_y(double*);								// Read GPU Buffers (Velocity in Y)
 		void			resetBoundaryCondition();								// Resets boundary condition
 
 		enum axis

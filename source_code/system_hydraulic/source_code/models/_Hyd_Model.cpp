@@ -252,15 +252,16 @@ void _Hyd_Model::init_solver(Hyd_Param_Global *global_params){
 void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 
 	this->gpu_in_use = true;
-	Hyd_Model_Floodplain* myFloodplain = (Hyd_Model_Floodplain*)this;
+	Hyd_Model_Floodplain* myFloodplain = (Hyd_Model_Floodplain*) this;
 
 	_hyd_floodplain_scheme_info scheme_info = myFloodplain->Param_FP.get_scheme_info();
 
-	pManager = new CModel();
-	CProfiler* cProfiler = new CProfiler(true);
+	pManager = new CModel(); //Deleted by _Hyd_Model destructor
+	CProfiler* cProfiler = new CProfiler(true);  //Deleted by pManager destructor
 
 	if (model::log == nullptr) {
-		CLog* cLog = new CLog();
+		Hyd_SolverGPU_LoggingWrapper* hyd_SolverGPU_LoggingWrapper = new Hyd_SolverGPU_LoggingWrapper(); //Deleted by pManager destructor
+		CLog* cLog = new CLog(hyd_SolverGPU_LoggingWrapper); //Deleted by pManager destructor
 		model::log = cLog;
 	}
 	//TODO: Alaa destory the profiler
@@ -303,11 +304,11 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	model::log->writeDivide();
 	if (myFloodplain->get_number_boundary_conditions() == 0) {
 		ourCartesianDomain->setUseOptimizedCoupling(true);
-		model::log->writeLine("Boundary Condition Optimization: On");
+		model::log->logInfo("Boundary Condition Optimization: On");
 	}
 	if (myFloodplain->get_number_coupling_conditions() == 0) {
 		ourCartesianDomain->setUseOptimizedCoupling(false);
-		model::log->writeLine("Boundary Condition Optimization: Off");
+		model::log->logInfo("Boundary Condition Optimization: Off");
 
 		if (myFloodplain->get_number_boundary_conditions() == 0) {
 			//TODO: Alaa Add warning that there are no coupling and no boundary
@@ -371,9 +372,10 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	pScheme->prepareAll();							//Needs Dimension data to alocate memory
 	ourCartesianDomain->setScheme(pScheme);
 
-	ourCartesianDomain->resetAllValues();
+	//This shouldn't be required
+	//ourCartesianDomain->resetAllValues();
 
-	pManager->log->writeLine("Setting Data...");
+	pManager->log->logInfo("Setting Data...");
 	unsigned long ulCellID;
 	unsigned char	ucRounding = 6;
 	for (unsigned long iRow = 0; iRow < myFloodplain->Param_FP.get_no_elems_y(); iRow++) {
@@ -430,7 +432,7 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	pDomainNew->setID(1);	// Should not be needed, but somehow is?
 	pManager->getDomainSet()->getDomainBaseVector()->push_back(pDomainNew);
 
-	pManager->log->writeLine("The computational engine is now ready.");
+	pManager->log->logInfo("The computational engine is now ready.");
 
 
 
@@ -1043,6 +1045,7 @@ void _Hyd_Model::calculate_solver_errors(void){
 }
 //close the solver
 void _Hyd_Model::close_solver(void){
+	//For Cvode
 	// Deallocate memory for solution vector 
 	if(this->results!=NULL){
 		N_VDestroy_Serial(this->results);
@@ -1055,6 +1058,9 @@ void _Hyd_Model::close_solver(void){
 		this->estimated_error=NULL;
 	}
 
+	//For GPU Solver
+	if (this->pManager != NULL)
+		delete this->pManager;
 	
 	//Free solver memory: CVodeFree(cvode mem); to free the memory allocated for cvode.
 	CVodeFree(&this->cvode_mem);
@@ -1280,16 +1286,15 @@ Error _Hyd_Model::set_error(const int err_type){
 /*
  *  Raise an error message and deal with it accordingly.
  */
-void model::doError(std::string sError, unsigned char cError)
+void model::doError(std::string errorMessage, unsigned char errorCode, std::string errorPlace, std::string ErrorRecommendation)
 {
-	model::log->writeError(sError, cError);
-	if (cError & model::errorCodes::kLevelModelStop)
+	model::log->writeError(errorMessage, errorCode);
+	if (errorCode & model::errorCodes::kLevelModelStop)
 		std::cout << "model forceAbort was requested by a function." << std::endl;
-	if (cError & model::errorCodes::kLevelFatal)
+	if (errorCode & model::errorCodes::kLevelFatal)
 	{
 		model::doPause();
 		exit(model::appReturnCodes::kAppFatal);
-
 	}
 }
 

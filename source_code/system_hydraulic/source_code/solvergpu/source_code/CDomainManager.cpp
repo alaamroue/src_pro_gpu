@@ -16,30 +16,24 @@
 
 #include "COCLDevice.h"
 
-/*
- *  Constructor
- */
+//Constructor
 CDomainManager::CDomainManager(void)
 {
 	this->ucSyncMethod = model::syncMethod::kSyncForecast;
 	this->uiSyncSpareIterations = 3;
 }
 
-/*
-*  Destructor
-*/
+//Destructor
 CDomainManager::~CDomainManager(void)
 {
 	for (unsigned int uiID = 0; uiID < domains.size(); ++uiID)
 		delete domains[uiID];
 
-	model::log->writeLine("The domain manager has been unloaded.");
+	model::log->logInfo("The domain manager has been unloaded.");
 }
 
-/*
- *  Add a new domain to the set
- */
-CDomainBase*	CDomainManager::createNewDomain( unsigned char ucType )
+//Add a new domain to the set
+CDomainBase* CDomainManager::createNewDomain( unsigned char ucType )
 {
 	CDomainBase*	pNewDomain = CDomainBase::createDomain(ucType);
 	unsigned int	uiID		= getDomainCount() + 1;
@@ -47,62 +41,48 @@ CDomainBase*	CDomainManager::createNewDomain( unsigned char ucType )
 	domains.push_back( pNewDomain );
 	pNewDomain->setID( uiID );
 
-	model::log->writeLine( "A new domain has been created within the model." );
+	model::log->logInfo( "A new domain has been created within the model." );
 
 	return pNewDomain;
 }
 
-/*
-*  Is a domain local to this node?
-*/
+//Is a domain local to this node?
 bool	CDomainManager::isDomainLocal(unsigned int uiID)
 {
 	return !( domains[uiID]->isRemote() );
 }
 
-/*
-*  Fetch a specific domain by ID
-*/
+//Fetch a specific domain by ID
 CDomainBase*	CDomainManager::getDomainBase(unsigned int uiID)
 {
 	return domains[uiID];
 }
 
-/*
-*  Fetch a specific domain by ID
-*/
+//Fetch a specific domain by ID
 std::vector<CDomainBase*>* CDomainManager::getDomainBaseVector()
 {
 	return &domains;
 }
 
-/*
- *  Fetch a specific domain by ID
- */
+//Fetch a specific domain by ID
 CDomain*	CDomainManager::getDomain(unsigned int uiID)
 {
 	return static_cast<CDomain*>(domains[ uiID ]);
 }
 
-/*
- *  Fetch a specific domain by a point therein
- */
+//Fetch a specific domain by a point therein
 CDomain*	CDomainManager::getDomain(double dX, double dY)
 {
 	return NULL;
 }
 
-/*
- *  How many domains in the set?
- */
+//How many domains in the set?
 unsigned int	CDomainManager::getDomainCount()
 {
 	return domains.size();
 }
 
-/*
- *  Fetch the total extent of all the domains
- */
+//Fetch the total extent of all the domains
 CDomainManager::Bounds		CDomainManager::getTotalExtent()
 {
 	CDomainManager::Bounds	b;
@@ -114,50 +94,38 @@ CDomainManager::Bounds		CDomainManager::getTotalExtent()
 	return b;
 }
 
-/*
-*	Fetch the current sync method being employed
-*/
+//Fetch the current sync method being employed
 unsigned char CDomainManager::getSyncMethod()
 {
 	return this->ucSyncMethod;
 }
 
-/*
-*	Set the sync method to being employed
-*/
+//Set the sync method to being employed
 void CDomainManager::setSyncMethod(unsigned char ucMethod)
 {
 	this->ucSyncMethod = ucMethod;
 }
 
-/*
-*	Fetch the number of spare batch iterations to aim for when forecast syncing
-*/
+//Fetch the number of spare batch iterations to aim for when forecast syncing
 unsigned int CDomainManager::getSyncBatchSpares()
 {
 	return this->uiSyncSpareIterations;
 }
 
-/*
-*	Set the number of spare batch iterations to aim for when forecast syncing
-*/
+//Set the number of spare batch iterations to aim for when forecast syncing
 void CDomainManager::setSyncBatchSpares(unsigned int uiSpare)
 {
 	this->uiSyncSpareIterations = uiSpare;
 }
 
-/*
- *  Are all the domains contiguous?
- */
+//Are all the domains contiguous?
 bool	CDomainManager::isSetContiguous()
 {
 	// TODO: Calculate this
 	return true;
 }
 
-/*
- *  Are all the domains ready?
- */
+//Are all the domains ready?
 bool	CDomainManager::isSetReady()
 {
 	// Is the domain ready?
@@ -170,64 +138,33 @@ bool	CDomainManager::isSetReady()
 	return true;
 }
 
-/*
- *	Generate links between domains where possible
- */
-void	CDomainManager::generateLinks()
-{
-	model::log->writeLine("Generating link data for each domain");
-
-	for (unsigned int i = 0; i < domains.size(); i++)
-	{
-		// Remove any pre-existing links
-		domains[i]->clearLinks();
-	}
-
-	for (unsigned int i = 0; i < domains.size(); i++)
-	{
-		for (unsigned int j = 0; j < domains.size(); j++)
-		{
-			// Must overlap and meet our various constraints
-			if (i != j && CDomainLink::canLink(domains[i], domains[j]))
-			{
-				// Make a new link...
-				CDomainLink* pNewLink = new CDomainLink(domains[i], domains[j]);
-				domains[i]->addLink(pNewLink);
-				domains[j]->addDependentLink(pNewLink);
-			}
-		}
-	}
-}
-
-/*
- *  Write some details to the console about our domain set
- */
+//Write some details to the console about our domain set
 void	CDomainManager::logDetails()
 {
 	model::log->writeDivide();
 	unsigned short	wColour = model::cli::colourInfoBlock;
 
-	model::log->writeLine("MODEL DOMAIN SET", true, wColour);
-	model::log->writeLine("  Domain count:      " + toStringExact(this->getDomainCount()), true, wColour);
+	model::log->logInfo("MODEL DOMAIN SET");
+	model::log->logInfo("  Domain count:      " + toStringExact(this->getDomainCount()));
 	if (this->getDomainCount() <= 1)
 	{
-		model::log->writeLine("  Synchronisation:   Not required", true, wColour);
+		model::log->logInfo("  Synchronization:   Not required");
 	}
 	else {
 		if (this->getSyncMethod() == model::syncMethod::kSyncForecast)
 		{
-			model::log->writeLine("  Synchronisation:   Domain-independent forecast", true, wColour);
-			model::log->writeLine("    Forecast method: Aiming for " + toStringExact(this->uiSyncSpareIterations) + " spare row(s)", true, wColour);
+			model::log->logInfo("  Synchronization:   Domain-independent forecast");
+			model::log->logInfo("    Forecast method: Aiming for " + toStringExact(this->uiSyncSpareIterations) + " spare row(s)");
 		}
 		if (this->getSyncMethod() == model::syncMethod::kSyncTimestep)
-			model::log->writeLine("  Synchronisation:   Explicit timestep exchange", true, wColour);
+			model::log->logInfo("  Synchronization:   Explicit timestep exchange");
 	}
 
-	model::log->writeLine("", false, wColour);
+	model::log->logInfo("");
 
-	model::log->writeLine("+--------+------+--------+--------+--------+-------+-------+-------+", false, wColour);	
-	model::log->writeLine("| Domain | Node | Device |  Rows  |  Cols  | Maths | Links | Resol |", false, wColour);	
-	model::log->writeLine("+--------+------+--------+--------+--------+-------+-------+-------+", false, wColour);
+	model::log->logInfo("+--------+------+--------+--------+--------+-------+-------+-------+");
+	model::log->logInfo("| Domain | Node | Device |  Rows  |  Cols  | Maths | Links | Resol |");
+	model::log->logInfo("+--------+------+--------+--------+--------+-------+-------+-------+");
 
 	for (unsigned int i = 0; i < this->getDomainCount(); i++)
 	{
@@ -249,10 +186,10 @@ void	CDomainManager::logDetails()
 			resolutionShort.c_str()
 		);
 
-		model::log->writeLine(std::string(cDomainLine), false, wColour);	// 13
+		model::log->logInfo(std::string(cDomainLine));	// 13
 	}
 
-	model::log->writeLine("+--------+------+--------+--------+--------+-------+-------+-------+", false, wColour);
+	model::log->logInfo("+--------+------+--------+--------+--------+-------+-------+-------+");
 
 	model::log->writeDivide();
 }

@@ -21,25 +21,25 @@
  */
 CScheme::CScheme()
 {
-	model::log->writeLine( "Scheme base-class instantiated." );
+	model::log->logInfo("Scheme base-class instantiated.");
 
 	// Not ready by default
-	this->bReady				= false;
-	this->bRunning				= false;
-	this->bThreadRunning		= false;
-	this->bThreadTerminated		= false;
+	this->bReady = false;
+	this->bRunning = false;
+	this->bThreadRunning = false;
+	this->bThreadTerminated = false;
 
-	this->bAutomaticQueue		= true;
-	this->uiQueueAdditionSize	= 1;
-	this->dCourantNumber		= 0.5;
-	this->dTimestep				= 0.001;
-	this->bDynamicTimestep		= true;
-	this->bFrictionEffects		= true;
+	this->bAutomaticQueue = true;
+	this->uiQueueAdditionSize = 1;
+	this->dCourantNumber = 0.5;
+	this->dTimestep = 0.001;
+	this->bDynamicTimestep = true;
+	this->bFrictionEffects = true;
 	this->bUseOptimizedBoundary = false;
-	this->dTargetTime			= 0.0;
-	this->uiBatchSkipped		= 0;
-	this->uiBatchSuccessful		= 0;
-	this->dBatchTimesteps		= 0.0;
+	this->dTargetTime = 0.0;
+	this->uiBatchSkipped = 0;
+	this->uiBatchSuccessful = 0;
+	this->dBatchTimesteps = 0.0;
 }
 
 /*
@@ -47,7 +47,7 @@ CScheme::CScheme()
  */
 CScheme::~CScheme(void)
 {
-	model::log->writeLine( "The abstract scheme class was unloaded from memory." );
+	model::log->logInfo( "The abstract scheme class was unloaded from memory." );
 }
 
 

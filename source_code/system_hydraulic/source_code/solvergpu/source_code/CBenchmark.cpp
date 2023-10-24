@@ -11,9 +11,7 @@
 #include "common.h"
 #include "CBenchmark.h"
 
-/*
- *  Constructor
- */
+//Constructor
 CBenchmark::CBenchmark( bool bStart )
 {
 	this->bRunning = false;
@@ -22,17 +20,13 @@ CBenchmark::CBenchmark( bool bStart )
 		this->start();
 }
 
-/*
- *  Destructor
- */
+//Destructor
 CBenchmark::~CBenchmark(void)
 {
 	// ...
 }
 
-/*
- *  Fetch the current time and return the value in seconds
- */
+//Fetch the current time and return the value in seconds
 double CBenchmark::getCurrentTime()
 {
 	/*
@@ -51,8 +45,10 @@ double CBenchmark::getCurrentTime()
 
 	if (bQueryState < 2)
 		model::doError(
-			"A high performance time counter cannot be obtained on this system.",
-			model::errorCodes::kLevelFatal
+			"A high performance time counter (QueryPerformanceCounter) cannot be obtained on this system.",
+			model::errorCodes::kLevelFatal,
+			"double CBenchmark::getCurrentTime()",
+			"Your system doesn't support QueryPerformanceCounter, please use another system or contact the developers"
 		);
 
 	// Deal with signed 64-bit ints
@@ -72,9 +68,7 @@ double CBenchmark::getCurrentTime()
 
 }
 
-/*
- *  Start counting
- */
+//Start counting
 void CBenchmark::start()
 {
 	this->dStartTime = this->getCurrentTime();
@@ -82,9 +76,7 @@ void CBenchmark::start()
 	this->bRunning	 = true;
 }
 
-/*
- *  End the counting
- */
+//End the counting
 void CBenchmark::finish()
 {
 	if ( !this->bRunning ) 
@@ -94,9 +86,7 @@ void CBenchmark::finish()
 	this->bRunning = false;
 }
 
-/*
- *  Fetch all the result metric values in a structure
- */
+//Fetch all the result metric values in a structure
 CBenchmark::sPerformanceMetrics* CBenchmark::getMetrics()
 {
 	if ( this->bRunning )

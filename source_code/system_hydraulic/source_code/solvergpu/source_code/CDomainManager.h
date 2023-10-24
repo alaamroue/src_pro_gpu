@@ -59,7 +59,6 @@ class CDomainManager
 		bool					isSetContiguous();													// Are all of the domains contiguous
 		bool					isSetReady();														// Is the set of domains ready?
 		void					logDetails();														// Spit out some information
-		void					generateLinks();													// Generate domain link records
 
 	protected:
 

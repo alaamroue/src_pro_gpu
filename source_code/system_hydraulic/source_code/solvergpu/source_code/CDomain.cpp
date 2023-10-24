@@ -13,9 +13,7 @@
 #include "CScheme.h"
 #include "COCLDevice.h"
 
-/*
- *  Constructor
- */
+//Constructor
 CDomain::CDomain(void)
 {
 	this->pScheme			= NULL;
@@ -33,9 +31,7 @@ CDomain::CDomain(void)
 
 }
 
-/*
- *  Destructor
- */
+//Destructor
 CDomain::~CDomain(void)
 {
 	if ( this->ucFloatSize == 4 )
@@ -43,23 +39,43 @@ CDomain::~CDomain(void)
 		delete [] this->fCellStates;
 		delete [] this->fBedElevations;
 		delete [] this->fManningValues;
+		delete [] this->fOpt_zxmaxValues;
+		delete [] this->fOpt_cxValues;
+		delete [] this->fOpt_zymaxValues;
+		delete [] this->fOpt_cyValues;
+		if (this->getSummary().bUseOptimizedBoundary == false) {
+			delete [] this->fBoundaryValues;
+		}
+		else {
+			delete [] fCouplingValues;
+			delete [] ulCouplingIDs;
+		}
 	} else if ( this->ucFloatSize == 8 ) {
 		delete [] this->dCellStates;
 		delete [] this->dBedElevations;
 		delete [] this->dManningValues;
+		delete [] this->dOpt_zxmaxValues;
+		delete [] this->dOpt_cxValues;
+		delete [] this->dOpt_zymaxValues;
+		delete [] this->dOpt_cyValues;
+		if (this->getSummary().bUseOptimizedBoundary == false) {
+			delete[] this->dBoundaryValues;
+		}
+		else {
+			delete[] dCouplingValues;
+			delete[] ulCouplingIDs;
+		}
 	}
+	delete[] this->bPoleniValues;
 
 	if ( this->pScheme != NULL )     delete pScheme;
-
 	delete [] this->cSourceDir;
 	delete [] this->cTargetDir;
 
-	model::log->writeLine("All domain memory has been released.");
+	model::log->logInfo("All domain memory has been released.");
 }
 
-/*
- *  Creates an OpenCL memory buffer for the specified data store
- */
+//Creates an OpenCL memory buffer for the specified data store
 void	CDomain::createStoreBuffers(
 			void**			vArrayCellStates,
 			void**			vArrayBedElevations,
@@ -164,52 +180,22 @@ void	CDomain::createStoreBuffers(
 		this->bPoleniValues			= new sUsePoleni[this->ulCellCount];
 		*vArrayPoleniValues			= static_cast<void*>(this->bPoleniValues);
 	}
-	catch( std::bad_alloc )
+	catch( const std::bad_alloc& e)
 	{
 		model::doError(
-			"Domain memory allocation failure. Probably out of memory.",
-			model::errorCodes::kLevelFatal
+			"Memory allocation failed: std::bad_alloc",
+			model::errorCodes::kLevelFatal,
+			"void CDomain::createStoreBuffers( void**, void**, void**, void**, void**, void**, void**, void**, void**, void**, void**, unsigned char)",
+			"The system ran out of memory. Try to run on a machine with more ram. Or use smaller floodplains"
 		);
 		return;
 	}
 }
 
-/*
- *  Populate all domain cells with default values
- *  NOTE: Shouldn't be required anymore, C++11 used in COCLBuffer to initialise to zero on allocate
- */
-void	CDomain::initialiseMemory()
-{
-	model::log->writeLine( "Initialising heap domain data." );
-
-	for( unsigned long i = 0; i < this->ulCellCount; i++ )
-	{
-		if ( this->ucFloatSize == 4 )
-		{
-			this->fCellStates[ i ].s[0]	= 0;	// Free-surface level
-			this->fCellStates[ i ].s[1]	= 0;	// Maximum free-surface level
-			this->fCellStates[ i ].s[2]	= 0;	// Discharge X
-			this->fCellStates[ i ].s[3]	= 0;	// Discharge Y
-			this->fBedElevations[ i ]   = 1;	// Bed elevation
-			this->fManningValues[ i ]	= 0;	// Manning coefficient
-		} else {
-			this->dCellStates[ i ].s[0]	= 0;	// Free-surface level
-			this->dCellStates[ i ].s[1]	= 0;	// Maximum free-surface level
-			this->dCellStates[ i ].s[2]	= 0;	// Discharge X
-			this->dCellStates[ i ].s[3]	= 0;	// Discharge Y
-			this->dBedElevations[ i ]   = 1;	// Bed elevation
-			this->dManningValues[ i ]	= 0;	// Manning coefficient
-		}
-	}
-}
-
-/*
- *  Populate all domain cells with default values
- *  NOTE: Shouldn't be required anymore, C++11 used in COCLBuffer to initialise to zero on allocate
- */
+//Populate all domain cells with default values. Shouldn't be required
 void	CDomain::resetAllValues()
 {
-	model::log->writeLine( "Reseting heap domain data." );
+	model::log->logInfo( "Reseting heap domain data." );
 
 	for( unsigned long i = 0; i < this->ulCellCount; i++ )
 	{
@@ -262,12 +248,10 @@ void	CDomain::resetAllValues()
 			}
 		}
 	}
-	model::log->writeLine("Reseting heap domain data Finished.");
+	model::log->logInfo("Reseting heap domain data Finished.");
 }
 
-/*
- *  Sets the bed elevation for a given cell
- */
+//Sets the bed elevation for a given cell
 void	CDomain::setBedElevation( unsigned long ulCellID, double dElevation )
 {
 	if ( this->ucFloatSize == 4 )
@@ -278,9 +262,7 @@ void	CDomain::setBedElevation( unsigned long ulCellID, double dElevation )
 	}
 }
 
-/*
- *  Sets the Manning coefficient for a given cell
- */
+//Sets the Manning coefficient for a given cell
 void	CDomain::setManningCoefficient( unsigned long ulCellID, double dCoefficient )
 {
 	if ( this->ucFloatSize == 4 )
@@ -291,9 +273,7 @@ void	CDomain::setManningCoefficient( unsigned long ulCellID, double dCoefficient
 	}
 }
 
-/*
- *  Sets a state variable for a given cell
- */
+//Sets a state variable for a given cell
 void	CDomain::setStateValue( unsigned long ulCellID, unsigned char ucIndex, double dValue )
 {
 	if ( this->ucFloatSize == 4 )
@@ -304,9 +284,7 @@ void	CDomain::setStateValue( unsigned long ulCellID, unsigned char ucIndex, doub
 	}
 }
 
-/*
- *  Gets the bed elevation for a given cell
- */
+//Gets the bed elevation for a given cell
 double	CDomain::getBedElevation( unsigned long ulCellID )
 {
 	if ( this->ucFloatSize == 4 ) 
@@ -314,9 +292,7 @@ double	CDomain::getBedElevation( unsigned long ulCellID )
 	return this->dBedElevations[ ulCellID ];
 }
 
-/*
- *  Gets the Manning coefficient for a given cell
- */
+//Gets the Manning coefficient for a given cell
 double	CDomain::getManningCoefficient( unsigned long ulCellID )
 {
 	if ( this->ucFloatSize == 4 ) 
@@ -324,9 +300,7 @@ double	CDomain::getManningCoefficient( unsigned long ulCellID )
 	return this->dManningValues[ ulCellID ];
 }
 
-/*
- *  Gets the Manning coefficient for a given cell
- */
+//Gets the Manning coefficient for a given cell
 double	CDomain::getBoundaryCondition( unsigned long ulCellID )
 {
 	if ( this->ucFloatSize == 4 ) 
@@ -334,9 +308,7 @@ double	CDomain::getBoundaryCondition( unsigned long ulCellID )
 	return this->dBoundaryValues[ ulCellID ];
 }
 
-/*
- *  Gets a state variable for a given cell
- */
+//Gets a state variable for a given cell
 double	CDomain::getStateValue( unsigned long ulCellID, unsigned char ucIndex )
 {
 	if ( this->ucFloatSize == 4 ) 
@@ -344,9 +316,7 @@ double	CDomain::getStateValue( unsigned long ulCellID, unsigned char ucIndex )
 	return this->dCellStates[ ulCellID ].s[ ucIndex ];
 }
 
-/*
- *  Handle initial conditions input data for a cell (usually from a raster dataset)
- */
+//Handle initial conditions input data for a cell (usually from a raster dataset)
 void	CDomain::handleInputData( 
 			unsigned long	ulCellID, 
 			double			dValue,
@@ -453,9 +423,7 @@ void	CDomain::handleInputData(
 }
 
 
-/*
- *  Sets the Boundary values for a given cell
- */
+//Sets the Boundary values for a given cell
 void	CDomain::setBoundaryCondition(unsigned long ulCellID, double dCoefficient)
 {
 	if (this->ucFloatSize == 4)
@@ -466,9 +434,8 @@ void	CDomain::setBoundaryCondition(unsigned long ulCellID, double dCoefficient)
 		this->dBoundaryValues[ulCellID] = dCoefficient;
 	}
 }
-/*
- *  Sets the Boundary values for a given cell
- */
+
+//Sets the Boundary values for a given cell
 void	CDomain::setOptimizedCouplingCondition(unsigned long index, double dCoefficient)
 {
 	if (this->ucFloatSize == 4)
@@ -479,9 +446,8 @@ void	CDomain::setOptimizedCouplingCondition(unsigned long index, double dCoeffic
 		this->dCouplingValues[index] = dCoefficient;
 	}
 }
-/*
- *  Sets the Boundary values for a given cell
- */
+
+//Sets the Boundary values for a given cell
 void	CDomain::setZxmax(unsigned long ulCellID, double dCoefficient)
 {
 	if (this->ucFloatSize == 4)
@@ -492,9 +458,8 @@ void	CDomain::setZxmax(unsigned long ulCellID, double dCoefficient)
 		this->dOpt_zxmaxValues[ulCellID] = dCoefficient;
 	}
 }
-/*
- *  Sets the Boundary values for a given cell
- */
+
+//Sets the Boundary values for a given cell
 void	CDomain::setcx(unsigned long ulCellID, double dCoefficient)
 {
 	if (this->ucFloatSize == 4)
@@ -505,9 +470,8 @@ void	CDomain::setcx(unsigned long ulCellID, double dCoefficient)
 		this->dOpt_cxValues[ulCellID] = dCoefficient;
 	}
 }
-/*
- *  Sets the Boundary values for a given cell
- */
+
+//Sets the Boundary values for a given cell
 void	CDomain::setZymax(unsigned long ulCellID, double dCoefficient)
 {
 	if (this->ucFloatSize == 4)
@@ -518,9 +482,8 @@ void	CDomain::setZymax(unsigned long ulCellID, double dCoefficient)
 		this->dOpt_zymaxValues[ulCellID] = dCoefficient;
 	}
 }
-/*
- *  Sets the Boundary values for a given cell
- */
+
+//Sets the Boundary values for a given cell
 void	CDomain::setcy(unsigned long ulCellID, double dCoefficient)
 {
 	if (this->ucFloatSize == 4)
@@ -531,16 +494,14 @@ void	CDomain::setcy(unsigned long ulCellID, double dCoefficient)
 		this->dOpt_cyValues[ulCellID] = dCoefficient;
 	}
 }
-/*
- *  Sets the Optimized Coupling Ids
- */
+
+//Sets the Optimized Coupling Ids
 void	CDomain::setOptimizedCouplingID(unsigned long index, unsigned long ID)
 {
 	this->ulCouplingIDs[index] = ID;
 }
-/*
- *  Sets the Poleni condition for a given cell in X
- */
+
+//Sets the Poleni condition for a given cell in X
 void	CDomain::setPoleniConditionX(unsigned long ulCellID, bool UsePoleniInX)
 {
 	//All values are already false by default, so we need to check which are true in the x direction, then change their neighbor to the east to true also in the -x direction
@@ -559,9 +520,7 @@ void	CDomain::setPoleniConditionX(unsigned long ulCellID, bool UsePoleniInX)
 
 }
 
-/*
- *  Sets the Poleni condition for a given cell in Y
- */
+//Sets the Poleni condition for a given cell in Y
 void	CDomain::setPoleniConditionY(unsigned long ulCellID, bool UsePoleniInY)
 {
 	//All values are already false by default, so we need to check which are true in the x direction, then change their neighbor to the west to true also in the -y direction
@@ -580,10 +539,7 @@ void	CDomain::setPoleniConditionY(unsigned long ulCellID, bool UsePoleniInY)
 
 }
 
-
-/*
- *  Calculate the total volume present in all of the cells
- */
+//Calculate the total volume present in all of the cells
 double	CDomain::getVolume()
 {
 	double dVolume = 0.0;
@@ -592,41 +548,31 @@ double	CDomain::getVolume()
 	return dVolume;
 }
 
-/*
- *  Sets the scheme we're running on this domain
- */
+//Sets the scheme we're running on this domain
 void	CDomain::setScheme( CScheme* pScheme )
 {
 	this->pScheme = pScheme;
 }
 
-/*
- *  Gets the scheme we're running on this domain
- */
+//Gets the scheme we're running on this domain
 CScheme*	CDomain::getScheme()
 {
 	return pScheme;
 }
 
-/*
- *  Sets the device to use
- */
+//Sets the device to use
 void	CDomain::setDevice( COCLDevice* pDevice )
 {
 	this->pDevice = pDevice;
 }
 
-/*
- *  Gets the scheme we're running on this domain
- */
+//Gets the scheme we're running on this domain
 COCLDevice*	CDomain::getDevice()
 {
 	return this->pDevice;
 }
 
-/*
- *  Gets the scheme we're running on this domain
- */
+//Gets the scheme we're running on this domain
 CDomainBase::mpiSignalDataProgress	CDomain::getDataProgress()
 {
 	CDomainBase::mpiSignalDataProgress pResponse;
@@ -643,9 +589,7 @@ CDomainBase::mpiSignalDataProgress	CDomain::getDataProgress()
 	return pResponse;
 }
 
-/*
- *  Fetch the code for a string descrption of an input/output
- */
+//Fetch the code for a string description of an input/output
 unsigned char	CDomain::getDataValueCode( char* cSourceValue )
 {
 	if ( strstr( cSourceValue, "dem" ) != NULL )		

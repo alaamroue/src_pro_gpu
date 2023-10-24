@@ -16,6 +16,8 @@
 #include <sstream>
 #include <locale>
 
+#include "CLoggingInterface.h"
+
 // Namespaces
 
 /*
@@ -24,48 +26,28 @@
  *
  *  Is a singleton class in reality, but need not be enforced.
  */
-class CLog
+class CLog : public CLoggingInterface
 {
 
 	public:
 
-		CLog( void );									// Constructor
+		CLog( CLoggingInterface* externalLogger_input = nullptr);									// Constructor
 		~CLog( void );									// Destructor
 
 		// Public functions
-		void		writeLine( std::string );				// Timestamp parameter is optional
-		void		writeLine( std::string, bool );			// Output to the console & file, specify timestamp
-		void		writeLine( std::string, bool, unsigned short );	// Output to the console with a colour
 		void		writeError( std::string, unsigned char );	// Display an error message
 		void		writeDivide( void );					// Write a line to break up the output
-		void		writeDebugFile( char**, unsigned int );	// Write a debug file to the log directory
-		void		clearFile();							// Clear the log file out
-		void		openFile();								// Opens the log file
-		void		closeFile();							// Closes the log file
-		bool		isFileAvailable();						// Is the file output available?
-		unsigned int getLineCount()	{ return uiLineCount; }	// Fetch no. of lines written
 
-		//void		setColour( unsigned short );			// Set the console colour
-		//void		resetColour();							// Reset the console colour
-		void		setPath();								// Set path to default
-		void		setPath( char*, size_t );				// Set path to given string
-		void		setDir();								// Set the directory to default
-		void		setDir( char*, size_t );				// Set the directory to given string
-		std::string	getPath();								// Returns the path
-		std::string getDir();								// Returns the directory
-		
+		//Interface
+		void logDebug(const std::string&);
+		void logInfo(const std::string&);
+		void logWarning(const std::string&);
+		void logError(const std::string&, const std::string&);
+		void writeCharToFile(char*, const char*, bool addTime = false);
+
 	private:
-
-		// Private variables
-		char*			logPath;							// Full path to the log file
-		char*			logDir;								// Directory for log files
-		std::ofstream	logStream;							// Handle for the log file stream
-		unsigned int	uiDebugFileID;						// Incremental tracking for debug files output
-		unsigned int	uiLineCount;						// Number of lines written
-
-		// Private functions
-		void		writeHeader( void );					// Information about the application
-
+		CLoggingInterface* externalLogger;
+		bool default;
 };
 
 #endif
