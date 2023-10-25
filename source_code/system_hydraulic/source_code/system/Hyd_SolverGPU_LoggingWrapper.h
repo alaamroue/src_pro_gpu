@@ -11,7 +11,9 @@ class Hyd_SolverGPU_LoggingWrapper : public CLoggingInterface {
 		void logDebug(const std::string&);
 		void logInfo(const std::string&);
 		void logWarning(const std::string&);
-		void logError(const std::string&, const std::string&);
+		void logError(const std::string, unsigned char error_type, const std::string, const std::string);
+	private:
+		bool output_on;
 };
 
 #endif

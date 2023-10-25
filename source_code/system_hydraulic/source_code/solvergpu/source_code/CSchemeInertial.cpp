@@ -160,7 +160,6 @@ void CSchemeInertial::prepareAll()
 void CSchemeInertial::logDetails()
 {
 	model::log->writeDivide();
-	unsigned short wColour = model::cli::colourInfoBlock;
 
 	std::string sConfiguration = "Undefined";
 	switch (this->ucConfiguration)

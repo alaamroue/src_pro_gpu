@@ -65,7 +65,7 @@ class CExecutorControlOpenCL: public CExecutorControl
 
 		// Private variables
 		sPlatformInfo*			platformInfo;					// Platform details
-		cl_platform_id *  	clPlatforms;					// Array of OpenCL platforms
+		cl_platform_id *  		clPlatforms;					// Array of OpenCL platforms
 		cl_uint					clPlatformCount;				// Number of platforms
 		cl_uint					clDeviceTotal;					// Total number of devices
 		std::vector<COCLDevice*>							// Dynamic array of device controller classes

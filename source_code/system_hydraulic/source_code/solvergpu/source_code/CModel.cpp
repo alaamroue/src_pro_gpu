@@ -18,13 +18,13 @@
 
 using std::min;
 using std::max;
+CLog* model::log;
 
-/*
- *  Constructor
- */
-CModel::CModel(void)
+//Constructor
+CModel::CModel(CLoggingInterface* CLI)
 {
-	this->log = nullptr;
+	this->log = new CLog(CLI);
+	model::log = this->log;
 
 	this->execController	= NULL;
 	this->domains			= new CDomainManager();
@@ -41,9 +41,7 @@ CModel::CModel(void)
 	this->ulRealTimeStart = 0;
 }
 
-/*
- *  Destructor
- */
+//Destructor
 CModel::~CModel(void)
 {
 	if (this->domains != NULL)
@@ -57,9 +55,7 @@ CModel::~CModel(void)
 		delete this->profiler;
 }
 
-/*
- *  Set the type of executor to use for the model
- */
+//Set the type of executor to use for the model
 bool CModel::setExecutor(CExecutorControl* pExecutorControl)
 {
 	// TODO: Has the value actually changed?
@@ -70,9 +66,11 @@ bool CModel::setExecutor(CExecutorControl* pExecutorControl)
 
 	if (!this->execController->isReady())
 	{
-		this->log->writeError(
+		model::doError(
 			"The executor is not ready. Model cannot continue.",
-			model::errorCodes::kLevelFatal
+			model::errorCodes::kLevelFatal,
+			"bool CModel::setExecutor(CExecutorControl* pExecutorControl)",
+			"Try reseting the model"
 		);
 		return false;
 	}
@@ -80,25 +78,19 @@ bool CModel::setExecutor(CExecutorControl* pExecutorControl)
 	return true;
 }
 
-/*
- *  Returns a pointer to the execution controller currently in use
- */
+//Returns a pointer to the execution controller currently in use
 CExecutorControlOpenCL* CModel::getExecutor(void)
 {
 	return this->execController;
 }
 
-/*
- *  Returns a pointer to the domain class
- */
+//Returns a pointer to the domain class
 CDomainManager* CModel::getDomainSet(void)
 {
 	return this->domains;
 }
 
-/*
-*  Returns a pointer to the MPI manager class
-*/
+//Returns a pointer to the MPI manager class
 CMPIManager* CModel::getMPIManager(void)
 {
 	// Pass back the pointer - will be NULL if not using MPI version
@@ -114,13 +106,9 @@ unsigned int CModel::getSelectedDevice() {
 	return this->selectedDevice;
 }
 
-/*
- *  Log the details for the whole simulation
- */
+//Log the details for the whole simulation
 void CModel::logDetails()
 {
-	unsigned short wColour = model::cli::colourInfoBlock;
-
 	this->log->writeDivide();
 	this->log->logInfo("SIMULATION CONFIGURATION");
 	this->log->logInfo("  Name:               " + this->sModelName);
@@ -130,9 +118,7 @@ void CModel::logDetails()
 	this->log->writeDivide();
 }
 
-/*
- *  Execute the model
- */
+//Execute the model
 bool CModel::runModel(void)
 {
 	this->log->logInfo("Verifying the required data before model run...");
@@ -169,57 +155,43 @@ bool CModel::runModel(void)
 	return true;
 }
 
-/*
- *  Sets a short name for the model
- */
+//Sets a short name for the model
 void	CModel::setName(std::string sName)
 {
 	this->sModelName = sName;
 }
 
-/*
- *  Sets a short name for the model
- */
+//Sets a short name for the model
 void	CModel::setDescription(std::string sDescription)
 {
 	this->sModelDescription = sDescription;
 }
 
-/*
- *  Sets the total length of a simulation
- */
+//Sets the total length of a simulation
 void	CModel::setSimulationLength(double dLength)
 {
 	this->dSimulationTime = dLength;
 }
 
-/*
- *  Gets the total length of a simulation
- */
+//Gets the total length of a simulation
 double	CModel::getSimulationLength()
 {
 	return this->dSimulationTime;
 }
 
-/*
- *  Set the frequency of outputs
- */
+//Set the frequency of outputs
 void	CModel::setOutputFrequency(double dFrequency)
 {
 	this->dOutputFrequency = dFrequency;
 }
 
-/*
- *  Get the frequency of outputs
- */
+//Get the frequency of outputs
 double	CModel::getOutputFrequency()
 {
 	return this->dOutputFrequency;
 }
 
-/*
- *  Set floating point precision
- */
+//Set floating point precision
 void	CModel::setFloatPrecision(unsigned char ucPrecision)
 {
 	if (!this->getExecutor()->getDevice()->isDoubleCompatible())
@@ -228,17 +200,13 @@ void	CModel::setFloatPrecision(unsigned char ucPrecision)
 	this->bDoublePrecision = (ucPrecision == model::floatPrecision::kDouble);
 }
 
-/*
- *  Get floating point precision
- */
+//Get floating point precision
 unsigned char	CModel::getFloatPrecision()
 {
 	return (this->bDoublePrecision ? model::floatPrecision::kDouble : model::floatPrecision::kSingle);
 }
 
-/*
- *  Write details of where model execution is currently at
- */
+//Write details of where model execution is currently at
 void	CModel::logProgress(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 {
 	char	cTimeLine[70] = "                                                                    X";
@@ -249,8 +217,6 @@ void	CModel::logProgress(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 	char	cBatchSizeLine[70] = "                                                                    X";
 	char	cProgress[57] = "                                                      ";
 	char	cProgessNumber[7] = "      ";
-
-	unsigned short wColour = model::cli::colourInfoBlock;
 
 	double		  dCurrentTime = (this->dCurrentTime > this->dSimulationTime ? this->dSimulationTime : this->dCurrentTime);
 	double		  dProgress = dCurrentTime / this->dSimulationTime;
@@ -349,9 +315,7 @@ void	CModel::logProgress(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 	//}
 }
 
-/*
- *  Update the visualisation by sending domain data over to the relevant component
- */
+//Update the visualization by sending domain data over to the relevant component
 void CModel::visualiserUpdate()
 {
 	if (this->dCurrentTime >= this->dSimulationTime - 1E-5)
@@ -359,20 +323,16 @@ void CModel::visualiserUpdate()
 
 }
 
-/*
- *  Memory read should have completed, so provided the simulation isn't over - read it back again
- */
+//Memory read should have completed, so provided the simulation isn't over - read it back again
 void CL_CALLBACK CModel::visualiserCallback(cl_event clEvent, cl_int iStatus, void* vData)
 {
 	model::CallBackData* callBackData = (model::CallBackData*)vData;
-	//TODO: The visualizer won't work becuase this is commented out
+	//TODO: The visualizer won't work because this is commented out
 	callBackData->cModel->visualiserUpdate();
 	clReleaseEvent(clEvent);
 }
 
-/*
-*  Prepare for a new simulation, which may follow a failed simulation so states need to be reset.
-*/
+//Prepare for a new simulation, which may follow a failed simulation so states need to be reset.
 void	CModel::runModelPrepare()
 {
 	// Can't have timestep sync if we've only got one domain
@@ -389,9 +349,7 @@ void	CModel::runModelPrepare()
 	dLastOutputTime = 0.0;
 }
 
-/*
-*  Prepare domains for a new simulation.
-*/
+//Prepare domains for a new simulation.
 void	CModel::runModelPrepareDomains()
 {
 	for (unsigned int i = 0; i < domains->getDomainCount(); ++i)
@@ -414,9 +372,7 @@ void	CModel::runModelPrepareDomains()
 	}
 }
 
-/*
-*  Assess the current state of each domain.
-*/
+//Assess the current state of each domain.
 void	CModel::runModelDomainAssess(bool* bIdle)
 {
 	bRollbackRequired = false;
@@ -435,9 +391,7 @@ void	CModel::runModelDomainAssess(bool* bIdle)
 	}
 }
 
-/*
- *  Exchange data across domains where necessary.
- */
+//Exchange data across domains where necessary.
 void	CModel::runModelDomainExchange()
 {
 	#ifdef DEBUG_MPI
@@ -458,15 +412,13 @@ void	CModel::runModelDomainExchange()
 	this->runModelBlockNode();
 }
 
-/*
-*  Synchronise the whole model across all domains.
-*/
+//Synchronize the whole model across all domains.
 void	CModel::runModelUpdateTarget(double dTimeBase)
 {
 	// Identify the smallest batch size associated timestep
 	double dEarliestSyncProposal = this->dSimulationTime;
 
-	// Only bother with all this stuff if we actually need to synchronise,
+	// Only bother with all this stuff if we actually need to synchronize,
 	// otherwise run free, for as long as possible (i.e. until outputs needed)
 	if (domains->getDomainCount() > 1 &&
 		this->getDomainSet()->getSyncMethod() == model::syncMethod::kSyncForecast)
@@ -492,9 +444,7 @@ void	CModel::runModelUpdateTarget(double dTimeBase)
 
 }
 
-/*
-*  Synchronise the whole model across all domains.
-*/
+//Synchronize the whole model across all domains.
 void	CModel::runModelSync()
 {
 	if (bRollbackRequired ||
@@ -524,7 +474,7 @@ void	CModel::runModelSync()
 	// therefore need only to take data already held locally and impose it on the main domain buffer.
 
 	// Let each domain know the goalposts have proverbially moved
-	// Read back domain data incase we need to rollback
+	// Read back domain data in case we need to rollback
 	for (unsigned int i = 0; i < domains->getDomainCount(); ++i)
 	{
 		if (domains->isDomainLocal(i))
@@ -560,9 +510,7 @@ void	CModel::runModelSync()
 	//this->runModelBlockGlobal();
 }
 
-/*
-*  Block execution across all domains which reside on this node only
-*/
+//Block execution across all domains which reside on this node only
 void	CModel::runModelBlockNode()
 {
 	for (unsigned int i = 0; i < domains->getDomainCount(); i++)
@@ -572,17 +520,13 @@ void	CModel::runModelBlockNode()
 	}
 }
 
-/*
- *  Block execution across all domains until every single one is ready
- */
+//Block execution across all domains until every single one is ready
 void	CModel::runModelBlockGlobal()
 {
 	this->runModelBlockNode();
 }
 
-/*
-*  Schedule new work in the simulation.
-*/
+//Schedule new work in the simulation.
 void	CModel::runModelSchedule(CBenchmark::sPerformanceMetrics* sTotalMetrics, bool* bIdle)
 {
 
@@ -602,9 +546,7 @@ void	CModel::runModelSchedule(CBenchmark::sPerformanceMetrics* sTotalMetrics, bo
 	//	this->runModelBlockGlobal();
 }
 
-/*
-*  Update UI elements (progress bars etc.)
-*/
+//Update UI elements (progress bars etc.)
 void	CModel::runModelUI(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 {
 	dProcessingTime = sTotalMetrics->dSeconds;
@@ -615,9 +557,7 @@ void	CModel::runModelUI(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 	}
 }
 
-/*
-*  Rollback simulation states to a previous recorded state.
-*/
+//Rollback simulation states to a previous recorded state.
 void	CModel::runModelRollback()
 {
 	if (!bRollbackRequired ||
@@ -663,9 +603,7 @@ void	CModel::runModelRollback()
 }
 
 
-/*
- *  Clean things up after the model is complete or aborted
- */
+//Clean things up after the model is complete or aborted
 void	CModel::runModelCleanup()
 {
 	// Note these will not return until their threads have terminated
@@ -677,8 +615,7 @@ void	CModel::runModelCleanup()
 }
 
 /*
- *  Run the actual simulation, asking each domain and schemes therein in turn etc.
-
+//Run the actual simulation, asking each domain and schemes therein in turn etc.
 void	CModel::runModelMain()
 {
 	bool*							bSyncReady				= new bool[ domains->getDomainCount() ];
@@ -766,9 +703,7 @@ void	CModel::runModelMain()
 	delete[] bIdle;
 }
  */
- /*
-  *  Run the actual simulation, asking each domain and schemes therein in turn etc.
-  */
+//Run the actual simulation, asking each domain and schemes therein in turn etc.
 void	CModel::runNext(const double next_time_point)
 {
 	bool bIdle;
@@ -854,24 +789,55 @@ void	CModel::runNext(const double next_time_point)
 	delete   pBenchmarkAll;
 }
 
-/*
- * Attached the logger class to the CModel
- */
+//Attached the logger class to the CModel
 void CModel::setLogger(CLog* cLog) {
 	this->log = cLog;
 }
 
-/*
- * Attached the proifler class to the CModel
- */
+//Attached the profiler class to the CModel
 void CModel::setProfiler(CProfiler* profiler) {
 	this->profiler = profiler;
 }
 
 
-/*
- * Attached the logger class to the CModel
- */
+//Attached the logger class to the CModel
 void CModel::setUIStatus(bool status) {
 	this->showProgess = status;
+}
+
+
+/*
+ *  Model is complete.
+ */
+int model::doClose(int iCode)
+{
+	model::doPause();
+
+	return iCode;
+}
+
+/*
+ *  Suspend the application temporarily pending the user
+ *  pressing return to continue.
+ */
+void model::doPause()
+{
+	std::cout << std::endl << "Press any key to close." << std::endl;
+	std::getchar();
+}
+
+/*
+ *  Raise an error message and deal with it accordingly.
+ */
+void model::doError(std::string error_reason, unsigned char error_type, std::string error_place, std::string error_help)
+{
+	model::log->logError(error_reason, error_type, error_place, error_help);
+
+	//if (error_type & model::errorCodes::kLevelModelStop)
+	//	model::log->logInfo("model forceAbort was requested by a function.");
+	//
+	//if (error_type & model::errorCodes::kLevelFatal) {
+	//	model::doPause();
+	//	exit(model::appReturnCodes::kAppFatal);
+	//}
 }

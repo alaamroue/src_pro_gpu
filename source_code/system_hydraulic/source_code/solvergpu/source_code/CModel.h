@@ -34,7 +34,7 @@ class CModel
 	public:
 
 		// Public functions
-		CModel(void);															// Constructor
+		CModel(CLoggingInterface* = NULL);															// Constructor
 		~CModel(void);															// Destructor
 
 		bool					setExecutor(CExecutorControl*);					// Sets the type of executor to use for the model

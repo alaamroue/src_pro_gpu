@@ -33,24 +33,6 @@ CLog::~CLog(void){
 		delete this->externalLogger;
 }
 
-// Setup details of an error that's occurred and send them to the logger to be outputted. Actual handling the error is conducted in the main sub-procedure.
-void CLog::writeError( std::string sError, unsigned char cError ){
-	std::string sErrorPrefix = "UNKNOWN";
-
-	if ( cError & model::errorCodes::kLevelFatal ) { 
-		sErrorPrefix = "FATAL ERROR"; 
-	} else if ( cError & model::errorCodes::kLevelModelStop	) { 
-		sErrorPrefix = "MODEL FAILURE"; 
-	} else if ( cError & model::errorCodes::kLevelModelContinue	) { 
-		sErrorPrefix = "MODEL WARNING"; 
-	} else if ( cError & model::errorCodes::kLevelWarning ) { 
-		sErrorPrefix = "WARNING"; 
-	} else if ( cError & model::errorCodes::kLevelInformation ) { 
-		sErrorPrefix = "INFO"; 
-	}
-	this->logError(sError, sErrorPrefix);
-}
-
 //Write a line to divide up the output, purely superficial
 void CLog::writeDivide()
 {
@@ -88,14 +70,39 @@ void CLog::logWarning(const std::string& message) {
 }
 
 //Actual outputting of error message to user
-void CLog::logError(const std::string& message, const std::string& errPrefix) {
+void CLog::logError(std::string error_reason, unsigned char error_type, std::string error_place, std::string error_help) {
 	if (default) {
+		std::string sErrorPrefix;
+
+		switch (error_type) {
+		case model::errorCodes::kLevelFatal:
+			sErrorPrefix = "FATAL ERROR";
+			break;
+		case model::errorCodes::kLevelModelStop:
+			sErrorPrefix = "MODEL FAILURE";
+			break;
+		case model::errorCodes::kLevelModelContinue:
+			sErrorPrefix = "MODEL WARNING";
+			break;
+		case model::errorCodes::kLevelWarning:
+			sErrorPrefix = "WARNING";
+			break;
+		case model::errorCodes::kLevelInformation:
+			sErrorPrefix = "INFO";
+			break;
+		default:
+			sErrorPrefix = "UNKNOWN";
+			break;
+		}
+
 		std::cout << "---------------------------------------------" << std::endl;
-		std::cout << "[ERR]: " << "[" << errPrefix << "] " << message << std::endl;
+		std::cout << "[ERR]: " << "[" << sErrorPrefix << "] " << error_reason << std::endl;
+		std::cout << "[ERR]: " << "Place: " << error_place << std::endl;
+		std::cout << "[ERR]: " << "Recommendation: " << error_help << std::endl;
 		std::cout << "---------------------------------------------" << std::endl;
 	}
 	else {
-		externalLogger->logError(message, errPrefix);
+		externalLogger->logError(error_reason, error_type, error_place, error_help);
 	}
 }
 

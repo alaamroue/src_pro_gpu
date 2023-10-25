@@ -14,9 +14,7 @@
 
 #include <vector>
 
-/*
- *  Constructor
- */
+//Constructor
 CExecutorControlOpenCL::CExecutorControlOpenCL(CModel* cModel)
 {
 	this->clDeviceTotal = 0;
@@ -28,9 +26,7 @@ CExecutorControlOpenCL::CExecutorControlOpenCL(CModel* cModel)
 	this->logPlatforms();
 }
 
-/*
- *  Destructor
- */
+//Destructor
 CExecutorControlOpenCL::~CExecutorControlOpenCL(void)
 {
 	for ( unsigned int iPlatformID = 0; iPlatformID < this->clPlatformCount; iPlatformID++ )
@@ -54,10 +50,7 @@ CExecutorControlOpenCL::~CExecutorControlOpenCL(void)
 	model::log->logInfo( "The OpenCL executor is now unloaded." );
 }
 
-/*
- *  Ascertain the number of, and store a pointer to each device
- *  available to us.
- */
+//Ascertain the number of, and store a pointer to each device available to us.
 bool CExecutorControlOpenCL::getPlatforms(void)
 {
 	if ( this->clDeviceTotal > 0 )
@@ -130,15 +123,11 @@ bool CExecutorControlOpenCL::getPlatforms(void)
 	return true;
 }
 
-/*
- *  Sends the details about the platforms to the log.
- */
+//Sends the details about the platforms to the log.
 void CExecutorControlOpenCL::logPlatforms(void)
 {
 	CLog*		pLog			= model::log;
 	std::string	sPlatformNo;
-
-	unsigned short	wColour		= model::cli::colourInfoBlock;
 
 	pLog->writeDivide();
 	pLog->logInfo("OPENCL PLATFORMS");
@@ -156,10 +145,7 @@ void CExecutorControlOpenCL::logPlatforms(void)
 	pLog->writeDivide();
 }
 
-/*
- *  Create a new instance of the device class for each device
- *  we can identify on the platforms.
- */
+//Create a new instance of the device class for each device we can identify on the platforms.
 bool CExecutorControlOpenCL::createDevices(void)
 {
 	cl_int				iErrorID;
@@ -238,9 +224,7 @@ bool CExecutorControlOpenCL::createDevices(void)
 	return true;
 }
 
-/*
- *  Obtain the size and value for a platform info field
- */
+//Obtain the size and value for a platform info field
 char* CExecutorControlOpenCL::getPlatformInfo(unsigned int uiPlatformID, cl_platform_info clInfo)
 {
 	cl_int		iErrorID;
@@ -267,18 +251,13 @@ char* CExecutorControlOpenCL::getPlatformInfo(unsigned int uiPlatformID, cl_plat
 	return cValue;
 }
 
-/*
- *  Get the code for a specific type of benchmark, to be compiled
- *  to a kernel.
- */
+//Get the code for a specific type of benchmark, to be compiled to a kernel.
 OCL_RAW_CODE CExecutorControlOpenCL::getOCLCode(std::string sFilename)
 {
 	return Util::getFileResource(sFilename.c_str(), "OpenCLCode");
 }
 
-/*
- *  Return the currently selected device.
- */
+//Return the currently selected device.
 COCLDevice* CExecutorControlOpenCL::getDevice()
 {
 	// Verify that a device has been selected, and do so
@@ -291,9 +270,7 @@ COCLDevice* CExecutorControlOpenCL::getDevice()
 	);
 }
 
-/*
- *  Fetch a device object, required because of some of the static member callbacks.
- */
+//Fetch a device object, required because of some of the static member callbacks.
 COCLDevice* CExecutorControlOpenCL::getDevice(unsigned int uiDeviceNo)
 {
 	if (uiDeviceNo > getDeviceCount())
@@ -303,9 +280,7 @@ COCLDevice* CExecutorControlOpenCL::getDevice(unsigned int uiDeviceNo)
 	return static_cast<COCLDevice*>(this->pDevices[uiDeviceNo - 1]);
 }
 
-/*
- *  Automatically select the best device for the model to use in this instance.
- */
+//Automatically select the best device for the model to use in this instance.
 void	CExecutorControlOpenCL::selectDevice()
 {
 	// Check the device isn't filtered from use, and is seemingly
@@ -339,10 +314,7 @@ void	CExecutorControlOpenCL::selectDevice()
 	this->selectDevice(1);
 }
 
-/*
- *  Select the device specified by the parameter, i.e. force the model to use
- *  a particular device as long as it is suitable. Raise a fatal error otherwise.
- */
+//Select the device specified by the parameter, i.e. force the model to use a particular device as long as it is suitable.Raise a fatal error otherwise.
 void	CExecutorControlOpenCL::selectDevice(unsigned int uiDeviceNo)
 {
 	if (uiDeviceNo > this->pDevices.size())

@@ -16,9 +16,7 @@
 #include "CExecutorControl.h"
 #include "CExecutorControlOpenCL.h"
 
-/*
- *  Constructor
- */
+//Constructor
 CExecutorControl::CExecutorControl(void)
 {
 	// This stub class is not enough to be ready
@@ -27,57 +25,44 @@ CExecutorControl::CExecutorControl(void)
 	this->setState( model::executorStates::executorError );
 }
 
-/*
- *  Destructor
- */
+//Destructor
 CExecutorControl::~CExecutorControl(void)
 {
 	// ...
 }
 
-/*
- *  Create a new executor of the specified type (static func)
- */
+//Create a new executor of the specified type (static func)
 CExecutorControl*	CExecutorControl::createExecutor( unsigned char cType, CModel* cModel)
 {
 	switch ( cType )
 	{
 		case model::executorTypes::executorTypeOpenCL:
-			return new CExecutorControlOpenCL(cModel);
+			return new CExecutorControlOpenCL(cModel); //Delete by pManager
 		break;
 	}
 
 	return NULL;
 }
 
-/*
- *  Is this executor ready to run models?
- */
+//Is this executor ready to run models?
 bool CExecutorControl::isReady( void )
 {
 	return this->state == model::executorStates::executorReady;
 }
 
-/*
- *  Set the ready state of this executor
- */
+//Set the ready state of this executor
 void CExecutorControl::setState( unsigned int iState )
 {
 	this->state = iState;
 }
 
-/*
- *  Set the device filter to determine what types of device we
- *  can use to execute the model.
- */
+//Set the device filter to determine what types of device we can use to execute the model.
 void CExecutorControl::setDeviceFilter( unsigned int uiFilters )
 {
 	this->deviceFilter = uiFilters;
 }
 
-/*
- *  Return any current device filters
- */
+//Return any current device filters
 unsigned int CExecutorControl::getDeviceFilter()
 {
 	return this->deviceFilter;

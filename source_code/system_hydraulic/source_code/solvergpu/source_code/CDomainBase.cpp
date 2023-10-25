@@ -10,7 +10,6 @@
 #include "common.h"
 #include "CDomainBase.h"
 #include "CDomainCartesian.h"
-#include "CDomainRemote.h"
 #include "CDomainLink.h"
 
 
@@ -40,16 +39,10 @@ CDomainBase::~CDomainBase(void)
 //Helper function that create a new class of the appropriate type for the domain we have.Create a domain of the specified type 
 CDomainBase* CDomainBase::createDomain(unsigned char cType)
 {
-	// Skeleton for remote?
-	if (cType == model::domainStructureTypes::kStructureRemote)
-	{
-		return new CDomainRemote;
-	}
-
 	// Cartesian grid?
 	if ( cType == model::domainStructureTypes::kStructureCartesian )
 	{
-		return static_cast<CDomainBase*>(new CDomainCartesian);
+		return static_cast<CDomainBase*>(new CDomainCartesian); //deleted by CModel
 	}
 
 	model::doError(

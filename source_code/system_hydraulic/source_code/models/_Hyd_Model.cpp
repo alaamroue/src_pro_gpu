@@ -1,8 +1,6 @@
 //#include "_Hyd_Model.h"
 #include "Hyd_Headers_Precompiled.h"
 
-CLog* model::log;
-
 // constructor
 _Hyd_Model::_Hyd_Model(void) {
 
@@ -245,7 +243,7 @@ void _Hyd_Model::init_solver(Hyd_Param_Global *global_params){
 		throw msg;
 	}
 
-	//count the requiered mem for the solver
+	//count the required memory for the solver
 	this->count_solver_memory();
 }
 //Initialize the solver with the given parameters for GPU calculation
@@ -256,16 +254,10 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 
 	_hyd_floodplain_scheme_info scheme_info = myFloodplain->Param_FP.get_scheme_info();
 
-	pManager = new CModel(); //Deleted by _Hyd_Model destructor
-	CProfiler* cProfiler = new CProfiler(true);  //Deleted by pManager destructor
+	Hyd_SolverGPU_LoggingWrapper* hyd_SolverGPU_LoggingWrapper = new Hyd_SolverGPU_LoggingWrapper(); //Deleted by pManager destructor
+	pManager = new CModel(hyd_SolverGPU_LoggingWrapper); //Deleted by _Hyd_Model destructor
+	CProfiler* cProfiler = new CProfiler(true);  //Deleted by CModel destructor
 
-	if (model::log == nullptr) {
-		Hyd_SolverGPU_LoggingWrapper* hyd_SolverGPU_LoggingWrapper = new Hyd_SolverGPU_LoggingWrapper(); //Deleted by pManager destructor
-		CLog* cLog = new CLog(hyd_SolverGPU_LoggingWrapper); //Deleted by pManager destructor
-		model::log = cLog;
-	}
-	//TODO: Alaa destory the profiler
-	pManager->setLogger(model::log);
 	pManager->setProfiler(cProfiler);
 
 
@@ -301,20 +293,20 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	ourCartesianDomain->setCols(myFloodplain->Param_FP.get_no_elems_x());
 	ourCartesianDomain->setRows(myFloodplain->Param_FP.get_no_elems_y());
 
-	model::log->writeDivide();
+	pManager->log->writeDivide();
 	if (myFloodplain->get_number_boundary_conditions() == 0) {
 		ourCartesianDomain->setUseOptimizedCoupling(true);
-		model::log->logInfo("Boundary Condition Optimization: On");
+		pManager->log->logInfo("Boundary Condition Optimization: On");
 	}
 	if (myFloodplain->get_number_coupling_conditions() == 0) {
 		ourCartesianDomain->setUseOptimizedCoupling(false);
-		model::log->logInfo("Boundary Condition Optimization: Off");
+		pManager->log->logInfo("Boundary Condition Optimization: Off");
 
 		if (myFloodplain->get_number_boundary_conditions() == 0) {
 			//TODO: Alaa Add warning that there are no coupling and no boundary
 		}
 	}
-	model::log->writeDivide();
+	pManager->log->writeDivide();
 	ourCartesianDomain->setOptimizedCouplingSize(myFloodplain->get_number_coupling_conditions());
 
 	CScheme* pScheme;
@@ -360,7 +352,7 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 		schemeSettings.CacheMode = model::schemeConfigurations::promaidesFormula::kCacheNone;
 		schemeSettings.CacheConstraints = model::cacheConstraints::promaidesFormula::kCacheActualSize;
 	}else {
-		std::cout << "Error: Scheme not chosen!" << std::endl;
+		pManager->log->logWarning("Error: Scheme not chosen!");
 	}
 
 	schemeSettings.ExtrapolatedContiguity = true;
@@ -1282,28 +1274,4 @@ Error _Hyd_Model::set_error(const int err_type){
 	msg.make_second_info(info.str());
 	return msg;
 
-}
-/*
- *  Raise an error message and deal with it accordingly.
- */
-void model::doError(std::string errorMessage, unsigned char errorCode, std::string errorPlace, std::string ErrorRecommendation)
-{
-	model::log->writeError(errorMessage, errorCode);
-	if (errorCode & model::errorCodes::kLevelModelStop)
-		std::cout << "model forceAbort was requested by a function." << std::endl;
-	if (errorCode & model::errorCodes::kLevelFatal)
-	{
-		model::doPause();
-		exit(model::appReturnCodes::kAppFatal);
-	}
-}
-
-/*
- *  Suspend the application temporarily pending the user
- *  pressing return to continue.
- */
-void model::doPause()
-{
-	std::cout << std::endl << "Press any key to close." << std::endl;
-	std::getchar();
 }

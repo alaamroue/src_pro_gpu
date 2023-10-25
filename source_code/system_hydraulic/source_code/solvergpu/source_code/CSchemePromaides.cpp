@@ -147,7 +147,6 @@ void CSchemePromaides::prepareAll()
 void CSchemePromaides::logDetails()
 {
 	model::log->writeDivide();
-	unsigned short wColour = model::cli::colourInfoBlock;
 
 	std::string sConfiguration = "Undefined";
 	switch (this->ucConfiguration)

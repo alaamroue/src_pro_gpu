@@ -116,7 +116,12 @@ class COCLDevice
 
 		// Private functions
 		void						getAllInfo();															// Fetches all the info we'll need on the device
-		void*						getDeviceInfo( cl_device_info );										// Fetch a device info field
+		template <typename T>
+		T						getDeviceInfo( cl_device_info);										// Fetch a device info field
+
+		template <typename T>
+		T						getDeviceInfo_pointers(cl_device_info);								// Fetch a device info field
+
 		void						createQueue( void );													// Create the device context and queue
 
 		model::CallBackData			callBackData;

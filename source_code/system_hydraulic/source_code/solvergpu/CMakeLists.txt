@@ -16,7 +16,6 @@ set(H_FILES
     source_code/CDomainCartesian.h
     source_code/CDomainLink.h
     source_code/CDomainManager.h
-    source_code/CDomainRemote.h
     source_code/CExecutorControl.h
     source_code/CExecutorControlOpenCL.h
     source_code/CLog.h
@@ -34,7 +33,6 @@ set(H_FILES
     source_code/CSchemeInertial.h
     source_code/CSchemeMUSCLHancock.h
     source_code/CSchemePromaides.h
-    source_code/gpudemo.h
     source_code/resource.h
     source_code/util.h
 )
@@ -50,7 +48,6 @@ set(CPP_FILES
     source_code/CDomainCartesian.cpp
     source_code/CDomainLink.cpp
     source_code/CDomainManager.cpp
-    source_code/CDomainRemote.cpp
     source_code/CExecutorControl.cpp
     source_code/CExecutorControlOpenCL.cpp
     source_code/CLog.cpp
@@ -66,7 +63,6 @@ set(CPP_FILES
     source_code/CSchemeInertial.cpp
     source_code/CSchemeMUSCLHancock.cpp
     source_code/CSchemePromaides.cpp
-    source_code/gpudemo.cpp
     source_code/util.cpp
     source_code/windows_platform.cpp
 )

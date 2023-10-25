@@ -98,7 +98,6 @@ void	CDomainCartesian::prepareDomain()
 void	CDomainCartesian::logDetails()
 {
 	model::log->writeDivide();
-	unsigned short	wColour			= model::cli::colourInfoBlock;
 
 	model::log->logInfo("REGULAR CARTESIAN GRID DOMAIN");
 	model::log->logInfo("  Device number:     " + toStringExact(this->pDevice->uiDeviceNo));

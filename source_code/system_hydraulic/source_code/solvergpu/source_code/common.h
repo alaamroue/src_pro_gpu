@@ -40,9 +40,9 @@
 	// Windows-specific includes
 	#include <tchar.h>
 	#include <direct.h>
-	// TODO: Alaa check if these includes are needed. They have been removed wih no problems in the other branches (see master branch and gpu branch)
 #endif
 
+// TODO: Alaa check if these includes are needed. They have been removed with no problems in the other branches (see master branch and gpu branch)
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
@@ -77,17 +77,8 @@ namespace model
 	// Application return codes
 	namespace appReturnCodes{ enum appReturnCodes {
 		kAppSuccess							= 0,	// Success
-		kAppInitFailure						= 1,	// Initialisation failure
+		kAppInitFailure						= 1,	// Initialization failure
 		kAppFatal							= 2		// Fatal error
-	}; }
-
-	// Error type codes
-	namespace errorCodes { enum errorCodes {
-		kLevelFatal							= 1,	// Fatal error, no continuation
-		kLevelModelStop						= 2,	// Error that requires the model to abort
-		kLevelModelContinue					= 4,	// Error for which the model can continue
-		kLevelWarning						= 8,	// Display a warning message
-		kLevelInformation					= 16	// Just provide some information
 	}; }
 
 	// Floating point precision
@@ -97,33 +88,6 @@ namespace model
 			kDouble = 1		// Double-precision
 		};
 	}
-
-
-	// Application author details
-	const std::string appName = " _    _   _   _____    _____   __  __    _____  \n"
-	" | |  | | (_) |  __ \\  |_   _| |  \\/  |  / ____| \n"
-	" | |__| |  _  | |__) |   | |   | \\  / | | (___   \n"
-	" |  __  | | | |  ___/    | |   | |\\/| |  \\___ \\  \n"
-	" | |  | | | | | |       _| |_  | |  | |  ____) | \n"
-	" |_|  |_| |_| |_|      |_____| |_|  |_| |_____/  \n"
-	"   High-performance Integrated Modelling System   ";
-	const std::string appAuthor = "Luke S. Smith and Qiuhua Liang";
-	const std::string appContact = "luke@smith.ac";
-	const std::string appUnit = "School of Civil Engineering and Geosciences";
-	const std::string appOrganisation = "Newcastle University";
-	const std::string appRevision = "$Revision: 717 $";
-
-	// Application version details
-	const unsigned int appVersionMajor = 0;	// Major 
-	const unsigned int appVersionMinor = 2;	// Minor
-	const unsigned int appVersionRevision = 0;	// Revision
-
-	// Application structure for argument names
-	struct modelArgument {
-		const char		cShort[3];
-		const char* cLong;
-		const char* cDescription;
-	};
 
 	// Kernel configurations
 	namespace schemeConfigurations {
@@ -209,7 +173,6 @@ namespace model
 	extern  char*			configFile;
 	extern  char*			codeDir;
 	void					doError( std::string, unsigned char, std::string, std::string);
-
 
 // Executor states
 	namespace executorStates {
@@ -344,38 +307,7 @@ namespace model
 	};
 
 	//Todo: Alaa Remove model:: dependency and allow for safe error logging
-	extern	CLog* log;				// Global logger class
-
-
-// Platform constant
-		namespace env {
-			#ifdef PLATFORM_WIN
-				const std::string	platformCode = "WIN";
-				const std::string	platformName = "Microsoft Windows";
-			#else
-				const std::string	platformCode = "LINUX";
-				const std::string	platformName = "Linux";
-			#endif
-		}
-
-		namespace cli {
-			#ifdef PLATFORM_WIN
-				const WORD		colourTimestamp = FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN;
-				const WORD		colourError = FOREGROUND_RED | FOREGROUND_INTENSITY;
-				const WORD		colourHeader = 0x03;
-				const WORD		colourMain = FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
-				const WORD		colourInfoBlock = FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY;
-			#else
-				const unsigned short		colourTimestamp = 1;
-				const unsigned short		colourError = 2;
-				const unsigned short		colourHeader = 3;
-				const unsigned short		colourMain = 4;
-				const unsigned short		colourInfoBlock = 5;
-			#endif
-		}
-
-
-
+	extern CLog* log;				// Global logger class
 
 	struct CallBackData
 	{

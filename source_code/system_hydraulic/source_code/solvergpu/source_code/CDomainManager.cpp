@@ -142,7 +142,6 @@ bool	CDomainManager::isSetReady()
 void	CDomainManager::logDetails()
 {
 	model::log->writeDivide();
-	unsigned short	wColour = model::cli::colourInfoBlock;
 
 	model::log->logInfo("MODEL DOMAIN SET");
 	model::log->logInfo("  Domain count:      " + toStringExact(this->getDomainCount()));

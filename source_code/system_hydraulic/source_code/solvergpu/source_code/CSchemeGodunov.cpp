@@ -132,7 +132,6 @@ void	CSchemeGodunov::setupScheme(model::SchemeSettings schemeSettings, CModel* c
 void CSchemeGodunov::logDetails()
 {
 	model::log->writeDivide();
-	unsigned short wColour = model::cli::colourInfoBlock;
 
 	std::string sSolver = "Undefined";
 	switch (this->ucSolverType)

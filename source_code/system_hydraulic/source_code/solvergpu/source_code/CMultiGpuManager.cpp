@@ -9,9 +9,7 @@
 
 #include <vector>
 
-/*
- *  Constructor
- */
+//Constructor
 CMultiGpuManager::CMultiGpuManager(void)
 {
 	this->numTotalDevices = 0;
@@ -22,39 +20,30 @@ CMultiGpuManager::CMultiGpuManager(void)
 }
 
 
-/*
- *  Destructor
- */
+//Destructor
 CMultiGpuManager::~CMultiGpuManager(void)
 {
 
 }
 
-/*
- *  Init for Manager
- */
+//Init for Manager
 void CMultiGpuManager::initManager(void)
 {
 	this->fetchHasError = this->getPlatforms();
 }
 
-/*
- *  Check if we are forcing cpu
- */
+//Check if we are forcing cpu
 bool CMultiGpuManager::getForceCpu(void)
 {
 	if (this->fetchHasError) {
 		return true;
 	}
 	else {
-	//do something
+        return true;
 	}
 }
 
-/*
- *  Ascertain the number of, and store a pointer to each device
- *  available to us.
- */
+//Ascertain the number of, and store a pointer to each device available to us.
 bool CMultiGpuManager::getPlatforms(void)
 {
     cl_int err;

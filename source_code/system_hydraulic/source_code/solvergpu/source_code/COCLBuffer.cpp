@@ -14,9 +14,7 @@
 #include "COCLBuffer.h"
 #include "COCLProgram.h"
 
-/*
- *  Constructor
- */
+//Constructor
 COCLBuffer::COCLBuffer(
 		std::string		sName,
 		COCLProgram*	pProgram,
@@ -56,9 +54,7 @@ COCLBuffer::COCLBuffer(
 		allocateHostBlock( this->ulSize );
 }
 
-/*
- *  Destructor
- */
+//Destructor
 COCLBuffer::~COCLBuffer()
 {
 	if ( this->clBuffer != NULL )
@@ -68,9 +64,7 @@ COCLBuffer::~COCLBuffer()
 		delete [] this->pHostBlock;
 }
 
-/*
- *  Create the OpenCL buffer
- */
+//Create the OpenCL buffer
 bool COCLBuffer::createBuffer()
 {
 	cl_int	iErrorID;
@@ -95,7 +89,7 @@ bool COCLBuffer::createBuffer()
 		return false;
 	}
 
-	// TODO: Look at using CL_MEM_COPY_HOST_PTR to initialise memory to zeros if required
+	// TODO: Look at using CL_MEM_COPY_HOST_PTR to initialize memory to zeros if required
 	// TODO: Verify the buffer size is acceptable for the device
 
 	clBuffer = clCreateBuffer(
@@ -127,9 +121,7 @@ bool COCLBuffer::createBuffer()
 	return true;
 }
 
-/*
- *  Create the OpenCL buffer but first initialise its values
- */
+//Create the OpenCL buffer but first initialize its values
 bool COCLBuffer::createBufferAndInitialise()
 {
 	this->clFlags |= CL_MEM_COPY_HOST_PTR;
@@ -140,9 +132,7 @@ bool COCLBuffer::createBufferAndInitialise()
 	return createBuffer();
 }
 
-/*
- *  Set the location of the host-copy of the buffer if it's not within this class instance
- */
+//Set the location of the host-copy of the buffer if it's not within this class instance
 void COCLBuffer::setPointer(
 	void* pLocation,
 	cl_ulong	ulSize
@@ -153,9 +143,7 @@ void COCLBuffer::setPointer(
 	bInternalBlock = false;
 }
 
-/*
- *  Allocate a block of memory within this class instance
- */
+//Allocate a block of memory within this class instance
 void COCLBuffer::allocateHostBlock(
 	cl_ulong	ulSize
 )
@@ -178,17 +166,13 @@ void COCLBuffer::allocateHostBlock(
 	bInternalBlock = true;
 }
 
-/*
-*  Attempt to write all of the buffer to the device
-*/
+//Attempt to write all of the buffer to the device
 void COCLBuffer::queueReadAll()
 {
 	queueReadPartial(0, static_cast<size_t>(this->ulSize));
 }
 
-/*
- *  Attempt to read all of the buffer contents back from the device
- */
+//Attempt to read all of the buffer contents back from the device
 void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock)
 {
 	cl_event	clEvent = NULL;
@@ -245,18 +229,14 @@ void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBl
 	}	
 }
 
-/*
- *  Attempt to write all of the buffer to the device
- */
+//Attempt to write all of the buffer to the device
 void COCLBuffer::queueWriteAll()
 {
 	queueWritePartial( 0, static_cast<size_t>( this->ulSize ) );
 }
 
 
-/*
- *  Attempt to write part of a buffer
- */
+//Attempt to write part of a buffer
 void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock )
 {
 	// Store the event returned, so the calling function

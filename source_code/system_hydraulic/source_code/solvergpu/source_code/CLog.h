@@ -18,8 +18,6 @@
 
 #include "CLoggingInterface.h"
 
-// Namespaces
-
 /*
  *  LOGGING CLASS
  *  CLog
@@ -35,14 +33,13 @@ class CLog : public CLoggingInterface
 		~CLog( void );									// Destructor
 
 		// Public functions
-		void		writeError( std::string, unsigned char );	// Display an error message
 		void		writeDivide( void );					// Write a line to break up the output
 
 		//Interface
 		void logDebug(const std::string&);
 		void logInfo(const std::string&);
 		void logWarning(const std::string&);
-		void logError(const std::string&, const std::string&);
+		void logError(const std::string, unsigned char error_type, const std::string, const std::string);
 		void writeCharToFile(char*, const char*, bool addTime = false);
 
 	private:

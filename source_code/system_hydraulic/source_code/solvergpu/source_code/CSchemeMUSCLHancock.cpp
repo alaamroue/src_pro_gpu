@@ -210,7 +210,6 @@ void CSchemeMUSCLHancock::prepareAll()
 void CSchemeMUSCLHancock::logDetails()
 {
 	model::log->writeDivide();
-	unsigned short wColour = model::cli::colourInfoBlock;
 
 	std::string sSolver = "Undefined";
 	switch (this->ucSolverType)
