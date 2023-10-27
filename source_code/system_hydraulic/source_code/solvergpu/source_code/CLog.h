@@ -44,7 +44,7 @@ class CLog : public CLoggingInterface
 
 	private:
 		CLoggingInterface* externalLogger;
-		bool default;
+		bool useDefaultLogger;
 };
 
 #endif

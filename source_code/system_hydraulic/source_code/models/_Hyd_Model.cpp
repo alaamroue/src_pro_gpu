@@ -255,20 +255,9 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	_hyd_floodplain_scheme_info scheme_info = myFloodplain->Param_FP.get_scheme_info();
 
 	Hyd_SolverGPU_LoggingWrapper* hyd_SolverGPU_LoggingWrapper = new Hyd_SolverGPU_LoggingWrapper(); //Deleted by pManager destructor
-	pManager = new CModel(hyd_SolverGPU_LoggingWrapper); //Deleted by _Hyd_Model destructor
-	CProfiler* cProfiler = new CProfiler(true);  //Deleted by CModel destructor
-
-	pManager->setProfiler(cProfiler);
+	pManager = new CModel(hyd_SolverGPU_LoggingWrapper, false); //Deleted by _Hyd_Model destructor
 
 
-	pManager->setUIStatus(false);
-
-	CExecutorControl* pExecutor = CExecutorControl::createExecutor(model::executorTypes::executorTypeOpenCL, pManager);
-	//pExecutor->setDeviceFilter(model::filters::devices::devicesCPU);
-	pExecutor->setDeviceFilter(model::filters::devices::devicesGPU);
-	//pExecutor->setDeviceFilter(model::filters::devices::devicesAPU);
-	pExecutor->createDevices();
-	pManager->setExecutor(pExecutor);
 
 	double outputFrequency = global_params->GlobTStep / global_params->GlobNofITS;
 	double simulationLength = global_params->GlobTNof * global_params->GlobTStep;
@@ -276,8 +265,6 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	int id = scheme_info.selected_device;
 	//TODO: Alaa Make these customizable
 	pManager->setSelectedDevice(id);														// Set GPU device to Use. Important: Has to be called after setExecutor. Default is the faster one.
-	pManager->setName("Name");																// Set Name of Project
-	pManager->setDescription("The Description");											// Set Description of Project
 	pManager->setSimulationLength(simulationLength);												// Set Simulation Length
 	pManager->setOutputFrequency(outputFrequency);	// Set Output Frequency
 	pManager->setFloatPrecision(model::floatPrecision::kDouble);							// Set Precision
@@ -361,7 +348,7 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	pScheme->setOutputFreq(pManager->getOutputFrequency());
 	//pScheme->setDebugger(1, 1);
 	pScheme->setDomain(ourCartesianDomain);			// Scheme allocates the memory and thus needs to know the dimensions
-	pScheme->prepareAll();							//Needs Dimension data to alocate memory
+	pScheme->prepareAll();							//Needs Dimension data to allocate memory
 	ourCartesianDomain->setScheme(pScheme);
 
 	//This shouldn't be required

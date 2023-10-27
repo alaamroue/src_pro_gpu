@@ -1314,8 +1314,9 @@ void Hyd_Model_Floodplain::solve_model_gpu(const double next_time_point, const s
 		
 		// Read water depth values and set them to element
 		//profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::START_PROFILING);
-		std::unique_ptr<double[]> opt_h_gpu = std::make_unique<double[]>(this->NEQ);
-		pManager->getDomainSet()->getDomain(0)->readBuffers_opt_h(opt_h_gpu.get());
+		//std::unique_ptr<double[]> opt_h_gpu = std::make_unique<double[]>(this->NEQ);
+		double* opt_h_gpu = new double[this->NEQ];
+		pManager->getDomainSet()->getDomain(0)->readBuffers_opt_h(opt_h_gpu);
 		//profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::END_PROFILING);
 
 		//profiler->profile("update_ds_dt", Profiler::profilerFlags::START_PROFILING);
@@ -1339,6 +1340,8 @@ void Hyd_Model_Floodplain::solve_model_gpu(const double next_time_point, const s
 		}
 		//profiler->profile("calculate_ds_dt", Profiler::profilerFlags::END_PROFILING);
 		
+		delete[] opt_h_gpu;
+
 		///New Code..................... Better for Godunov Scheme
 		/*
 		double** results = pManager->getDomainSet()->getDomain(0)->readBuffers_h_vx_vy();

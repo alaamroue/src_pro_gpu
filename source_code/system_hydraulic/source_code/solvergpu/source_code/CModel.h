@@ -34,7 +34,7 @@ class CModel
 	public:
 
 		// Public functions
-		CModel(CLoggingInterface* = NULL);															// Constructor
+		CModel(CLoggingInterface* = NULL, bool = false);															// Constructor
 		~CModel(void);															// Destructor
 
 		bool					setExecutor(CExecutorControl*);					// Sets the type of executor to use for the model
@@ -90,8 +90,6 @@ class CModel
 		CDomainManager*			domains;										// Handle for the domain management class
 		CMPIManager*			mpiManager;										// Handle for the MPI manager class
 		unsigned int			selectedDevice;
-		std::string				sModelName;										// Short name for the model
-		std::string				sModelDescription;								// Short description of the model
 		bool					bDoublePrecision;								// Double precision enabled?
 		double					dSimulationTime;								// Total length of simulations
 		double					dCurrentTime;									// Current simulation time

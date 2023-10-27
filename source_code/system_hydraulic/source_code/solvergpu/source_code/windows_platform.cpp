@@ -167,7 +167,9 @@ char* Util::getFileResource(const char* sName, const char* sType)
 
 		model::doError(
 			"Requested an invalid resource.",
-			model::errorCodes::kLevelWarning
+			model::errorCodes::kLevelWarning,
+			"char* Util::getFileResource(const char* sName, const char* sType)",
+			"Couldn't find the requested resource that matches this name. Name: [" + std::string(sName) + "] .Type: [" + std::string(sType) + "]"
 		);
 		return "";
 
@@ -191,7 +193,9 @@ char* Util::getFileResource(const char* sName, const char* sType)
 	{
 		model::doError(
 			"Error loading a resource.",
-			model::errorCodes::kLevelWarning
+			model::errorCodes::kLevelWarning,
+			"char* Util::getFileResource(const char* sName, const char* sType)",
+			"Unable to find or locate resource file. Name: [" + std::string(sName) + "] .Type: [" + std::string(sType) + "]"
 		);
 		return "";
 	}

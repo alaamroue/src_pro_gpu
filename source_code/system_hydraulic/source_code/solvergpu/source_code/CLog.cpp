@@ -15,12 +15,12 @@ CLog::CLog(CLoggingInterface* externalLogger_input){
 	externalLogger = nullptr;
 
 	//Check and attach to external logging functions
-	if (externalLogger_input != nullptr) {
-		default = false;
+	if (externalLogger_input != NULL) {
+		useDefaultLogger = false;
 		externalLogger = externalLogger_input;
 	}
 	else {
-		default = true;
+		useDefaultLogger = true;
 	}
 
 	setlocale( LC_ALL, "" );
@@ -41,7 +41,7 @@ void CLog::writeDivide()
 
 //Actual outputting of debug message to user
 void CLog::logDebug(const std::string& message) {
-	if (default) {
+	if (useDefaultLogger) {
 		std::cout << "[DEBUG]: " << message << std::endl;
 	}
 	else {
@@ -51,7 +51,7 @@ void CLog::logDebug(const std::string& message) {
 
 //Actual outputting of info message to user
 void CLog::logInfo(const std::string& message) {
-	if (default) {
+	if (useDefaultLogger) {
 		std::cout << "[INFO]: " << message << std::endl;
 	}
 	else {
@@ -61,7 +61,7 @@ void CLog::logInfo(const std::string& message) {
 
 //Actual outputting of warning message to user
 void CLog::logWarning(const std::string& message) {
-	if (default) {
+	if (useDefaultLogger) {
 		std::cout << "[WARN]: " << message << std::endl;
 	}
 	else {
@@ -71,7 +71,7 @@ void CLog::logWarning(const std::string& message) {
 
 //Actual outputting of error message to user
 void CLog::logError(std::string error_reason, unsigned char error_type, std::string error_place, std::string error_help) {
-	if (default) {
+	if (useDefaultLogger) {
 		std::string sErrorPrefix;
 
 		switch (error_type) {

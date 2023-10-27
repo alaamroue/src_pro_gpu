@@ -21,11 +21,14 @@ using std::max;
 CLog* model::log;
 
 //Constructor
-CModel::CModel(CLoggingInterface* CLI)
+CModel::CModel(CLoggingInterface* CLI, bool profilingOn)
 {
 	this->log = new CLog(CLI);
 	model::log = this->log;
 
+	this->profiler = new CProfiler(profilingOn);
+
+	this->showProgess = false;
 	this->execController	= NULL;
 	this->domains			= new CDomainManager();
 	this->mpiManager		= NULL;
@@ -39,6 +42,11 @@ CModel::CModel(CLoggingInterface* CLI)
 	this->pProgressCoords.sY = -1;
 
 	this->ulRealTimeStart = 0;
+
+	CExecutorControl* pExecutor = CExecutorControl::createExecutor(model::executorTypes::executorTypeOpenCL, this);
+	pExecutor->setDeviceFilter(model::filters::devices::devicesGPU);
+	pExecutor->createDevices();
+	this->setExecutor(pExecutor);
 }
 
 //Destructor
@@ -111,7 +119,6 @@ void CModel::logDetails()
 {
 	this->log->writeDivide();
 	this->log->logInfo("SIMULATION CONFIGURATION");
-	this->log->logInfo("  Name:               " + this->sModelName);
 	this->log->logInfo("  Simulation length:  " + Util::secondsToTime(this->dSimulationTime));
 	this->log->logInfo("  Output frequency:   " + Util::secondsToTime(this->dOutputFrequency));
 	this->log->logInfo("  Floating-point:     " + (std::string)(this->getFloatPrecision() == model::floatPrecision::kDouble ? "Double-precision" : "Single-precision"));

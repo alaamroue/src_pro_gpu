@@ -1,6 +1,14 @@
+# - Set allows giving a value to a variable similar to: UI_FILES = "file1.ui file2.ui file3.ui"
+# - A list of .ui Files is made to make it easier to work with them
+# - In this case, there are no UI files, this "set" is just used to keep the code consitent
+# - If you add UI files to this library please uncomment the qt5_wrap_ui line below or add AUTOUIC
 set(UI_FILES
 )
 
+# - Set allows giving a value to a variable similar to: H_FILES = "file1.h file2.h file3.h"
+# - A list of .h Files is made to make it easier to work with them
+# - All the h files in this library need to be added here MANUALLY.
+# - This variable is passed to the library when creating it so that it knows what files are parts of it
 set(H_FILES
     cvode.h
     cvode_band.h
@@ -41,6 +49,10 @@ set(H_FILES
     protos.h
 )
 
+# - Set allows giving a value to a variable similar to: CPP_FILES = "file1.cpp file2.cpp file3.cpp"
+# - A list of h Files is made to make it easier to work with them
+# - All the .cpp files in this library need to be added here MANUALLY.
+# - This variable is passed to the library when creating it so that it knows what files to compile
 set(CPP_FILES           
     cvode.c
     cvode_band.c
@@ -71,11 +83,22 @@ set(CPP_FILES
     sets.c
 )
 
+# - qt5_wrap_ui: Creates rules for calling the User Interface Compiler (uic) on the given .ui files
+# - In case there are any UI files. Uncomment the line below
 #qt5_wrap_ui(UI_FILES ${UI_FILES})
 
+# - add_library create the library
+# - The add_library is the engine here and is defined as add_library(<name> [STATIC | SHARED | MODULE] [EXCLUDE_FROM_ALL] [<source>...])
+# - solver is the name given to the library
+# - What follows are the source codes
 add_library(solver ${UI_FILES} ${H_FILES} ${CPP_FILES})
 
+# - target_include_directories sets the include directories for a specfic target
+# - In this case the include directories for the solver package are defined
+# - It is set to PUBLIC meaning the parent targerts also inherit these directories
+# - For example: the HYD Library is a parent of solver and has access to things like: include "cvode.h"
+# - All files in this libary are in the the same directory so only "/" is needed
 target_include_directories(solver
     PUBLIC
-    	/
+    	./.
 )

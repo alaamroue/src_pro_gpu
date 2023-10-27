@@ -1,7 +1,7 @@
 # - Set allows giving a value to a variable similar to: UI_FILES = "file1.ui file2.ui file3.ui"
 # - A list of .ui Files is made to make it easier to work with them
 # - In this case, there are no UI files, this "set" is just used to keep the code consitent
-# - If you add UI files to this library please uncomment the qt5_wrap_ui line or add AUTOUIC
+# - If you add UI files to this library please uncomment the qt5_wrap_ui line below or add AUTOUIC
 set(UI_FILES
 )
 
@@ -84,7 +84,7 @@ set(RCFiles
 
 # - add_library create the library
 # - The add_library is the engine here and is defined as add_library(<name> [STATIC | SHARED | MODULE] [EXCLUDE_FROM_ALL] [<source>...])
-# - solvergpu is the name given the library
+# - solvergpu is the name given to the library
 # - What follows are the source codes
 add_library(solvergpu ${UI_FILES} ${H_FILES} ${CPP_FILES})
 
