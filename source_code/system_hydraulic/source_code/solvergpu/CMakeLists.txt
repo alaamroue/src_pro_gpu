@@ -16,7 +16,6 @@ set(H_FILES
     source_code/CDomainCartesian.h
     source_code/CDomainLink.h
     source_code/CDomainManager.h
-    source_code/CExecutorControl.h
     source_code/CExecutorControlOpenCL.h
     source_code/CLog.h
     source_code/CLoggingInterface.h
@@ -48,7 +47,6 @@ set(CPP_FILES
     source_code/CDomainCartesian.cpp
     source_code/CDomainLink.cpp
     source_code/CDomainManager.cpp
-    source_code/CExecutorControl.cpp
     source_code/CExecutorControlOpenCL.cpp
     source_code/CLog.cpp
     source_code/CModel.cpp

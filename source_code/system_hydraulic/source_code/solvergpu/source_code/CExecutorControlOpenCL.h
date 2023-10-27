@@ -10,7 +10,6 @@
 #define HIPIMS_OPENCL_EXECUTORS_CEXECUTORCONTROLOPENCL_H_
 
 #include <vector>
-#include "CExecutorControl.h"
 #include "CL/opencl.h"
 
 // Type aliases
@@ -26,12 +25,11 @@ class COCLDevice;
  *
  *  Controls the model execution
  */
-class CExecutorControlOpenCL: public CExecutorControl
-{
+class CExecutorControlOpenCL{
 
 	public:
 
-		CExecutorControlOpenCL(CModel* cModel);
+		CExecutorControlOpenCL(unsigned int);
 		~CExecutorControlOpenCL( void );							// Destructor
 
 		// Public variables
@@ -41,6 +39,7 @@ class CExecutorControlOpenCL: public CExecutorControl
 		friend class			COCLDevice;							// Allow the devices access to these private vars
 
 		// Public functions
+		bool					isReady(void);						// Is the executor ready?
 		COCLDevice*				getDevice();						// Fetch the currently selected device
 		COCLDevice*				getDevice( unsigned int );			// Fetch a device pointer
 		void					selectDevice();						// Automatically select the best device
@@ -49,6 +48,9 @@ class CExecutorControlOpenCL: public CExecutorControl
 		bool					createDevices( void );				// Creates new classes for each device
 		unsigned int			getDeviceCount( void )		{ return clDeviceTotal; }		// Returns the number of devices in the system
 		unsigned int			getDeviceCurrent( void )	{ return uiSelectedDeviceID; }	// Returns the active device
+		void					setState( unsigned int );				// Set the ready state
+		unsigned int			getDeviceFilter();					// Fetch back the current device filter
+		
 
 	private:
 
@@ -72,7 +74,9 @@ class CExecutorControlOpenCL: public CExecutorControl
 								pDevices;				
 		unsigned int			uiSelectedDeviceID;				// The selected device for use in execution
 
-		CModel* cModel;
+
+		unsigned int			deviceFilter;							// Device filter active for this executor
+		unsigned int			state;									// Ready state value
 
 		// Private functions
 		char*					getPlatformInfo( unsigned int, cl_platform_info );	// Fetches information about the platform

@@ -15,11 +15,13 @@
 #include <vector>
 
 //Constructor
-CExecutorControlOpenCL::CExecutorControlOpenCL(CModel* cModel)
+CExecutorControlOpenCL::CExecutorControlOpenCL(unsigned int uiFilters)
 {
 	this->clDeviceTotal = 0;
 	this->uiSelectedDeviceID = NULL;
-	this->cModel = cModel;
+	this->deviceFilter = uiFilters;
+
+	this->setState(model::executorStates::executorError);
 
 	if (!this->getPlatforms()) return;
 
@@ -184,8 +186,7 @@ bool CExecutorControlOpenCL::createDevices(void)
 				clDevice[iDeviceID],
 				iPlatformID,
 				uiDeviceCount,
-				this,
-				cModel
+				this
 			);
 
 			if (pDevice->isReady())
@@ -334,4 +335,23 @@ void	CExecutorControlOpenCL::selectDevice(unsigned int uiDeviceNo)
 	}
 
 	this->uiSelectedDeviceID = uiDeviceNo;
+}
+
+
+//Is this executor ready to run models?
+bool CExecutorControlOpenCL::isReady(void)
+{
+	return this->state == model::executorStates::executorReady;
+}
+
+//Set the ready state of this executor
+void CExecutorControlOpenCL::setState(unsigned int iState)
+{
+	this->state = iState;
+}
+
+//Return any current device filters
+unsigned int CExecutorControlOpenCL::getDeviceFilter()
+{
+	return this->deviceFilter;
 }

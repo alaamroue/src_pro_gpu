@@ -252,28 +252,24 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	this->gpu_in_use = true;
 	Hyd_Model_Floodplain* myFloodplain = (Hyd_Model_Floodplain*) this;
 
+	//Collect Floodplain Information
 	_hyd_floodplain_scheme_info scheme_info = myFloodplain->Param_FP.get_scheme_info();
-
-	Hyd_SolverGPU_LoggingWrapper* hyd_SolverGPU_LoggingWrapper = new Hyd_SolverGPU_LoggingWrapper(); //Deleted by pManager destructor
-	pManager = new CModel(hyd_SolverGPU_LoggingWrapper, false); //Deleted by _Hyd_Model destructor
-
-
-
 	double outputFrequency = global_params->GlobTStep / global_params->GlobNofITS;
 	double simulationLength = global_params->GlobTNof * global_params->GlobTStep;
 
-	int id = scheme_info.selected_device;
-	//TODO: Alaa Make these customizable
-	pManager->setSelectedDevice(id);														// Set GPU device to Use. Important: Has to be called after setExecutor. Default is the faster one.
-	pManager->setSimulationLength(simulationLength);												// Set Simulation Length
-	pManager->setOutputFrequency(outputFrequency);	// Set Output Frequency
-	pManager->setFloatPrecision(model::floatPrecision::kDouble);							// Set Precision
+	//Create the GPU model with our own logger attached
+	Hyd_SolverGPU_LoggingWrapper* hyd_SolverGPU_LoggingWrapper = new Hyd_SolverGPU_LoggingWrapper(); //Deleted by pManager destructor
+	pManager = new CModel(hyd_SolverGPU_LoggingWrapper, false); //Deleted by _Hyd_Model destructor
 
-	pManager->getDomainSet()->setSyncMethod(model::syncMethod::kSyncTimestep);
+	//TODO: Alaa Make these customizable
+	pManager->setSelectedDevice(scheme_info.selected_device);							// Set GPU device to Use. Important: Has to be called after setExecutor. Default is the faster one.
+	pManager->setSimulationLength(simulationLength);									// Set Simulation Length
+	pManager->setOutputFrequency(outputFrequency);										// Set Output Frequency
+	pManager->setFloatPrecision(model::floatPrecision::kDouble);						// Set Precision
 
 	CDomainBase* pDomainNew;
 	pDomainNew = CDomainBase::createDomain(model::domainStructureTypes::kStructureCartesian);
-	static_cast<CDomain*>(pDomainNew)->setDevice(pManager->getExecutor()->getDevice(id));
+	static_cast<CDomain*>(pDomainNew)->setDevice(pManager->getExecutor()->getDevice(scheme_info.selected_device));
 	CDomainCartesian* ourCartesianDomain = (CDomainCartesian*)pDomainNew;
 
 	ourCartesianDomain->setCellResolution(*myFloodplain->Param_FP.get_ptr_width_x(), *myFloodplain->Param_FP.get_ptr_width_y());

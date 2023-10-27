@@ -10,12 +10,11 @@
 #include "common.h"
 #include "CL/opencl.h"
 #include "CModel.h"
-#include "CExecutorControl.h"
 #include "CExecutorControlOpenCL.h"
 #include "COCLDevice.h"
 
 //Constructor
-COCLDevice::COCLDevice( cl_device_id clDevice, unsigned int iPlatformID, unsigned int iDeviceNo, CExecutorControlOpenCL* executor, CModel* cModel)
+COCLDevice::COCLDevice( cl_device_id clDevice, unsigned int iPlatformID, unsigned int iDeviceNo, CExecutorControlOpenCL* executor)
 {
 	// Store the device and platform ID
 	this->uiPlatformID			= iPlatformID;
@@ -28,8 +27,6 @@ COCLDevice::COCLDevice( cl_device_id clDevice, unsigned int iPlatformID, unsigne
 	this->bErrored				= false;
 	this->bBusy					= false;
 	this->clMarkerEvent			= NULL;
-	this->cModel				= cModel;
-	this->callBackData.cModel	= this->cModel;
 
 	model::log->logInfo("Querying the suitability of a discovered device.");
 

@@ -34,10 +34,10 @@ class CModel
 	public:
 
 		// Public functions
-		CModel(CLoggingInterface* = NULL, bool = false);															// Constructor
+		CModel(CLoggingInterface* = NULL, bool profilingOn = false);															// Constructor
 		~CModel(void);															// Destructor
 
-		bool					setExecutor(CExecutorControl*);					// Sets the type of executor to use for the model
+		bool					setExecutor(CExecutorControlOpenCL*);					// Sets the type of executor to use for the model
 		CExecutorControlOpenCL*	getExecutor(void);								// Gets the executor object currently in use
 		CDomainManager*			getDomainSet(void);								// Gets the domain set
 		CMPIManager*			getMPIManager(void);							// Gets the MPI manager
@@ -67,8 +67,6 @@ class CModel
 		void					setOutputFrequency( double );					// Set the output frequency
 		void					setFloatPrecision( unsigned char );				// Set floating point precision
 		unsigned char			getFloatPrecision();							// Get floating point precision
-		void					setName( std::string );							// Sets the name
-		void					setDescription( std::string );					// Sets the description
 		void					logProgress( CBenchmark::sPerformanceMetrics* );// Write the progress bar etc.
 		static void CL_CALLBACK	visualiserCallback( cl_event, cl_int, void * );	// Callback event used when memory reads complete, for visualisation updates
 		void					runNext(const double);

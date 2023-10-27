@@ -24,7 +24,7 @@ class COCLDevice
 
 	public:
 
-		COCLDevice( cl_device_id, unsigned int, unsigned int, CExecutorControlOpenCL*, CModel*);				// Constructor
+		COCLDevice( cl_device_id, unsigned int, unsigned int, CExecutorControlOpenCL*);				// Constructor
 		~COCLDevice( void );												// Destructor
 
 		// Public structures

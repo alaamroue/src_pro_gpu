@@ -43,8 +43,7 @@ CModel::CModel(CLoggingInterface* CLI, bool profilingOn)
 
 	this->ulRealTimeStart = 0;
 
-	CExecutorControl* pExecutor = CExecutorControl::createExecutor(model::executorTypes::executorTypeOpenCL, this);
-	pExecutor->setDeviceFilter(model::filters::devices::devicesGPU);
+	CExecutorControlOpenCL* pExecutor = new CExecutorControlOpenCL(model::filters::devices::devicesGPU);
 	pExecutor->createDevices();
 	this->setExecutor(pExecutor);
 }
@@ -64,13 +63,13 @@ CModel::~CModel(void)
 }
 
 //Set the type of executor to use for the model
-bool CModel::setExecutor(CExecutorControl* pExecutorControl)
+bool CModel::setExecutor(CExecutorControlOpenCL* pExecutorControl)
 {
 	// TODO: Has the value actually changed?
 
 	// TODO: Delete the old executor controller
 
-	this->execController = static_cast<CExecutorControlOpenCL*>(pExecutorControl);
+	this->execController = pExecutorControl;
 
 	if (!this->execController->isReady())
 	{
@@ -160,18 +159,6 @@ bool CModel::runModel(void)
 	//this->runModelMain();
 
 	return true;
-}
-
-//Sets a short name for the model
-void	CModel::setName(std::string sName)
-{
-	this->sModelName = sName;
-}
-
-//Sets a short name for the model
-void	CModel::setDescription(std::string sDescription)
-{
-	this->sModelDescription = sDescription;
 }
 
 //Sets the total length of a simulation
