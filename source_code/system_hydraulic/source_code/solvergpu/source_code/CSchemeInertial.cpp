@@ -9,7 +9,6 @@
 #include <algorithm>
 
 #include "common.h"
-#include "CDomain.h"
 #include "CDomainCartesian.h"
 #include "CSchemeInertial.h"
 
@@ -19,7 +18,7 @@ using std::max;
 /*
  *  Constructor
  */
-CSchemeInertial::CSchemeInertial(void)
+CSchemeInertial::CSchemeInertial()
 {
 	// Scheme is loaded
 	model::log->logInfo("Inertial scheme loaded for execution on OpenCL platform.");
@@ -32,6 +31,7 @@ CSchemeInertial::CSchemeInertial(void)
 	this->ucSolverType = model::solverTypes::kHLLC;
 	this->ucConfiguration = model::schemeConfigurations::inertialFormula::kCacheNone;
 	this->ucCacheConstraints = model::cacheConstraints::inertialFormula::kCacheActualSize;
+
 }
 
 /*
@@ -247,7 +247,7 @@ bool CSchemeInertial::prepareInertialKernels()
 {
 	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomain* pDomain = this->pDomain;
+	CDomainCartesian* pDomain = this->pDomain;
 	COCLDevice* pDevice = pExecutor->getDevice();
 
 	// --

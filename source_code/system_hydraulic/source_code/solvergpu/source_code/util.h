@@ -32,11 +32,7 @@ namespace Util
 	//cursorCoords	getCursorPosition();
 	void			getHostname(char*);
 	//void			setCursorPosition(cursorCoords);
-	double			round(double, unsigned char);
-	char*			toLowercase(const char*);
-	void			toLowercase(char**, const char*);
-	void			toNewString(char**, const char*);
-	bool			fileExists(const char*);
+	double			round(double, unsigned int);
 	std::string     to_string_exact(double);
 
 }

@@ -30,23 +30,10 @@ struct _hyd_floodplain_geo_info{
 	double origin_global_y;
 };
 
-///Enumerator for defining the scheme that will be used to run the simulation \ingroup hyd
-enum _hyd_calc_scheme_type {
-	///Hydraulic scheme using diffusive wave equations, calculated implicitly on the CPU
-	eDIFFUSIVE_CPU = 1,
-	///Hydraulic scheme using diffusive wave equations, calculated explicitly on the GPU
-	eDIFFUSIVE_GPU = 2,
-	///Hydraulic scheme using inertial scheme, calculated explicitly on the GPU
-	eINERTIAL_GPU = 3,
-	///Hydraulic scheme using Godunov scheme implemented with HLLLC, calculated explicitly on the GPU
-	eGODUNOV_GPU = 4,
-	///Hydraulic scheme using MUSCL scheme (2nd order scheme), calculated explicitly on the GPU
-	eMUSCL_GPU = 5
-};
 ///Structure where the geometrical information of the floodplain are stored \ingroup hyd
 struct _hyd_floodplain_scheme_info {
 	///Selected scheme for the floodplain simulation
-	_hyd_calc_scheme_type scheme_type;
+	model::schemeTypes::schemeTypes scheme_type;
 	///Device selected to calculate the simulation on
 	int selected_device;
 	///Courant number used when calculating a maximum timestep to use
@@ -137,9 +124,9 @@ public:
 	Hyd_Param_FP& operator= (const Hyd_Param_FP& par);
 
 	///Convert the scheme type enumerator from text to enum
-	_hyd_calc_scheme_type convert_txt2schemetype(string txt);
+	model::schemeTypes::schemeTypes convert_txt2schemetype(string txt);
 	///Convert the scheme type enumerator from enum to txt 
-	string convert_schemetype2txt(_hyd_calc_scheme_type type);
+	string convert_schemetype2txt(model::schemeTypes::schemeTypes type);
 
 private:
 	///Name of the Floodplain model
@@ -176,7 +163,7 @@ private:
 	double noinfo_value;	
 
 	///Selected scheme for the floodplain simulation
-	_hyd_calc_scheme_type scheme_type;
+	model::schemeTypes::schemeTypes scheme_type;
 	///Device selected to calculate the simulation on
 	int selected_device;
 	///Courant number used when calculating a maximum timestep to use

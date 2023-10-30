@@ -9,9 +9,6 @@
 #include <algorithm>
 
 #include "common.h"
-#include "CDomainManager.h"
-#include "CDomain.h"
-#include "CDomainLink.h"
 #include "CDomainCartesian.h"
 
 #include "CSchemeGodunov.h"
@@ -24,7 +21,7 @@ using std::max;
 /*
  *  Default constructor
  */
-CSchemeGodunov::CSchemeGodunov()
+CSchemeGodunov::CSchemeGodunov(void)
 {
 	// Scheme is loaded
 	model::log->logInfo("Godunov-type scheme loaded for execution on OpenCL platform.");
@@ -36,12 +33,25 @@ CSchemeGodunov::CSchemeGodunov()
 	this->bDebugOutput = false;
 	this->uiDebugCellX = 9999;
 	this->uiDebugCellY = 9999;
+	
+	this->bImportBoundaries = false;
+	this->bOverrideTimestep = false;
+	this->bUpdateTargetTime = false;
+	this->bUseAlternateKernel = false;
+	this->bUseForcedTimeAdvance = false;
+	this->dLastSyncTime = -1.0;
+	this->ulCachedGlobalSizeX = 0;
+	this->ulCachedGlobalSizeY = 0;
+	this->ulCouplingArraySize = 0;
+	this->ulNonCachedGlobalSizeX = 0;
+	this->ulNonCachedGlobalSizeY = 0;
+	this->ulReductionGlobalSize = 0;
+	this->ulReductionWorkgroupSize = 0;
 
 	this->dCurrentTime = 0.0;
 	this->dThresholdVerySmall = 1E-10;
 	this->dThresholdQuiteSmall = this->dThresholdVerySmall * 10;
-	this->bFrictionInFluxKernel = true;
-	this->bIncludeBoundaries = false;
+	this->bFrictionInFluxKernel = false;
 	this->uiTimestepReductionWavefronts = 200;
 
 	this->ucSolverType = model::solverTypes::kHLLC;
@@ -52,12 +62,6 @@ CSchemeGodunov::CSchemeGodunov()
 	this->ulCachedWorkgroupSizeY = 0;
 	this->ulNonCachedWorkgroupSizeX = 0;
 	this->ulNonCachedWorkgroupSizeY = 0;
-
-	this->dBoundaryTimeSeries = NULL;
-	this->fBoundaryTimeSeries = NULL;
-	this->uiBoundaryParameters = NULL;
-	this->ulBoundaryRelationCells = NULL;
-	this->uiBoundaryRelationSeries = NULL;
 
 	// Default null values for OpenCL objects
 	oclModel = NULL;
@@ -85,6 +89,10 @@ CSchemeGodunov::CSchemeGodunov()
 	oclBufferTimeHydrological = NULL;
 	oclBufferCouplingIDs = NULL;
 	oclBufferCouplingValues = NULL;
+	
+	oclBufferBatchTimesteps = NULL;
+	oclBufferBatchSuccessful = NULL;
+	oclBufferBatchSkipped = NULL;
 
 	if (this->bDebugOutput)
 		model::doError("Debug mode is enabled!",
@@ -103,27 +111,6 @@ CSchemeGodunov::~CSchemeGodunov(void)
 {
 	this->releaseResources();
 	model::log->logInfo("The Godunov scheme class was unloaded from memory.");
-}
-
-/*
- *  Read in settings from the XML configuration file for this scheme
- */
-void	CSchemeGodunov::setupScheme(model::SchemeSettings schemeSettings, CModel* cModel)
-{
-	this->cModel = cModel;
-
-	this->setCourantNumber(schemeSettings.CourantNumber);
-	this->setDryThreshold(schemeSettings.DryThreshold);
-	this->setTimestepMode(schemeSettings.TimestepMode);
-	this->setTimestep(schemeSettings.Timestep);
-	this->setReductionWavefronts(schemeSettings.ReductionWavefronts);
-	this->setFrictionStatus(schemeSettings.FrictionStatus);
-	this->setRiemannSolver(schemeSettings.RiemannSolver);
-	this->setCachedWorkgroupSize(schemeSettings.CachedWorkgroupSize[0], schemeSettings.CachedWorkgroupSize[1]);
-	this->setNonCachedWorkgroupSize(schemeSettings.NonCachedWorkgroupSize[0], schemeSettings.NonCachedWorkgroupSize[1]);
-	this->setCacheMode(schemeSettings.CacheMode);
-	this->setCacheConstraints(schemeSettings.CacheConstraints);
-
 }
 
 /*
@@ -167,11 +154,38 @@ void CSchemeGodunov::logDetails()
 	model::log->writeDivide();
 }
 
+void CSchemeGodunov::prepareSetup(CModel* cModel, model::SchemeSettings schemeSettings) {
+
+	this->cModel = cModel;
+
+	this->setCourantNumber(schemeSettings.CourantNumber);
+	this->setDryThreshold(schemeSettings.DryThreshold);
+	this->setTimestepMode(schemeSettings.TimestepMode);
+	this->setTimestep(schemeSettings.Timestep);
+	this->setReductionWavefronts(schemeSettings.ReductionWavefronts);
+	this->setFrictionStatus(schemeSettings.FrictionStatus);
+	this->setRiemannSolver(schemeSettings.RiemannSolver);
+	this->setNonCachedWorkgroupSize(schemeSettings.NonCachedWorkgroupSize[0], schemeSettings.NonCachedWorkgroupSize[1]);
+	this->setOutputFreq(cModel->getOutputFrequency());
+
+	this->setDomain(cModel->getDomain());
+
+	if (schemeSettings.debuggerOn) {
+		this->setDebugger(schemeSettings.debuggerCells[0], schemeSettings.debuggerCells[1]);
+	}
+
+	this->setDomain(this->cModel->getDomain());
+	this->cModel->getDomain()->setScheme(this);
+	this->prepareAll();
+}
+
 /*
  *  Run all preparation steps
  */
 void CSchemeGodunov::prepareAll()
 {
+
+
 	model::log->logInfo("Starting to prepare program for Godunov-type scheme.");
 
 	this->releaseResources();
@@ -438,8 +452,8 @@ bool CSchemeGodunov::prepare1OExecDimensions()
 	// --
 	// Optimized Coupling
 	// --
-	this->bUseOptimizedBoundary = pDomain->getSummary().bUseOptimizedBoundary;
-	this->ulCouplingArraySize = pDomain->getSummary().ulCouplingArraySize;
+	this->bUseOptimizedBoundary = pDomain->getUseOptimizedCoupling();
+	this->ulCouplingArraySize = pDomain->getOptimizedCouplingSize();
 
 
 	// --
@@ -570,7 +584,7 @@ bool CSchemeGodunov::prepare1OConstants()
 	double	dResolutionX, dResolutionY;
 	pDomain->getCellResolution(&dResolutionX, &dResolutionY);
 
-	unsigned long ulOptimizedCouplingArraySize = pDomain->getSummary().ulCouplingArraySize;
+	unsigned long ulOptimizedCouplingArraySize = pDomain->getOptimizedCouplingSize();
 
 	oclModel->registerConstant("DOMAIN_CELLCOUNT", std::to_string(pDomain->getCellCount()));
 	oclModel->registerConstant("DOMAIN_COLS", std::to_string(pDomain->getCols()));
@@ -589,7 +603,7 @@ bool CSchemeGodunov::prepare1OMemory()
 {
 	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomain* pDomain = this->pDomain;
+	CDomainCartesian* pDomain = this->pDomain;
 	COCLDevice* pDevice = pExecutor->getDevice();
 
 	unsigned char ucFloatSize = (cModel->getFloatPrecision() == model::floatPrecision::kSingle ? sizeof(cl_float) : sizeof(cl_double));
@@ -750,7 +764,7 @@ bool CSchemeGodunov::prepareGeneralKernels()
 {
 	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomain* pDomain = this->pDomain;
+	CDomainCartesian* pDomain = this->pDomain;
 	COCLDevice* pDevice = pExecutor->getDevice();
 
 	// --
@@ -834,7 +848,7 @@ bool CSchemeGodunov::prepare1OKernels()
 {
 	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomain* pDomain = this->pDomain;
+	CDomainCartesian* pDomain = this->pDomain;
 	COCLDevice* pDevice = pExecutor->getDevice();
 
 	// --
@@ -907,6 +921,9 @@ void CSchemeGodunov::release1OResources()
 	if (this->oclBufferTime != NULL)						delete oclBufferTime;
 	if (this->oclBufferTimeTarget != NULL)				delete oclBufferTimeTarget;
 	if (this->oclBufferTimeHydrological != NULL)			delete oclBufferTimeHydrological;
+	if (this->oclBufferBatchTimesteps != NULL)			delete oclBufferBatchTimesteps;
+	if (this->oclBufferBatchSuccessful != NULL)			delete oclBufferBatchSuccessful;
+	if (this->oclBufferBatchSkipped != NULL)			delete oclBufferBatchSkipped;
 
 	oclModel = NULL;
 	oclKernelFullTimestep = NULL;
@@ -933,22 +950,10 @@ void CSchemeGodunov::release1OResources()
 	oclBufferTime = NULL;
 	oclBufferTimeTarget = NULL;
 	oclBufferTimeHydrological = NULL;
+	oclBufferBatchTimesteps = NULL;
+	oclBufferBatchSuccessful = NULL;
+	oclBufferBatchSkipped = NULL;
 
-	if (this->bIncludeBoundaries)
-	{
-		delete[] this->dBoundaryTimeSeries;
-		delete[] this->fBoundaryTimeSeries;
-		delete[] this->uiBoundaryParameters;
-		if (this->ulBoundaryRelationCells != NULL)
-			delete[] this->ulBoundaryRelationCells;
-		if (this->uiBoundaryRelationSeries != NULL)
-			delete[] this->uiBoundaryRelationSeries;
-	}
-	this->dBoundaryTimeSeries = NULL;
-	this->fBoundaryTimeSeries = NULL;
-	this->ulBoundaryRelationCells = NULL;
-	this->uiBoundaryRelationSeries = NULL;
-	this->uiBoundaryParameters = NULL;
 }
 
 /*
@@ -986,10 +991,8 @@ void	CSchemeGodunov::prepareSimulation()
 	// Sort out memory alternation
 	bUseAlternateKernel = false;
 	bOverrideTimestep = false;
-	bDownloadLinks = false;
-	bImportLinks = false;
+	bImportBoundaries = false;
 	bUseForcedTimeAdvance = true;
-	bCellStatesSynced = true;
 
 	// Need a timer...
 	dBatchStartedTime = 0.0;
@@ -1142,9 +1145,9 @@ void CSchemeGodunov::Threaded_runBatch()
 		}
 
 		// Have we been asked to import new data?
-		if (this->bImportLinks) {
+		if (this->bImportBoundaries) {
 
-			this->bImportLinks = false;
+			this->bImportBoundaries = false;
 
 			this->cModel->profiler->profile("BoundaryWrite", CProfiler::profilerFlags::START_PROFILING);
 			if (this->bUseOptimizedBoundary == false) {
@@ -1295,8 +1298,7 @@ void	CSchemeGodunov::runSimulation(double dTargetTime, double dRealTime)
 
 	// Calculate a new batch size
 	if (this->bAutomaticQueue &&
-		dRealTime > 1E-5 &&
-		cModel->getDomainSet()->getSyncMethod() != model::syncMethod::kSyncTimestep)
+		dRealTime > 1E-5)
 	{
 		// We're aiming for a seconds worth of work to be carried out
 		double dBatchDuration = dRealTime - dBatchStartedTime;
@@ -1376,8 +1378,7 @@ void	CSchemeGodunov::rollbackSimulation(double dCurrentTime, double dTargetTime)
 	}
 
 	// Timestep update without simulation time update
-	if (cModel->getDomainSet()->getSyncMethod() != model::syncMethod::kSyncTimestep)
-		oclKernelTimestepUpdate->scheduleExecution();
+	oclKernelTimestepUpdate->scheduleExecution();
 	bUseForcedTimeAdvance = true;
 
 	// Clear the failure state
@@ -1396,14 +1397,12 @@ bool	CSchemeGodunov::isSimulationFailure(double dExpectedTargetTime)
 		return false;
 
 	// Can't exceed number of buffer cells in forecast mode
-	if (cModel->getDomainSet()->getSyncMethod() == model::syncMethod::kSyncForecast &&
-		uiBatchSuccessful >= pDomain->getRollbackLimit() &&
+	if (uiBatchSuccessful >= pDomain->getRollbackLimit() &&
 		dExpectedTargetTime - dCurrentTime > 1E-5)
 		return true;
 
 	// This shouldn't happen
-	if (cModel->getDomainSet()->getSyncMethod() == model::syncMethod::kSyncTimestep &&
-		uiBatchSuccessful > pDomain->getRollbackLimit())
+	if (uiBatchSuccessful > pDomain->getRollbackLimit())
 		return true;
 
 	// This also shouldn't happen... but might...
@@ -1448,38 +1447,13 @@ bool	CSchemeGodunov::isSimulationSyncReady(double dExpectedTargetTime)
 
 	// Have we hit our target time?
 	// TODO: Review whether this is appropriate (need fabs?) (1E-5?)
-	if (cModel->getDomainSet()->getSyncMethod() == model::syncMethod::kSyncTimestep)
+	if (dExpectedTargetTime - dCurrentTime > 1E-5)
 	{
-		// Any criteria required for timestep-based sync?
-	}
-	else {
-		if (dExpectedTargetTime - dCurrentTime > 1E-5)
-		{
-			#ifdef DEBUG_MPI
-			model::log->logInfo("Expected target: " + toStringExact(dExpectedTargetTime) + " Current time: " + toStringExact(dCurrentTime));
-			#endif
-			return false;
-		}
-	}
-
-	// Have we downloaded the data we need for each domain link?
-	if (!bCellStatesSynced && cModel->getDomainSet()->getDomainCount() > 1)
+		#ifdef DEBUG_MPI
+		model::log->logInfo("Expected target: " + toStringExact(dExpectedTargetTime) + " Current time: " + toStringExact(dCurrentTime));
+		#endif
 		return false;
-
-	// Are we synchronising the timesteps?
-	if (cModel->getDomainSet()->getSyncMethod() == model::syncMethod::kSyncTimestep &&
-		uiIterationsSinceSync < this->pDomain->getRollbackLimit() - 1 &&
-		dExpectedTargetTime - dCurrentTime > 1E-5 &&
-		dCurrentTime > 0.0)
-		return false;
-
-	//if ( uiIterationsSinceSync < this->pDomain->getRollbackLimit() )
-	//	return false;
-
-	// Assume success
-	#ifdef DEBUG_MPI
-		//model::log->logInfo( "Domain is considered sync ready" );
-	#endif
+	}
 
 	return true;
 }
@@ -1490,7 +1464,7 @@ bool	CSchemeGodunov::isSimulationSyncReady(double dExpectedTargetTime)
 void	CSchemeGodunov::scheduleIteration(
 	bool			bUseAlternateKernel,
 	COCLDevice* pDevice,
-	CDomain* pDomain
+	CDomainCartesian* pDomain
 )
 {
 	// Re-set the kernel arguments to use the correct cell state buffer
@@ -1565,6 +1539,11 @@ void	CSchemeGodunov::scheduleIteration(
 	// Only block after every iteration when testing things that need it...
 	// Big performance hit...
 	//pDevice->blockUntilFinished();
+	//this->readDomainAll();
+	//oclBufferTime->queueReadAll();
+	//oclBufferTimestep->queueReadAll();
+	//pDevice->blockUntilFinished();
+	//std::cout << "Volume: " << this->getDomain()->getVolume() << " Expected: " << std::to_string(*(oclBufferTime->getHostBlock<double*>())*10) << std::endl;
 }
 
 /*
@@ -1589,7 +1568,7 @@ void CSchemeGodunov::readDomainAll()
  */
 void CSchemeGodunov::importLinkZoneData()
 {
-	this->bImportLinks = true;
+	this->bImportBoundaries = true;
 }
 
 /*
@@ -1672,7 +1651,7 @@ double CSchemeGodunov::proposeSyncPoint( double dCurrentTime )
 	{
 		// Try to accommodate approximately three spare iterations
 		dProposal = dCurrentTime +
-			max(fabs(this->dTimestep), pDomain->getRollbackLimit() * (dBatchTimesteps / uiBatchSuccessful) * (((double)pDomain->getRollbackLimit() - cModel->getDomainSet()->getSyncBatchSpares()) / pDomain->getRollbackLimit()));
+			max(fabs(this->dTimestep), pDomain->getRollbackLimit() * (dBatchTimesteps / uiBatchSuccessful) * (((double)pDomain->getRollbackLimit() - 3) / pDomain->getRollbackLimit()));
 		// Don't allow massive jumps
 		//if ((dProposal - dCurrentTime) > dBatchTimesteps * 3.0)
 		//	dProposal = dCurrentTime + dBatchTimesteps * 3.0;
@@ -1738,4 +1717,19 @@ void CSchemeGodunov::setDebugger(unsigned int debugX, unsigned int debugY) {
 	bDebugOutput = true;
 	uiDebugCellX = debugX;
 	uiDebugCellY = debugY;
+}
+
+void CSchemeGodunov::dumpMemory() {
+	COCLBuffer* COCLBuffers[19] = { oclBufferCellStates,oclBufferCellManning,oclBufferCellBoundary,oclBufferUsePoleni,oclBuffer_opt_zxmax,
+	oclBuffer_opt_cx,oclBuffer_opt_zymax,oclBuffer_opt_cy,oclBufferCellBed,oclBufferTimestep,oclBufferTimestepReduction,oclBufferTime,
+	oclBufferTimeTarget,oclBufferTimeHydrological,oclBufferCouplingIDs,oclBufferCouplingValues,
+	oclBufferBatchTimesteps,oclBufferBatchSuccessful,oclBufferBatchSkipped };
+
+	for (COCLBuffer* currentBuffer : COCLBuffers) {
+		if (currentBuffer != NULL) {
+			model::log->logDebug("Reading buffer: " + currentBuffer->getName());
+			currentBuffer->queueReadAll();
+		}
+	}
+	
 }

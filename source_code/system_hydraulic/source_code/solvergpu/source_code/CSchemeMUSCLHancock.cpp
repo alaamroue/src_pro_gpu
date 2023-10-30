@@ -9,7 +9,6 @@
 #include <algorithm>
 
 #include "common.h"
-#include "CDomain.h"
 #include "CDomainCartesian.h"
 
 #include "CSchemeMUSCLHancock.h"
@@ -20,7 +19,7 @@ using std::max;
 /*
  *  Constructor
  */
-CSchemeMUSCLHancock::CSchemeMUSCLHancock(void)
+CSchemeMUSCLHancock::CSchemeMUSCLHancock()
 {
 	model::log->logInfo("MUSCL-Hancock scheme loaded for execution on OpenCL platform.");
 
@@ -29,7 +28,7 @@ CSchemeMUSCLHancock::CSchemeMUSCLHancock(void)
 	this->uiDebugCellY = 100;
 
 	this->ucSolverType = model::solverTypes::kHLLC;
-	this->ucConfiguration = model::schemeConfigurations::musclHancock::kCachePrediction;
+	this->ucConfiguration = model::schemeConfigurations::musclHancock::kCacheNone;
 	this->ucCacheConstraints = model::cacheConstraints::musclHancock::kCacheActualSize;
 
 	this->ulCachedWorkgroupSizeX = 0;
@@ -37,9 +36,6 @@ CSchemeMUSCLHancock::CSchemeMUSCLHancock(void)
 	this->ulNonCachedWorkgroupSizeX = 0;
 	this->ulNonCachedWorkgroupSizeY = 0;
 
-	this->dBoundaryTimeSeries = NULL;
-	this->ulBoundaryRelationCells = NULL;
-	this->uiBoundaryRelationSeries = NULL;
 	this->bContiguousFaceData = false;
 
 	oclKernelHalfTimestep = NULL;
@@ -48,6 +44,7 @@ CSchemeMUSCLHancock::CSchemeMUSCLHancock(void)
 	oclBufferFaceExtrapolationE = NULL;
 	oclBufferFaceExtrapolationS = NULL;
 	oclBufferFaceExtrapolationW = NULL;
+
 }
 
 /*
@@ -57,22 +54,6 @@ CSchemeMUSCLHancock::~CSchemeMUSCLHancock(void)
 {
 	this->releaseResources();
 	model::log->logInfo("The MUSCL-Hancock scheme was unloaded from memory.");
-}
-
-/*
- *  Read in settings from the XML configuration file for this scheme
- */
-void	CSchemeMUSCLHancock::setupScheme(model::SchemeSettings schemeSettings, CModel* cModel)
-{
-	this->cModel = cModel;
-	// Call the base class function which handles most of the settings
-	CSchemeGodunov::setupScheme(schemeSettings, cModel);
-
-	this->setCacheMode(schemeSettings.CacheMode);
-	this->setCacheConstraints(schemeSettings.CacheConstraints);
-	this->setExtrapolatedContiguity(schemeSettings.ExtrapolatedContiguity);
-
-
 }
 
 /*
@@ -402,7 +383,7 @@ bool CSchemeMUSCLHancock::prepare2OConstants()
 bool CSchemeMUSCLHancock::prepare2OMemory()
 {
 	bool						bReturnState = true;
-	CDomain* pDomain = this->pDomain;
+	CDomainCartesian* pDomain = this->pDomain;
 
 	unsigned char ucFloatSize = (cModel->getFloatPrecision() == model::floatPrecision::kDouble ? sizeof(cl_double) : sizeof(cl_float));
 
@@ -436,7 +417,7 @@ bool CSchemeMUSCLHancock::prepare2OKernels()
 {
 	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomain* pDomain = this->pDomain;
+	CDomainCartesian* pDomain = this->pDomain;
 	COCLDevice* pDevice = pExecutor->getDevice();
 
 	// --
@@ -582,7 +563,7 @@ unsigned char	CSchemeMUSCLHancock::getCacheConstraints()
 void	CSchemeMUSCLHancock::scheduleIteration(
 					bool						bUseAlternateKernel,
 					COCLDevice*					pDevice,
-					CDomain*					pDomain
+					CDomainCartesian*			pDomain
 		)
 {
 	oclKernelBoundary->scheduleExecution();

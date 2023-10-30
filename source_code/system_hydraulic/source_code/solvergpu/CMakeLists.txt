@@ -11,11 +11,7 @@ set(UI_FILES
 # - This variable is passed to the library when creating it so that it knows what files are parts of it
 set(H_FILES
     source_code/CBenchmark.h
-    source_code/CDomain.h
-    source_code/CDomainBase.h
     source_code/CDomainCartesian.h
-    source_code/CDomainLink.h
-    source_code/CDomainManager.h
     source_code/CExecutorControlOpenCL.h
     source_code/CLog.h
     source_code/CLoggingInterface.h
@@ -42,11 +38,7 @@ set(H_FILES
 # - This variable is passed to the library when creating it so that it knows what files to compile
 set(CPP_FILES           
     source_code/CBenchmark.cpp
-    source_code/CDomain.cpp
-    source_code/CDomainBase.cpp
     source_code/CDomainCartesian.cpp
-    source_code/CDomainLink.cpp
-    source_code/CDomainManager.cpp
     source_code/CExecutorControlOpenCL.cpp
     source_code/CLog.cpp
     source_code/CModel.cpp
@@ -65,6 +57,33 @@ set(CPP_FILES
     source_code/windows_platform.cpp
 )
 
+# - Set allows giving a value to a variable similar to: CPP_FILES = "file1.cpp file2.cpp file3.cpp"
+# - A list of OpenCL Files is made to make it easier to work with them
+# - All the .clc & .clh files in this library need to be added here MANUALLY.
+# - This variable is passed to the library so that they are added to the project
+set(OPENCL_FILES
+    source_code/opencl/CLBoundaries.clc
+    source_code/opencl/CLBoundaries.clh
+    source_code/opencl/CLDomainCartesian.clc
+    source_code/opencl/CLDomainCartesian.clh
+    source_code/opencl/CLDynamicTimestep.clc
+    source_code/opencl/CLDynamicTimestep.clh
+    source_code/opencl/CLFriction.clc
+    source_code/opencl/CLFriction.clh
+    source_code/opencl/CLSchemeGodunov.clc
+    source_code/opencl/CLSchemeGodunov.clh
+    source_code/opencl/CLSchemeInertial.clc
+    source_code/opencl/CLSchemeInertial.clh
+    source_code/opencl/CLSchemeMUSCLHancock.clc
+    source_code/opencl/CLSchemeMUSCLHancock.clh
+    source_code/opencl/CLSchemePromaides.clc
+    source_code/opencl/CLSchemePromaides.clh
+    source_code/opencl/CLSlopeLimiterMINMOD.clc
+    source_code/opencl/CLSlopeLimiterMINMOD.clh
+    source_code/opencl/CLSolverHLLC.clc
+    source_code/opencl/CLSolverHLLC.clh
+    source_code/opencl/CLUniversalHeader.clh
+)
 # - Set allows giving a value to a variable similar to: RCFiles = "Resource1.rc Resource2.rc Resource3.rc"
 # - This set is not used.
 # - It is left here because the following message are important:
@@ -84,7 +103,11 @@ set(RCFiles
 # - The add_library is the engine here and is defined as add_library(<name> [STATIC | SHARED | MODULE] [EXCLUDE_FROM_ALL] [<source>...])
 # - solvergpu is the name given to the library
 # - What follows are the source codes
-add_library(solvergpu ${UI_FILES} ${H_FILES} ${CPP_FILES})
+add_library(solvergpu ${UI_FILES} ${H_FILES} ${CPP_FILES} ${OPENCL_FILES})
+
+# - source_group used to group a bunch of files under a folder
+# - This is just to get the OpenCL files under a folder in the solution explorer of VS
+source_group("OpenCLFiles" FILES ${OPENCL_FILES})
 
 # To allow correct correct recovery of exeptions through the stack
 #if(MSVC)

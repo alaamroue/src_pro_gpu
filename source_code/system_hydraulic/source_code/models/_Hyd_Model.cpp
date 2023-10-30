@@ -261,94 +261,33 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	Hyd_SolverGPU_LoggingWrapper* hyd_SolverGPU_LoggingWrapper = new Hyd_SolverGPU_LoggingWrapper(); //Deleted by pManager destructor
 	pManager = new CModel(hyd_SolverGPU_LoggingWrapper, false); //Deleted by _Hyd_Model destructor
 
-	//TODO: Alaa Make these customizable
+	//Set up the Manager Settings
 	pManager->setSelectedDevice(scheme_info.selected_device);							// Set GPU device to Use. Important: Has to be called after setExecutor. Default is the faster one.
 	pManager->setSimulationLength(simulationLength);									// Set Simulation Length
 	pManager->setOutputFrequency(outputFrequency);										// Set Output Frequency
 	pManager->setFloatPrecision(model::floatPrecision::kDouble);						// Set Precision
-
-	CDomainBase* pDomainNew;
-	pDomainNew = CDomainBase::createDomain(model::domainStructureTypes::kStructureCartesian);
-	static_cast<CDomain*>(pDomainNew)->setDevice(pManager->getExecutor()->getDevice(scheme_info.selected_device));
-	CDomainCartesian* ourCartesianDomain = (CDomainCartesian*)pDomainNew;
-
+	
+	//Create the domain
+	CDomainCartesian* ourCartesianDomain = pManager->getDomain();
 	ourCartesianDomain->setCellResolution(*myFloodplain->Param_FP.get_ptr_width_x(), *myFloodplain->Param_FP.get_ptr_width_y());
 	ourCartesianDomain->setCols(myFloodplain->Param_FP.get_no_elems_x());
 	ourCartesianDomain->setRows(myFloodplain->Param_FP.get_no_elems_y());
-
-	pManager->log->writeDivide();
-	if (myFloodplain->get_number_boundary_conditions() == 0) {
-		ourCartesianDomain->setUseOptimizedCoupling(true);
-		pManager->log->logInfo("Boundary Condition Optimization: On");
-	}
-	if (myFloodplain->get_number_coupling_conditions() == 0) {
-		ourCartesianDomain->setUseOptimizedCoupling(false);
-		pManager->log->logInfo("Boundary Condition Optimization: Off");
-
-		if (myFloodplain->get_number_boundary_conditions() == 0) {
-			//TODO: Alaa Add warning that there are no coupling and no boundary
-		}
-	}
-	pManager->log->writeDivide();
+	ourCartesianDomain->setUseOptimizedCoupling(myFloodplain->get_number_boundary_conditions() == 0);
 	ourCartesianDomain->setOptimizedCouplingSize(myFloodplain->get_number_coupling_conditions());
-
-	CScheme* pScheme;
-	model::schemeTypes::schemeTypes mst;
-	if (scheme_info.scheme_type == _hyd_calc_scheme_type::eDIFFUSIVE_GPU){
-		mst = model::schemeTypes::kPromaidesScheme;
-	}else if (scheme_info.scheme_type == _hyd_calc_scheme_type::eINERTIAL_GPU) {
-		mst = model::schemeTypes::kInertialSimplification;
-	}else if (scheme_info.scheme_type == _hyd_calc_scheme_type::eGODUNOV_GPU){
-		mst = model::schemeTypes::kGodunov;
-	}else if (scheme_info.scheme_type == _hyd_calc_scheme_type::eMUSCL_GPU) {
-		mst = model::schemeTypes::kMUSCLHancock;
-	}
-
-	pScheme = CScheme::createScheme(mst);
-
-	//pScheme->setQueueMode(model::queueMode::kAuto);
-	//pScheme->setQueueSize(1);
+	
+	//Create the Scheme,
 	model::SchemeSettings schemeSettings;
+	schemeSettings.scheme_type = scheme_info.scheme_type;
 	schemeSettings.CourantNumber = scheme_info.courant_number;
 	schemeSettings.DryThreshold = 1E-10;
 	schemeSettings.Timestep = 0.1;
 	schemeSettings.ReductionWavefronts = scheme_info.reduction_wavefronts;
 	schemeSettings.FrictionStatus = scheme_info.friction_status;
-	schemeSettings.CachedWorkgroupSize[0] = 8;
-	schemeSettings.CachedWorkgroupSize[1] = 8;
 	schemeSettings.NonCachedWorkgroupSize[0] = scheme_info.workgroup_size_x;
 	schemeSettings.NonCachedWorkgroupSize[1] = scheme_info.workgroup_size_y;
+	schemeSettings.debuggerOn = false;
+	CScheme::createScheme(pManager, ourCartesianDomain, schemeSettings);
 
-	if (mst == model::schemeTypes::kGodunov) {
-		schemeSettings.CacheMode = model::schemeConfigurations::godunovType::kCacheNone;
-		schemeSettings.CacheConstraints = model::cacheConstraints::godunovType::kCacheActualSize;
-	}
-	else if (mst == model::schemeTypes::kMUSCLHancock) {
-		schemeSettings.CacheMode = model::schemeConfigurations::musclHancock::kCacheNone;
-		schemeSettings.CacheConstraints = model::cacheConstraints::musclHancock::kCacheActualSize;
-	}
-	else if (mst == model::schemeTypes::kInertialSimplification) {
-		schemeSettings.CacheMode = model::schemeConfigurations::inertialFormula::kCacheNone;
-		schemeSettings.CacheConstraints = model::cacheConstraints::inertialFormula::kCacheActualSize;
-	}
-	else if (mst == model::schemeTypes::kPromaidesScheme) {
-		schemeSettings.CacheMode = model::schemeConfigurations::promaidesFormula::kCacheNone;
-		schemeSettings.CacheConstraints = model::cacheConstraints::promaidesFormula::kCacheActualSize;
-	}else {
-		pManager->log->logWarning("Error: Scheme not chosen!");
-	}
-
-	schemeSettings.ExtrapolatedContiguity = true;
-
-	pScheme->setupScheme(schemeSettings, pManager);
-	pScheme->setOutputFreq(pManager->getOutputFrequency());
-	//pScheme->setDebugger(1, 1);
-	pScheme->setDomain(ourCartesianDomain);			// Scheme allocates the memory and thus needs to know the dimensions
-	pScheme->prepareAll();							//Needs Dimension data to allocate memory
-	ourCartesianDomain->setScheme(pScheme);
-
-	//This shouldn't be required
-	//ourCartesianDomain->resetAllValues();
 
 	pManager->log->logInfo("Setting Data...");
 	unsigned long ulCellID;
@@ -357,21 +296,22 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 		for (unsigned long iCol = 0; iCol < myFloodplain->Param_FP.get_no_elems_x(); iCol++) {
 			ulCellID = ourCartesianDomain->getCellID(iCol, ourCartesianDomain->getRows() - iRow - 1);
 			//Elevations
-			if (myFloodplain->floodplain_elems[ulCellID].get_elem_type() == _hyd_elem_type::STANDARD_ELEM ||
-				myFloodplain->floodplain_elems[ulCellID].get_elem_type() == _hyd_elem_type::DIKELINE_ELEM) {
-				ourCartesianDomain->handleInputData(ulCellID, myFloodplain->floodplain_elems[ulCellID].get_z_value(), model::rasterDatasets::dataValues::kBedElevation, ucRounding);
-			}
-			else {
-				ourCartesianDomain->handleInputData(ulCellID, -9999.0, model::rasterDatasets::dataValues::kBedElevation, ucRounding);
+			if (myFloodplain->floodplain_elems[ulCellID].get_elem_type() == _hyd_elem_type::STANDARD_ELEM || myFloodplain->floodplain_elems[ulCellID].get_elem_type() == _hyd_elem_type::DIKELINE_ELEM) {
+				ourCartesianDomain->setBedElevation(ulCellID, myFloodplain->floodplain_elems[ulCellID].get_z_value());
+			}else {
+				ourCartesianDomain->setBedElevation(ulCellID, -9999.0);
+				ourCartesianDomain->setFSL(ulCellID, -9999.0);
 			}
 			//Manning Coefficient
-			ourCartesianDomain->handleInputData(ulCellID, myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().n_value, model::rasterDatasets::dataValues::kManningCoefficient, ucRounding);
+			ourCartesianDomain->setManningCoefficient(ulCellID, myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().n_value);
 			//Depth
-			ourCartesianDomain->handleInputData(ulCellID, myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().init_condition, model::rasterDatasets::dataValues::kDepth, ucRounding);
+			ourCartesianDomain->setFSL(ulCellID, myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().init_condition + myFloodplain->floodplain_elems[ulCellID].get_z_value());
+			//MaxDepth
+			ourCartesianDomain->setMaxFSL(ulCellID, myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().init_condition + myFloodplain->floodplain_elems[ulCellID].get_z_value());
 			//VelocityX
-			ourCartesianDomain->handleInputData(ulCellID, 0.0, model::rasterDatasets::dataValues::kVelocityX, ucRounding);
+			ourCartesianDomain->setDischargeX(ulCellID, 0.0);
 			//VelocityY
-			ourCartesianDomain->handleInputData(ulCellID, 0.0, model::rasterDatasets::dataValues::kVelocityY, ucRounding);
+			ourCartesianDomain->setDischargeY(ulCellID, 0.0);
 			//Boundary Condition
 			if (ourCartesianDomain->getUseOptimizedCoupling() == false) {
 				ourCartesianDomain->setBoundaryCondition(ulCellID, 0.0);
@@ -400,17 +340,12 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	if (ourCartesianDomain->getUseOptimizedCoupling()) {
 		//set id array
 		for (int i = 0; i < ourCartesianDomain->getOptimizedCouplingSize(); i++) {
+			ourCartesianDomain->setOptimizedCouplingCondition(i, 0.0);
 			ourCartesianDomain->setOptimizedCouplingID(i, myFloodplain->get_optimized_coupling_id(i));
 		}
 	}
 
-	pDomainNew->setID(1);	// Should not be needed, but somehow is?
-	pManager->getDomainSet()->getDomainBaseVector()->push_back(pDomainNew);
-
 	pManager->log->logInfo("The computational engine is now ready.");
-
-
-
 
 	pManager->runModelPrepare();
 

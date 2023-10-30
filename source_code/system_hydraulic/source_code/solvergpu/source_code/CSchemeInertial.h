@@ -24,7 +24,7 @@ class CSchemeInertial : public CSchemeGodunov
 
 	public:
 
-		CSchemeInertial( void );											// Constructor
+		CSchemeInertial( void );								// Constructor
 		virtual ~CSchemeInertial( void );									// Destructor
 
 		// Public functions

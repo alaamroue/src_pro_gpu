@@ -202,32 +202,28 @@ namespace model
 	};
 
 	// Model scheme types
-	namespace rasterDatasets {
-		namespace dataValues {
-			enum dataValues {
-				kBedElevation = 0,		// Bed elevation
-				kDepth = 1,		// Depth
-				kFreeSurfaceLevel = 2,		// Free surface level
-				kVelocityX = 3,		// Initial velocity X
-				kVelocityY = 4,		// Initial velocity Y
-				kDischargeX = 5,		// Initial discharge X
-				kDischargeY = 6,		// Initial discharge Y
-				kManningCoefficient = 7,		// Manning coefficient
-				kDisabledCells = 8,		// Disabled cells
-				kMaxDepth = 9,		// Max depth
-				kMaxFSL = 10,		// Max FSL
-				kFroudeNumber = 11		// Froude number
-			};
+	namespace dataValues {
+		enum dataValues {
+			kBedElevation = 0,		// Bed elevation
+			kDepth = 1,				// Depth
+			kFreeSurfaceLevel = 2,	// Free surface level
+			kVelocityX = 3,			// Initial velocity X
+			kVelocityY = 4,			// Initial velocity Y
+			kDischargeX = 5,		// Initial discharge X
+			kDischargeY = 6,		// Initial discharge Y
+			kManningCoefficient = 7,// Manning coefficient
+			kDisabledCells = 8,		// Disabled cells
 		};
 	};
 
 	// Model scheme types
 	namespace schemeTypes {
 		enum schemeTypes {
-			kGodunov = 0,	// Godunov (first-order)
-			kMUSCLHancock = 1,	// MUSCL-Hancock (second-order)
-			kInertialSimplification = 2,		// Inertial simplification
-			kPromaidesScheme = 3		// Inertial simplification
+			kGodunovGPU		= 0,	// Godunov (first-order)
+			kMUSCLGPU		= 1,	// MUSCL-Hancock (second-order)
+			kInertialGPU	= 2,	// Inertial simplification
+			kDiffusiveGPU	= 3,	// Inertial simplification
+			kDiffusiveCPU	= 4		// Diffusive CPU
 		};
 	}
 
@@ -285,8 +281,8 @@ namespace model
 		unsigned long	ulBoundaryOthers;
 	};
 
-	struct SchemeSettings 
-	{
+	struct SchemeSettings {
+		model::schemeTypes::schemeTypes scheme_type;
 		double CourantNumber = 0.5;
 		double DryThreshold = 1e-10;
 		unsigned char TimestepMode = model::timestepMode::kCFL;
@@ -295,15 +291,9 @@ namespace model
 		unsigned int ReductionWavefronts = 200;
 		bool FrictionStatus = false;
 		unsigned char RiemannSolver = model::solverTypes::kHLLC;
-		unsigned char CachedWorkgroupSize[2] = { 8, 8 };
-		unsigned char NonCachedWorkgroupSize[2] = { 8, 8 };
-		unsigned char CacheMode = model::schemeConfigurations::godunovType::kCacheNone;
-		//unsigned char CacheMode = model::schemeConfigurations::godunovType::kCacheEnabled;
-		unsigned char CacheConstraints = model::cacheConstraints::godunovType::kCacheActualSize;
-		//unsigned char CacheConstraints = model::cacheConstraints::godunovType::kCacheAllowOversize;
-		//unsigned char CacheConstraints = model::cacheConstraints::godunovType::kCacheAllowUndersize;
-		bool ExtrapolatedContiguity = false;
-	
+		unsigned int NonCachedWorkgroupSize[2] = { 8, 8 };
+		bool debuggerOn = false;
+		unsigned int debuggerCells[2] = { 0, 0 };
 	};
 
 	//Todo: Alaa Remove model:: dependency and allow for safe error logging

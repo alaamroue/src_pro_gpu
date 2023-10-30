@@ -1530,8 +1530,7 @@ void Hyd_Hydraulic_System::init_solver(void){
 			cout<<"Initialize the solver for floodplain model ..."<< endl;
 			Sys_Common_Output::output_hyd->output_txt(&cout);
 			//2DGPU Check
-			_hyd_calc_scheme_type temp = my_fpmodels[j].Param_FP.get_scheme_info().scheme_type;
-			if(my_fpmodels[j].Param_FP.get_scheme_info().scheme_type != _hyd_calc_scheme_type::eDIFFUSIVE_CPU) {
+			if(my_fpmodels[j].Param_FP.get_scheme_info().scheme_type != model::schemeTypes::kDiffusiveCPU) {
 				this->my_fpmodels[j].init_solver_gpu(&this->global_parameters);
 			}
 			else {
@@ -3695,7 +3694,7 @@ void Hyd_Hydraulic_System::make_calculation_floodplainmodel(void){
 	for(int i=0; i< this->global_parameters.GlobNofFP;i++){
 		Hyd_Multiple_Hydraulic_Systems::check_stop_thread_flag();
 		//if (constant::gpu2d_applied == false) {
-		if(my_fpmodels[i].Param_FP.get_scheme_info().scheme_type != _hyd_calc_scheme_type::eDIFFUSIVE_CPU){
+		if(my_fpmodels[i].Param_FP.get_scheme_info().scheme_type != model::schemeTypes::kDiffusiveCPU){
 			//cout << "using gpu" << endl;
 			this->my_fpmodels[i].solve_model_gpu(this->next_internal_time - this->global_parameters.get_startime(), this->get_identifier_prefix(false));
 		}else{

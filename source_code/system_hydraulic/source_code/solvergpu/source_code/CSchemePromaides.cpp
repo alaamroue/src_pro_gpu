@@ -9,7 +9,6 @@
 #include <algorithm>
 
 #include "common.h"
-#include "CDomain.h"
 #include "CDomainCartesian.h"
 #include "CSchemePromaides.h"
 
@@ -22,7 +21,7 @@ using std::max;
 CSchemePromaides::CSchemePromaides(void)
 {
 	// Scheme is loaded
-	model::log->logInfo("Promaides scheme loaded for execution on OpenCL platform.");
+	model::log->logInfo("Diffusive GPU scheme loaded for execution on OpenCL platform.");
 
 	// Default setup values
 	this->bDebugOutput = false;
@@ -31,6 +30,7 @@ CSchemePromaides::CSchemePromaides(void)
 
 	this->ucConfiguration = model::schemeConfigurations::promaidesFormula::kCacheNone;
 	this->ucCacheConstraints = model::cacheConstraints::promaidesFormula::kCacheActualSize;
+
 }
 
 /*
@@ -204,7 +204,7 @@ bool CSchemePromaides::preparePromaidesKernels()
 {
 	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomain* pDomain = this->pDomain;
+	CDomainCartesian* pDomain = this->pDomain;
 	COCLDevice* pDevice = pExecutor->getDevice();
 
 	// --

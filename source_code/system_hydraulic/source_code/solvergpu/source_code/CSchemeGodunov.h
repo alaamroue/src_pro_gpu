@@ -25,16 +25,15 @@ class CSchemeGodunov : public CScheme
 
 	public:
 
-		CSchemeGodunov();															// Default constructor
+		CSchemeGodunov( void );						// Default constructor
 		virtual ~CSchemeGodunov( void );											// Destructor
 
 		// Public functions
-		virtual void		setupScheme(model::SchemeSettings, CModel* cModel);			// Set up the scheme
 		virtual void		logDetails();											// Write some details about the scheme
 		virtual void		prepareAll();											// Prepare absolutely everything for a model run
 		virtual void		scheduleIteration( bool,								// Schedule an iteration of the scheme
 											   COCLDevice*,
-											   CDomain* );					
+											   CDomainCartesian* );					
 		double				proposeSyncPoint( double );								// Propose a synchronisation point
 		void				forceTimestep( double );								// Force a specific timestep
 		void				setDryThreshold( double );								// Set the dry cell threshold depth
@@ -69,6 +68,7 @@ class CSchemeGodunov : public CScheme
 
 		virtual void		readDomainAll();										// Read back all domain data
 		virtual void		importLinkZoneData();									// Load in data
+		void				prepareSetup(CModel*, model::SchemeSettings);			// Set everything up to start running for this domain
 		virtual void		prepareSimulation();									// Set everything up to start running for this domain
 		virtual void		readKeyStatistics();									// Fetch the key details back to the right places in memory
 		virtual void		runSimulation( double, double );						// Run this simulation until the specified time
@@ -78,6 +78,8 @@ class CSchemeGodunov : public CScheme
 		virtual void		rollbackSimulation( double, double );					// Roll back cell states to the last successful round
 		virtual bool		isSimulationFailure( double );							// Check whether we successfully reached a specific time
 		virtual bool		isSimulationSyncReady( double );						// Are we ready to synchronise? i.e. have we reached the set sync time?
+		virtual void		dumpMemory( void );										// Read all buffers so that memory can be dumped
+
 
 	protected:
 
@@ -87,15 +89,12 @@ class CSchemeGodunov : public CScheme
 		cl_ulong			ulCachedGlobalSizeX, ulCachedGlobalSizeY;
 		cl_ulong			ulNonCachedGlobalSizeX, ulNonCachedGlobalSizeY;
 		cl_ulong			ulCouplingArraySize;
-		cl_ulong			ulBoundaryCellWorkgroupSize;
-		cl_ulong			ulBoundaryCellGlobalSize;
 		cl_ulong			ulReductionWorkgroupSize;
 		cl_ulong			ulReductionGlobalSize;
 
 		unsigned char		ucConfiguration;										// Kernel configuration in-use
 		unsigned char		ucCacheConstraints;										// Kernel LDS cache constraints
 		unsigned char		ucSolverType;											// Code for the Riemann solver type
-		unsigned char		ucSyncMethod;											// Synchronisation method employed
 		double				dThresholdVerySmall;									// Threshold value for 'very small'
 		double				dThresholdQuiteSmall;									// Threshold value for 'quite small'
 		double				dLastSyncTime;											// What was the last synchronisation time?
@@ -105,18 +104,10 @@ class CSchemeGodunov : public CScheme
 		bool				bUseForcedTimeAdvance;									// Force the timestep to be advanced next time?
 		bool				bOverrideTimestep;										// Force set the timestep next time?
 		bool				bUpdateTargetTime;										// Update the target time?
-		bool				bImportLinks;											// Import link data?
-		bool				bDownloadLinks;											// Download dependent links?
-		bool				bIncludeBoundaries;										// Boundary condition kernel is required?
-		bool				bCellStatesSynced;										// Are the host cell states synchronised with the compute device?
+		bool				bImportBoundaries;										// Import link data?
 		unsigned int		uiDebugCellX;											// Debug info cell X
 		unsigned int		uiDebugCellY;											// Debug info cell Y
 		unsigned int		uiTimestepReductionWavefronts;							// Number of wavefronts used in reduction
-		cl_double4*			dBoundaryTimeSeries;									// Boundary time series data
-		cl_float4*			fBoundaryTimeSeries;									// Boundary time series data
-		cl_ulong*			ulBoundaryRelationCells;								// Boundary to cell relations
-		cl_uint*			uiBoundaryRelationSeries;								// Target series for the boundary to cell relations
-		cl_uint*			uiBoundaryParameters;									// Boundary parameters bitmask
 		
 		// Private functions
 		virtual bool		prepareCode();											// Prepare the code required

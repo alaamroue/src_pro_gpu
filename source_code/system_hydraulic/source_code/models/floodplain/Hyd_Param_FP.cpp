@@ -16,7 +16,7 @@ Hyd_Param_FP::Hyd_Param_FP(void):default_rel_tol(1.0e-8),default_abs_tol(1.0e-5)
 	this->FPLowLeftY=0.0;		
 	this->floodplain_file=label::not_set;
 
-	this->scheme_type			= _hyd_calc_scheme_type::eDIFFUSIVE_CPU;
+	this->scheme_type			= model::schemeTypes::kDiffusiveCPU;
 	this->selected_device		= 1;
 	this->courant_number		= 0.5;
 	this->reduction_wavefronts	= 200;
@@ -612,26 +612,26 @@ Error Hyd_Param_FP::set_error(const int err_type){
 
 
 //Convert the Gramschmidt type enumerator from text to enum
-_hyd_calc_scheme_type Hyd_Param_FP::convert_txt2schemetype(string txt) {
-	_hyd_calc_scheme_type type;
+model::schemeTypes::schemeTypes Hyd_Param_FP::convert_txt2schemetype(string txt) {
+	model::schemeTypes::schemeTypes type;
 	_Hyd_Parse_IO::string2lower(&txt);
 	_Hyd_Parse_IO::erase_leading_whitespace_tabs(&txt);
 	_Hyd_Parse_IO::erase_end_whitespace_tabs(&txt);
 
 	if (txt == hyd_label::scheme_type_diffusive_cpu) {
-		type = _hyd_calc_scheme_type::eDIFFUSIVE_CPU;
+		type = model::schemeTypes::kDiffusiveCPU;
 	}
 	else if (txt == hyd_label::scheme_type_diffusive_gpu) {
-		type = _hyd_calc_scheme_type::eDIFFUSIVE_GPU;
+		type = model::schemeTypes::kDiffusiveGPU;
 	}
 	else if (txt == hyd_label::scheme_type_inertial_gpu) {
-		type = _hyd_calc_scheme_type::eINERTIAL_GPU;
+		type = model::schemeTypes::kInertialGPU;
 	}
 	else if (txt == hyd_label::scheme_type_godunov_gpu) {
-		type = _hyd_calc_scheme_type::eGODUNOV_GPU;
+		type = model::schemeTypes::kGodunovGPU;
 	}
 	else if (txt == hyd_label::scheme_type_muscl_gpu) {
-		type = _hyd_calc_scheme_type::eMUSCL_GPU;
+		type = model::schemeTypes::kMUSCLGPU;
 	}
 	else {
 		Warning msg = this->set_warning(4);
@@ -640,27 +640,27 @@ _hyd_calc_scheme_type Hyd_Param_FP::convert_txt2schemetype(string txt) {
 		msg.make_second_info(info.str());
 		msg.output_msg(2);
 		//reaction
-		type = _hyd_calc_scheme_type::eDIFFUSIVE_CPU;
+		type = model::schemeTypes::kDiffusiveCPU;
 	}
 	return type;
 }
 //Convert the Gramschmidt type enumerator from enum to txt 
-string Hyd_Param_FP::convert_schemetype2txt(_hyd_calc_scheme_type  type) {
+string Hyd_Param_FP::convert_schemetype2txt(model::schemeTypes::schemeTypes  type) {
 	string txt;
 	switch (type) {
-	case _hyd_calc_scheme_type::eDIFFUSIVE_CPU:
+	case model::schemeTypes::kDiffusiveCPU:
 		txt = hyd_label::scheme_type_diffusive_cpu;
 		break;
-	case _hyd_calc_scheme_type::eDIFFUSIVE_GPU:
+	case model::schemeTypes::kDiffusiveGPU:
 		txt = hyd_label::scheme_type_diffusive_gpu;
 		break;
-	case _hyd_calc_scheme_type::eINERTIAL_GPU:
+	case model::schemeTypes::kInertialGPU:
 		txt = hyd_label::scheme_type_inertial_gpu;
 		break;
-	case _hyd_calc_scheme_type::eGODUNOV_GPU:
+	case model::schemeTypes::kGodunovGPU:
 		txt = hyd_label::scheme_type_godunov_gpu;
 		break;
-	case _hyd_calc_scheme_type::eMUSCL_GPU:
+	case model::schemeTypes::kMUSCLGPU:
 		txt = hyd_label::scheme_type_muscl_gpu;
 		break;
 	default:

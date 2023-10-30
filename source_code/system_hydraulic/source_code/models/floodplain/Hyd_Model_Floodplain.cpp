@@ -1264,8 +1264,8 @@ unsigned long Hyd_Model_Floodplain::get_optimized_coupling_id(unsigned long inde
 void Hyd_Model_Floodplain::solve_model_gpu(const double next_time_point, const string system_id) {
 	try {
 		unsigned long ulCellID;
-		CDomainCartesian* myCarDomain = (CDomainCartesian*) pManager->getDomainSet()->getDomain(0);
-		CScheme* myScheme = (CScheme*) pManager->getDomainSet()->getDomain(0)->getScheme();
+		CDomainCartesian* myCarDomain = pManager->getDomain();
+		CScheme* myScheme = (CScheme*)pManager->getDomain()->getScheme();
 		
 		//profiler->profile("SetBoundaryConditionsArray", Profiler::profilerFlags::START_PROFILING);
 		// Zero out the boundary conditions array
@@ -1316,7 +1316,7 @@ void Hyd_Model_Floodplain::solve_model_gpu(const double next_time_point, const s
 		//profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::START_PROFILING);
 		//std::unique_ptr<double[]> opt_h_gpu = std::make_unique<double[]>(this->NEQ);
 		double* opt_h_gpu = new double[this->NEQ];
-		pManager->getDomainSet()->getDomain(0)->readBuffers_opt_h(opt_h_gpu);
+		pManager->getDomain()->readBuffers_opt_h(opt_h_gpu);
 		//profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::END_PROFILING);
 
 		//profiler->profile("update_ds_dt", Profiler::profilerFlags::START_PROFILING);

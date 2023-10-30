@@ -13,7 +13,6 @@
 #include "CSchemeMUSCLHancock.h"
 #include "CSchemeInertial.h"
 #include "CSchemePromaides.h"
-#include "CDomain.h"
 #include "CDomainCartesian.h"
 
 /*
@@ -55,25 +54,45 @@ CScheme::~CScheme(void)
  *  Ask the executor to create a type of scheme with the defined
  *  flags.
  */
-CScheme* CScheme::createScheme( unsigned char ucType )
+void CScheme::createScheme(CModel* cModel, CDomainCartesian* cDomainCartesian, model::SchemeSettings scheme_settings)
 {
-	switch( ucType )
+	CScheme* newScheme = NULL;
+	switch(scheme_settings.scheme_type)
 	{
-		case model::schemeTypes::kGodunov:
-			return static_cast<CScheme*>( new CSchemeGodunov() );
-		break;
-		case model::schemeTypes::kMUSCLHancock:
-			return static_cast<CScheme*>( new CSchemeMUSCLHancock() );
-		break;
-		case model::schemeTypes::kInertialSimplification:
-			return static_cast<CScheme*>( new CSchemeInertial() );
-		break;
-		case model::schemeTypes::kPromaidesScheme:
-			return static_cast<CScheme*>(new CSchemePromaides() );
-		break;
+		case model::schemeTypes::kGodunovGPU:
+			newScheme = new CSchemeGodunov();
+			break;
+		case model::schemeTypes::kMUSCLGPU:
+			newScheme = new CSchemeMUSCLHancock();
+			break;
+		case model::schemeTypes::kInertialGPU:
+			newScheme = new CSchemeInertial();
+			break;
+		case model::schemeTypes::kDiffusiveGPU:
+			newScheme = new CSchemePromaides();
+			break;
+		case model::schemeTypes::kDiffusiveCPU:
+			model::doError(
+				"You are using the Diffusive CPU Scheme in the GPU Solver",
+				model::errorCodes::kLevelFatal,
+				"CScheme* CScheme::createScheme( unsigned char ucType )",
+				"Something is wrong in the code. CPU schemes shouldn't be redirected here."
+			);
+			return;
+			break;
 	}
+	if (newScheme == NULL) {
+		model::doError(
+			"Scheme creation failed",
+			model::errorCodes::kLevelFatal,
+			"CScheme* CScheme::createScheme( unsigned char ucType )",
+			"Please try again with a different scheme type."
+		);
+		return;
+	}
+	
+	newScheme->prepareSetup(cModel, scheme_settings);
 
-	return NULL;
 }
 
 

@@ -23,7 +23,7 @@ class CSchemePromaides : public CSchemeGodunov
 
 	public:
 
-		CSchemePromaides( void );											// Constructor
+		CSchemePromaides( void );							// Constructor
 		virtual ~CSchemePromaides( void );									// Destructor
 
 		// Public functions

@@ -16,7 +16,7 @@
 // Some classes we need to know about...
 class CExecutorControl;
 class CExecutorControlOpenCL;
-class CDomainManager;
+class CDomainCartesian;
 class CScheme;
 class CLog;
 class CProfiler;
@@ -39,7 +39,7 @@ class CModel
 
 		bool					setExecutor(CExecutorControlOpenCL*);					// Sets the type of executor to use for the model
 		CExecutorControlOpenCL*	getExecutor(void);								// Gets the executor object currently in use
-		CDomainManager*			getDomainSet(void);								// Gets the domain set
+		CDomainCartesian*		getDomain(void);								// Gets the domain
 		CMPIManager*			getMPIManager(void);							// Gets the MPI manager
 		void					setSelectedDevice(unsigned int);
 		unsigned int			getSelectedDevice();
@@ -51,11 +51,7 @@ class CModel
 		void					runModelDomainAssess( bool* );			// Assess domain states
 		void					runModelDomainExchange(void);					// Exchange domain data
 		void					runModelUpdateTarget(double);					// Calculate a new target time
-		void					runModelSync(void);								// Synchronise domain and timestep data
-		void					runModelMPI(void);								// Process MPI queue etc.
-		void					runModelSchedule( CBenchmark::sPerformanceMetrics *, bool * );	// Schedule work
 		void					runModelUI( CBenchmark::sPerformanceMetrics * );// Update progress data etc.
-		void					runModelRollback(void);							// Rollback simulation
 		void					runModelBlockGlobal(void);						// Block all domains until all are done
 		void					runModelBlockNode(void);						// Block further processing on this node only
 		void					runModelCleanup(void);							// Clean up after a simulation completes/aborts
@@ -85,7 +81,7 @@ class CModel
 
 		// Private variables
 		CExecutorControlOpenCL*	execController;									// Handle for the executor controlling class
-		CDomainManager*			domains;										// Handle for the domain management class
+		CDomainCartesian*		domain;										// Handle for the domain management class
 		CMPIManager*			mpiManager;										// Handle for the MPI manager class
 		unsigned int			selectedDevice;
 		bool					bDoublePrecision;								// Double precision enabled?

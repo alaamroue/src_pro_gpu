@@ -41,6 +41,14 @@ __kernel void bdy_Promaides (
 		return;
 	}
 
+	//if (ulIdx == 7116 ){
+	//	//printf("Postion: X: %f Y:%f \n",lIdxX*1.0 , lIdxY*1.0 );
+	//	printf("opt_z %f opt_s %f opt_s_after %f ",dCellBedElev, (pCellData.x-dCellBedElev), fmax(dCellBedElev, pCellData.x + dRate * dLclTimestep));
+	//	printf("dLclTimestep %f dRate %f ",dLclTimestep, dRate);
+	//	printf("\n");
+	//}
+
+
 	// Hydrological processes have their own timesteps
 	//if (dLclTimestepHydro < TIMESTEP_HYDROLOGICAL){
 	//	return;

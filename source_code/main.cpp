@@ -6,8 +6,8 @@
 //#pragma once
 
 //decide here the main program
-#define all1
-//#define hydraulic
+//#define all1
+#define hydraulic
 //#define geometry
 //#define damage
 //#define test_sc_break
@@ -212,11 +212,11 @@ int main(int argc , char *argv[]){
     }
 
     delete system_1;
-    Sys_Memory_Count::self()->output_mem();
+    //Sys_Memory_Count::self()->output_mem();
     my_output.delete_output_excep();
     my_output.delete_output_hyd();
     my_output.delete_output_system();
-    Sys_Memory_Count::self()->output_mem();
+    //Sys_Memory_Count::self()->output_mem();
 
 return 0;
 }

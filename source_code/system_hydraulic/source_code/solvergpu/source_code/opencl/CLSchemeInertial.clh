@@ -42,15 +42,6 @@ void ine_cacheDisabled (
 	__global	cl_double const * restrict	
 );
 
-__kernel  REQD_WG_SIZE_FULL_TS
-void ine_cacheEnabled ( 
-	__constant	cl_double *,
-	__global	cl_double const * restrict,
-	__global	cl_double4 *,
-	__global	cl_double4 *,
-	__global    cl_double const * restrict
-);
-
 cl_double calculateInertialFlux(
 	cl_double,
 	cl_double,

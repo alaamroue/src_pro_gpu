@@ -65,9 +65,9 @@ namespace Util
 	/*
 	 *  Round a number to set decimal places
 	 */
-	double	round( double dValue, unsigned char ucPlaces )
+	double	round( double dValue, unsigned int ucPlaces )
 	{
-		unsigned int	uiMultiplier		= (unsigned int)std::pow( 10.0, ucPlaces );
+		unsigned int	uiMultiplier		= (unsigned int) std::pow( 10.0, ucPlaces );
 		double			dMultipliedValue	= dValue * uiMultiplier;
 		double			dRemainder			= std::fmod( dMultipliedValue, 1 );
 
@@ -81,92 +81,8 @@ namespace Util
 		return dMultipliedValue / uiMultiplier;
 	}
 
-	/*
-	 *  Convert a char array to lowercase
-	 *  WARNING: This function is probably unsafe
-	 *  		 and might cause stack corruption.
-	 */
-	char*	toLowercase( const char* cString )
-	{
-		if ( cString == NULL ) return NULL;
-
-		std::locale loc;
-
-		char*	cNewString = new char[ strlen( cString ) ];
-		strcpy( cNewString, cString );
-
-		for( unsigned int i = 0; cNewString[ i ] != '\0'; i++ )
-		{
-			cNewString[ i ] = std::tolower( cNewString[ i ], loc );
-		}
-
-		return cNewString;
-	}
-
-	/*
-	 *  Convert a char array to lowercase
-	 */
-	void toLowercase( char** cTarget, const char* cString )
-	{
-		if ( cString == NULL ) 
-		{
-			*cTarget = NULL;
-			return;
-		} 
-
-		std::locale loc;
-
-		// TODO: This is almost certainly causing a memory leak, but I can't be bothered to fix it yet
-		//if ( *cTarget != NULL )
-		//	delete [] (*cTarget);
-
-		*cTarget = new char[ strlen( cString ) + 1 ];
-		strcpy( *cTarget, cString );
-		(*cTarget)[ strlen( cString ) ] = '\0';
-
-		for( unsigned int i = 0; cString[ i ] != '\0'; i++ )
-		{
-			(*cTarget)[ i ] = std::tolower( cString[ i ], loc );
-		}
-	}
-
-	/*
-	 *  Copy a string
-	 */
-	void toNewString( char** cTarget, const char* cString )
-	{
-		if ( cString == NULL ) 
-		{
-			*cTarget = NULL;
-			return;
-		}
-
-		// TODO: This is almost certainly causing a memory leak, but I can't be bothered to fix it yet
-		//if ( *cTarget != NULL )
-		//	delete [] (*cTarget);
-
-		*cTarget = new char[ strlen( cString ) + 1 ];
-		strcpy( *cTarget, cString );
-		(*cTarget)[ strlen( cString ) ] = '\0';
-	}
 
 
-	/*
-	 *	Check if a file exists -- strictly speaking if it's accessible
-	 */
-	bool fileExists(const char * cFilename)
-	{
-		std::ifstream f(cFilename);
-
-		if (f.good())
-		{
-			f.close();
-			return true;
-		} else {
-			f.close();
-			return false;
-		}
-	}
 
 	std::string to_string_exact(double x) {
 		std::ostringstream os;

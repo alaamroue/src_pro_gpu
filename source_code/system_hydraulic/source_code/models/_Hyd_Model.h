@@ -49,8 +49,6 @@
 #include "CProfiler.h"
 #include "CModel.h"
 #include "COCLDevice.h"
-#include "CDomainManager.h"
-#include "CDomain.h"
 #include "CDomainCartesian.h"
 #include "CScheme.h"
 

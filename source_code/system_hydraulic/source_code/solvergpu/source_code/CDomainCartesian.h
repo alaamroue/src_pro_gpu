@@ -9,7 +9,43 @@
 #ifndef HIPIMS_DOMAIN_CARTESIAN_CDOMAINCARTESIAN_H_
 #define HIPIMS_DOMAIN_CARTESIAN_CDOMAINCARTESIAN_H_
 
-#include "CDomain.h"
+#include "COCLDevice.h"
+
+ // Public structures
+struct DomainSummary
+{
+	bool			bAuthoritative;
+	unsigned int	uiDomainID;
+	unsigned int	uiNodeID;
+	unsigned int	uiLocalDeviceID;
+	double			dResolutionX;
+	double			dResolutionY;
+	unsigned long	ulRowCount;
+	unsigned long	ulColCount;
+	unsigned char	ucFloatPrecision;
+	unsigned long	ulCouplingArraySize;
+	bool			bUseOptimizedBoundary;
+};
+
+struct dataProgress
+{
+	unsigned int 	uiDomainID;
+	double			dCurrentTimestep;
+	double			dCurrentTime;
+	double			dBatchTimesteps;
+	cl_uint			uiBatchSkipped;
+	cl_uint			uiBatchSuccessful;
+	unsigned int	uiBatchSize;
+};
+
+
+enum direction
+{
+	north = 0,
+	east = 1,
+	south = 2,
+	west = 3
+};
 
 /*
  *  DOMAIN CLASS
@@ -18,7 +54,7 @@
  *  Stores the relevant information required for a
  *  domain based on a simple cartesian grid.
  */
-class CDomainCartesian : public CDomain 
+class CDomainCartesian
 {
 
 	public:
@@ -30,85 +66,115 @@ class CDomainCartesian : public CDomain
 		// ...
 
 		// Public functions
-		// - Replacements for CDomain stubs
-		virtual	unsigned char	getType()										{ return model::domainStructureTypes::kStructureCartesian; };	// Fetch a type code
-		virtual	CDomainBase::DomainSummary getSummary();						// Fetch summary information for this domain
 		bool			validateDomain( bool );									// Verify required data is available
 		void			prepareDomain();										// Create memory structures etc.
 		void			logDetails();											// Log details about the domain
-		// - Specific to cartesian grids
+
+		// - Specific to Cartesian grids
 		void			setCellResolution( double, double);						// Set cell resolution
-		void			getCellResolution( double* , double*);					// Fetch cell resolution
-		void			setUnits( char* );										// Set the units
-		char*			getUnits();												// Get the units
-		void			setProjectionCode( unsigned long );						// Set the EPSG projection code
-		unsigned long	getProjectionCode();									// Get the EPSG projection code
-		unsigned long	getRows();												// Get the number of rows in the domain
-		unsigned long	getCols();												// Get the number of columns in the domain
 		void			setRows(unsigned long);									// Fetch cell resolution
 		void			setCols(unsigned long);									// Fetch cell resolution
+		void			setRollbackLimit(unsigned int);									// Set the number of iterations before a rollback is required
+		void			getCellResolution( double* , double*);					// Fetch cell resolution
+		unsigned long	getRows();												// Get the number of rows in the domain
+		unsigned long	getCols();												// Get the number of columns in the domain
+		unsigned int	getRollbackLimit();										// How many iterations before a rollback is required?
+		unsigned long	getCellCount();											// X Return the total number of cells
 
 		void			setUseOptimizedCoupling(bool);
 		void			setOptimizedCouplingSize(unsigned long);
 		bool			getUseOptimizedCoupling();
 		unsigned long	getOptimizedCouplingSize();
 		
+		//Progress Monitoring
+		dataProgress getDataProgress();				// Fetch some data on this domain's progress
+		void 		setDataProgress(dataProgress);	// Set some data on this domain's progress
 
 
-		virtual unsigned long	getCellID( unsigned long, unsigned long );		// Get the cell ID using an X and Y index
 		double			getVolume();											// Calculate the amount of volume in all the cells
+		double			getBoundaryVolume();									// 
 		void			readBuffers_h_vx_vy(double**);							// Read GPU Buffers (All three Values)
 		void			readBuffers_opt_h(double*);								// Read GPU Buffers (Water Depth: Surface Level - Bed Elevation)
 		void			readBuffers_v_x(double*);								// Read GPU Buffers (Velocity in X)
 		void			readBuffers_v_y(double*);								// Read GPU Buffers (Velocity in Y)
 		void			resetBoundaryCondition();								// Resets boundary condition
 
-		enum axis
-		{
-			kAxisX	= 0,
-			kAxisY	= 1
-		};
 
-		enum edge
-		{
-			kEdgeN	= 0,
-			kEdgeE	= 1,
-			kEdgeS	= 2,
-			kEdgeW	= 3
-		};
+		void				createStoreBuffers(void**, void**, void**, void**, void**,
+			void**, void**, void**, void**, void**,
+			void**, unsigned char);							// Allocates memory and returns pointers to the three arrays
+		void				resetAllValues();
+		void				setScheme(CScheme*);													// Set the scheme running for this domain
+		CScheme*			getScheme();															// Get the scheme running for this domain
+		void				setDevice(COCLDevice*);												// Set the device responsible for running this domain
+		COCLDevice*			getDevice();															// Get the device responsible for running this domain
+		//Setting Domain Data
+		void			setBedElevation(unsigned long, double);					// Sets the bed elevation for a cell
+		void			setManningCoefficient(unsigned long, double);			// Sets the manning coefficient for a cell
+		void			setBoundaryCondition(unsigned long, double);			// Sets the boundary coefficient for a cell
+		void			setOptimizedCouplingCondition(unsigned long, double);	// Sets the optimized coupling boundary coefficient for a cell
+		void			setZxmax(unsigned long, double);						// Sets the 
+		void			setcx(unsigned long, double);							// Sets the 
+		void			setZymax(unsigned long, double);						// Sets the 
+		void			setcy(unsigned long, double);							// Sets the 
+		void			setFSL(unsigned long, double);							// Sets the 
+		void			setMaxFSL(unsigned long, double);						// Sets the 
+		void			setDischargeX(unsigned long, double);					// Sets the 
+		void			setDischargeY(unsigned long, double);					// Sets the 
+		void			setOptimizedCouplingID(unsigned long, unsigned long);	// Sets the 
+		void			setPoleniConditionX(unsigned long, bool);				// Sets the poleni condition in x for a cell
+		void			setPoleniConditionY(unsigned long, bool);				// Sets the poleni condition in y for a cell
+		double			getStateValue(unsigned long , unsigned char);			// Gets a state variable for a given cell
+		double			getBedElevation(unsigned long);							// Gets the bed elevation for a given cell
+		double			getBoundaryCondition(unsigned long ulCellID);
+		bool			isDoublePrecision() { return (ucFloatSize == 8); };		// Are we using double-precision?
 
-		enum boundaryTreatment
-		{
-			kBoundaryOpen = 0,
-			kBoundaryClosed = 1
-		};
+		//HelperFunctions
+		unsigned long		getCellID(unsigned long, unsigned long);										// Get the cell ID using an X and Y index
+		void				getCellIndices(unsigned long ulID, unsigned long* lIdxX, unsigned long* lIdxY); //	Fetch the X and Y indices for a cell using its ID
+		unsigned long		getNeighbourID(unsigned long ulCellID, unsigned char  ucDirection);				//	Fetch the ID for a neighboring cell in the domain
+		void				memoryDump();																	//	Dumps memory for debugging
 
 	private:
 
-		// Private structures
-		struct	sDataSourceInfo {
-			char*			cSourceType;
-			char*			cFileValue;
-			unsigned char	ucValue;
-		};
-		struct	sDataTargetInfo
-		{
-			char*			cType;
-			char*			cFormat;
-			unsigned char	ucValue;
-			std::string		sTarget;
-		};
+		// Private General Domain Variables
+		unsigned long	ulRows;						// Number of cells in the y-direction
+		unsigned long	ulCols;						// Number of cells in the x-direction
+		double			dCellResolutionX;			// Size of cell in the x-direction
+		double			dCellResolutionY;			// Size of cell in the y-direction
+		bool			bUseOptimizedBoundary;		// Show boundary condition be optimized
+		unsigned long	ulCouplingArraySize;		// If boundary condition is optimized, what is then the size of the boundary condition array
+		unsigned int	uiRollbackLimit;			// Iteration Limit before declaring failure
+		dataProgress	sDataProgress;				// Data on this domain's progress
+		CScheme* pScheme;							// Scheme we are running for this particular domain
+		COCLDevice* pDevice;						// Device responsible for running this domain
 
-		// Private variables
-		double			dCellResolutionX;
-		double			dCellResolutionY;
-		unsigned long	ulCouplingArraySize;
-		bool			bUseOptimizedBoundary;
-		unsigned long	ulRows;
-		unsigned long	ulCols;
+		// Private Domain GPU heaps
+		unsigned int uiRounding;
+		unsigned char		ucFloatSize;	// Size of floats used for cell data (bytes)
 
-		// Private functions
-		void			updateCellStatistics();										// Update the number of rows, cols, etc.
+		cl_double4* dCellStates;			// Heap for cell state data
+		cl_double* dBedElevations;			// Heap for bed elevations
+		cl_double* dManningValues;			// Heap for manning values
+		cl_double* dBoundaryValues;			// Heap for boundary values
+		cl_double* dOpt_zxmaxValues;		// Heap for opt_zxmax values
+		cl_double* dOpt_cxValues;			// Heap for opt_cx values
+		cl_double* dOpt_zymaxValues;		// Heap for opt_zymax values
+		cl_double* dOpt_cyValues;			// Heap for opt_cy values
+		cl_double* dCouplingValues;			// Heap for optimized coupling values
+
+		cl_float4* fCellStates;				// Heap for cell state date (single)
+		cl_float* fBedElevations;			// Heap for bed elevations (single)
+		cl_float* fManningValues;			// Heap for manning values (single)
+		cl_float* fBoundaryValues;			// Heap for boundary values (single)
+		cl_float* fOpt_zxmaxValues;			// Heap for opt_zxmax values (single)
+		cl_float* fOpt_cxValues;			// Heap for opt_cx values (single)
+		cl_float* fOpt_zymaxValues;			// Heap for opt_zymax values (single)
+		cl_float* fOpt_cyValues;			// Heap for opt_cy values (single)
+		cl_float* fCouplingValues;			// Heap for optimized coupling values (single)
+
+		sUsePoleni* bPoleniValues;			// Heap for Struct of Poleni values
+		cl_ulong* ulCouplingIDs;			// Heap for optimized coupling IDs
 
 };
 

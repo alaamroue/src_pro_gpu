@@ -11,7 +11,7 @@
 
 #include "common.h"
 #include "CBenchmark.h"
-#include "CDomain.h"
+#include "CDomainCartesian.h"
 #include "CExecutorControlOpenCL.h"
 #include "COCLProgram.h"
 #include "COCLDevice.h"
@@ -33,18 +33,18 @@ class CScheme
 
 	public:
 
-		CScheme();																					// Default constructor
+		CScheme();													// Default constructor
 		virtual ~CScheme( void );																	// Destructor
 
 		// Public functions
-		static CScheme*		createScheme( unsigned char );											// Instantiate a scheme
+		static void			createScheme(CModel*, CDomainCartesian*,model::SchemeSettings);			// Instantiate a scheme
 
-		virtual void		setupScheme(model::SchemeSettings, CModel* cModel) = 0 ;										// Set up the scheme
 		virtual void		setDebugger(unsigned int, unsigned int) = 0;
 		bool				isReady();																// Is the scheme ready to run?
 		bool				isRunning();															// Is this scheme currently running a batch?
 		virtual void		logDetails() = 0;														// Write some details about the scheme
 		virtual void		prepareAll() = 0;														// Prepare absolutely everything for a model run
+		virtual void		prepareSetup(CModel*, model::SchemeSettings) = 0;						// Prepare absolutely everything for a model run
 		virtual double		proposeSyncPoint( double ) = 0;											// Propose a synchronisation point
 		virtual void		forceTimestep(double) = 0;												// Force a specific timestep
 		void				setQueueMode( unsigned char );											// Set the queue mode
@@ -62,8 +62,8 @@ class CScheme
 		bool				getFrictionStatus();													// Get enabled/disabled for friction
 		virtual void		setTargetTime( double );												// Set the target sync time
 		double				getTargetTime();														// Get the target sync time
-		void				setDomain( CDomain *d )			{ pDomain = d; }						// Set the domain we're working on
-		CDomain*			getDomain()						{ return pDomain; }						// Fetch the domain we're working on
+		void				setDomain( CDomainCartesian *d )			{ pDomain = d; }						// Set the domain we're working on
+		CDomainCartesian*	getDomain()						{ return pDomain; }						// Fetch the domain we're working on
 		unsigned long long	getCellsCalculated()			{ return ulCurrentCellsCalculated; }	// Number of cells calculated so far
 		double				getCurrentTimestep()			{ return dCurrentTimestep; }			// Current timestep
 		bool				getCurrentSuspendedState()		{ return ( dCurrentTimestep < 0.0 ); }	// Is the simulation suspended?
@@ -71,7 +71,6 @@ class CScheme
 		unsigned int		getBatchSize()					{ return uiQueueAdditionSize; }			// Get the batch size
 		unsigned int		getIterationsSuccessful()		{ return uiBatchSuccessful; }			// Get the successful iterations
 		unsigned int		getIterationsSkipped()			{ return uiBatchSkipped; }				// Get the number of iterations skipped
-
 		virtual void		readDomainAll() = 0;													// Read back all domain data
 		virtual void		importLinkZoneData() = 0;												// Read back synchronisation zone data
 		virtual void		prepareSimulation() = 0;												// Set everything up to start running for this domain
@@ -85,6 +84,7 @@ class CScheme
 		virtual bool		isSimulationSyncReady( double ) = 0;									// Are we ready to synchronise? i.e. have we reached the set sync time?
 		virtual COCLBuffer*	getLastCellSourceBuffer() = 0;											// Get the last source cell state buffer
 		virtual COCLBuffer*	getNextCellSourceBuffer() = 0;											// Get the next source cell state buffer
+		virtual void		dumpMemory() = 0;														// Read back all domain data
 		void				setOutputFreq(double);
 
 	protected:
@@ -117,7 +117,7 @@ class CScheme
 		cl_uint				uiBatchSkipped;															// Number of skipped batch iterations
 		cl_uint				uiBatchSuccessful;														// Number of successful batch iterations
 		cl_uint				uiBatchRate;															// Number of successful iterations per second
-		CDomain*			pDomain;																// Domain which this scheme is attached to
+		CDomainCartesian*	pDomain;																// Domain which this scheme is attached to
 		double				outputFrequency;
 		CModel*				cModel;
 		

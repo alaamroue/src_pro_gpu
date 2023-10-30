@@ -24,16 +24,15 @@ class CSchemeMUSCLHancock : public CSchemeGodunov
 
 	public:
 
-		CSchemeMUSCLHancock( void );										// Constructor
+		CSchemeMUSCLHancock( void );							// Constructor
 		virtual ~CSchemeMUSCLHancock( void );								// Destructor
 
 		// Public functions
-		virtual void		setupScheme(model::SchemeSettings, CModel* cModel);	// Set up the scheme
 		virtual void		logDetails();									// Write some details about the scheme
 		virtual void		prepareAll();									// Prepare absolutely everything for a model run
 		virtual void		scheduleIteration( bool,						// Schedule an iteration of the scheme
 											   COCLDevice*,
-											   CDomain* );	
+											   CDomainCartesian* );	
 		void				setCacheMode( unsigned char );					// Set the cache configuration
 		unsigned char		getCacheMode();									// Get the cache configuration
 		void				setCacheConstraints( unsigned char );			// Set LDS cache size constraints
