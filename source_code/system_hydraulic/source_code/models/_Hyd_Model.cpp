@@ -259,7 +259,7 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 
 	//Create the GPU model with our own logger attached
 	Hyd_SolverGPU_LoggingWrapper* hyd_SolverGPU_LoggingWrapper = new Hyd_SolverGPU_LoggingWrapper(); //Deleted by pManager destructor
-	pManager = new CModel(hyd_SolverGPU_LoggingWrapper, false); //Deleted by _Hyd_Model destructor
+	pManager = new CModel(hyd_SolverGPU_LoggingWrapper, true); //Deleted by _Hyd_Model destructor
 
 	//Set up the Manager Settings
 	pManager->setSelectedDevice(scheme_info.selected_device);							// Set GPU device to Use. Important: Has to be called after setExecutor. Default is the faster one.
@@ -347,7 +347,7 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 
 	pManager->log->logInfo("The computational engine is now ready.");
 
-	pManager->runModelPrepare();
+	pManager->ValidateAndPrepareModel();
 
 	//TODO: Alaa: Calculate memory     this->count_solver_memory();
 }

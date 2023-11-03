@@ -53,7 +53,6 @@ CSchemeMUSCLHancock::CSchemeMUSCLHancock()
 CSchemeMUSCLHancock::~CSchemeMUSCLHancock(void)
 {
 	this->releaseResources();
-	model::log->logInfo("The MUSCL-Hancock scheme was unloaded from memory.");
 }
 
 /*
@@ -495,8 +494,6 @@ void CSchemeMUSCLHancock::releaseResources()
 {
 	this->bReady = false;
 
-	model::log->logInfo("Releasing scheme resources held for OpenCL.");
-
 	this->release2OResources();
 	this->release1OResources();
 }
@@ -507,8 +504,6 @@ void CSchemeMUSCLHancock::releaseResources()
 void CSchemeMUSCLHancock::release2OResources()
 {
 	this->bReady = false;
-
-	model::log->logInfo("Releasing 2nd-order scheme resources held for OpenCL.");
 
 	if ( this->oclKernelHalfTimestep != NULL )				delete oclKernelHalfTimestep;
 	if ( this->oclBufferFaceExtrapolations != NULL )		delete oclBufferFaceExtrapolations;

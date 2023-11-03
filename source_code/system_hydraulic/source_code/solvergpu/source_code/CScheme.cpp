@@ -46,7 +46,7 @@ CScheme::CScheme()
  */
 CScheme::~CScheme(void)
 {
-	model::log->logInfo( "The abstract scheme class was unloaded from memory." );
+	//Nothing to delete
 }
 
 

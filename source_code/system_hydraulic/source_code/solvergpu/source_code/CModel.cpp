@@ -25,12 +25,16 @@ CModel::CModel(CLoggingInterface* CLI, bool profilingOn)
 	this->log = new CLog(CLI);
 	model::log = this->log;
 
+	if (profilingOn) {
+		model::log->logWarning("Profiler is activated. This will slow down the simulation. Use this for testing only.");
+	}
 	this->profiler = new CProfiler(profilingOn);
 
 	this->showProgess = false;
 	this->mpiManager		= NULL;
 
 	this->dCurrentTime		= 0.0;
+	this->dTargetTime		= 0.0;
 	this->dSimulationTime	= 60;
 	this->dOutputFrequency	= 60;
 	this->bDoublePrecision	= true;
@@ -52,16 +56,17 @@ CModel::CModel(CLoggingInterface* CLI, bool profilingOn)
 //Destructor
 CModel::~CModel(void)
 {
-	this->runModelCleanup();
+	this->domain->getScheme()->cleanupSimulation();
 	if (this->domain != NULL)
 		delete this->domain;
 	if ( this->execController != NULL )
 		delete this->execController;
-	this->log->logInfo("The model engine is completely unloaded.");
-	if (this->log != NULL)
-		delete this->log;
 	if (this->profiler != NULL)
 		delete this->profiler;
+	this->log->logInfo("The model engine is completely unloaded.");
+	if (this->log != NULL)
+		model::log = NULL;
+		delete this->log;
 }
 
 //Set the type of executor to use for the model
@@ -99,13 +104,6 @@ CDomainCartesian* CModel::getDomain(void)
 	return this->domain;
 }
 
-//Returns a pointer to the MPI manager class
-CMPIManager* CModel::getMPIManager(void)
-{
-	// Pass back the pointer - will be NULL if not using MPI version
-	return this->mpiManager;
-}
-
 void CModel::setSelectedDevice(unsigned int id) {
 	this->selectedDevice = id;
 	this->getExecutor()->selectDevice(id);
@@ -119,25 +117,25 @@ unsigned int CModel::getSelectedDevice() {
 //Log the details for the whole simulation
 void CModel::logDetails()
 {
-	this->log->writeDivide();
-	this->log->logInfo("SIMULATION CONFIGURATION");
-	this->log->logInfo("  Simulation length:  " + Util::secondsToTime(this->dSimulationTime));
-	this->log->logInfo("  Output frequency:   " + Util::secondsToTime(this->dOutputFrequency));
-	this->log->logInfo("  Floating-point:     " + (std::string)(this->getFloatPrecision() == model::floatPrecision::kDouble ? "Double-precision" : "Single-precision"));
-	this->log->writeDivide();
+	model::log->writeDivide();
+	model::log->logInfo("SIMULATION CONFIGURATION");
+	model::log->logInfo("  Simulation length:  " + Util::secondsToTime(this->dSimulationTime));
+	model::log->logInfo("  Output frequency:   " + Util::secondsToTime(this->dOutputFrequency));
+	model::log->logInfo("  Floating-point:     " + (std::string)(this->getFloatPrecision() == model::floatPrecision::kDouble ? "Double-precision" : "Single-precision"));
+	model::log->writeDivide();
 }
 
 //Execute the model
-bool CModel::runModel(void)
+bool CModel::ValidateAndPrepareModel(void)
 {
-	this->log->logInfo("Verifying the required data before model run...");
+	model::log->logInfo("Verifying the required data before model run...");
 
 	if (!this->domain)
 	{
 		model::doError(
 			"The domain is not ready.",
 			model::errorCodes::kLevelModelStop,
-			"bool CModel::runModel(void)",
+			"bool CModel::ValidateAndPrepareModel(void)",
 			"Please restart the program and try again."
 		);
 		return false;
@@ -147,18 +145,18 @@ bool CModel::runModel(void)
 		model::doError(
 			"The executor is not ready.",
 			model::errorCodes::kLevelModelStop,
-			"bool CModel::runModel(void)",
+			"bool CModel::ValidateAndPrepareModel(void)",
 			"Please restart the program and try again."
 		);
 		return false;
 	}
 
-	this->log->logInfo("Verification is complete.");
+	model::log->logInfo("Verification is complete.");
 
-	this->log->writeDivide();
-	this->log->logInfo("Starting a new simulation...");
+	model::log->writeDivide();
+	model::log->logInfo("Starting a new simulation...");
 
-	this->runModelPrepare();
+	this->domain->getScheme()->prepareSimulation();
 	//this->runModelMain();
 
 	return true;
@@ -315,78 +313,6 @@ void CL_CALLBACK CModel::visualiserCallback(cl_event clEvent, cl_int iStatus, vo
 	clReleaseEvent(clEvent);
 }
 
-//Prepare for a new simulation, which may follow a failed simulation so states need to be reset.
-void	CModel::runModelPrepare()
-{
-
-	this->runModelPrepareDomains();
-
-	bSynchronised = true;
-	bAllIdle = true;
-	dTargetTime = 0.0;
-	dLastSyncTime = -1.0;
-	dLastOutputTime = 0.0;
-}
-
-//Prepare domains for a new simulation.
-void	CModel::runModelPrepareDomains()
-{
-
-	domain->getScheme()->prepareSimulation();
-
-}
-
-//Assess the current state of each domain.
-void	CModel::runModelDomainAssess(bool* bIdle)
-{
-	bRollbackRequired = false;
-	dEarliestTime = 0.0;
-	bWaitOnLinks = false;
-
-	// Minimum time
-	dCurrentTime = domain->getScheme()->getCurrentTime();
-
-	// Either we're not ready to sync, or we were still synced from the last run
-	if (domain->getScheme()->isRunning() || domain->getDevice()->isBusy()) {
-		*bIdle = false;
-	}
-	else {
-		*bIdle = true;
-	}
-}
-
-//Synchronize the whole model across all domains.
-void	CModel::runModelUpdateTarget(double dTimeBase)
-{
-	// Identify the smallest batch size associated timestep
-	double dEarliestSyncProposal = this->dSimulationTime;
-
-	// Don't exceed an output interval if required
-	if (floor(dEarliestSyncProposal / dOutputFrequency) > floor(dLastSyncTime / dOutputFrequency))
-	{
-		dEarliestSyncProposal = (floor(dLastSyncTime / dOutputFrequency) + 1) * dOutputFrequency;
-	}
-
-	// Work scheduler within numerical schemes should identify whether this has changed
-	// and update the buffer if required only...
-	// Alaa: We  don't need this anymore. Promaides should do the proposal
-	//dTargetTime = dEarliestSyncProposal;
-
-}
-
-//Block execution across all domains which reside on this node only
-void	CModel::runModelBlockNode()
-{
-	domain->getDevice()->blockUntilFinished();
-}
-
-//Block execution across all domains until every single one is ready
-void	CModel::runModelBlockGlobal()
-{
-	this->runModelBlockNode();
-}
-
-
 //Update UI elements (progress bars etc.)
 void	CModel::runModelUI(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 {
@@ -398,102 +324,6 @@ void	CModel::runModelUI(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 	}
 }
 
-
-//Clean things up after the model is complete or aborted
-void	CModel::runModelCleanup()
-{
-	domain->getScheme()->cleanupSimulation();
-}
-
-/*
-//Run the actual simulation, asking each domain and schemes therein in turn etc.
-void	CModel::runModelMain()
-{
-	bool*							bSyncReady				= new bool[ domains->getDomainCount() ];
-	bool*							bIdle					= new bool[domains->getDomainCount()];
-	double							dCellRate				= 0.0;
-	CBenchmark::sPerformanceMetrics *sTotalMetrics;
-	CBenchmark						*pBenchmarkAll;
-
-	// Write out the simulation details
-	this->logDetails();
-
-	// Track time for the whole simulation
-	model::log->logInfo( "Collecting time and performance data..." );
-	pBenchmarkAll = new CBenchmark( true );
-	sTotalMetrics = pBenchmarkAll->getMetrics();
-
-	// Track total processing time
-	dProcessingTime = sTotalMetrics->dSeconds;
-	dVisualisationTime = dProcessingTime;
-
-	// ---------
-	// Run the main management loop
-	// ---------
-	// Even if user has forced abort, still wait until all idle state is reached
-	while ( ( this->dCurrentTime < dSimulationTime - 1E-5 ) || !bAllIdle )
-	{
-		// Assess the overall state of the simulation at present
-		this->runModelDomainAssess(
-			bSyncReady,
-			bIdle
-		);
-
-
-		// Perform a rollback if required
-		this->runModelRollback();
-
-		// Perform a sync if possible
-		this->runModelSync();
-
-		// Don't proceed beyond this point if we need to rollback and we're just waiting for
-		// devices to finish first...
-		if (bRollbackRequired)
-			continue;
-
-		// Schedule new work
-		this->runModelSchedule(
-			sTotalMetrics,
-			bIdle
-		);
-
-		// Update progress bar after each batch, not every time
-		sTotalMetrics = pBenchmarkAll->getMetrics();
-		this->runModelUI(
-			sTotalMetrics
-		);
-	}
-
-	// Update to 100% progress bar
-	pBenchmarkAll->finish();
-	sTotalMetrics = pBenchmarkAll->getMetrics();
-	this->runModelUI(
-		sTotalMetrics
-	);
-
-	// Get the total number of cells calculated
-	unsigned long long	ulCurrentCellsCalculated = 0;
-	double				dVolume = 0.0;
-	for( unsigned int i = 0; i < domains->getDomainCount(); ++i )
-	{
-		if (!domains->isDomainLocal(i))
-			continue;
-
-		ulCurrentCellsCalculated += domains->getDomain(i)->getScheme()->getCellsCalculated();
-		dVolume += abs( domains->getDomain(i)->getVolume() );
-	}
-	unsigned long ulRate = static_cast<unsigned long>(static_cast<double>(ulCurrentCellsCalculated) / sTotalMetrics->dSeconds);
-
-	model::log->logInfo( "Simulation time:     " + Util::secondsToTime( sTotalMetrics->dSeconds ) );
-	//model::log->logInfo( "Calculation rate:    " + toStringExact( floor(dCellRate) ) + " cells/sec" );
-	//model::log->logInfo( "Final volume:        " + toStringExact( static_cast<int>( dVolume ) ) + "m3" );
-	model::log->writeDivide();
-
-	delete   pBenchmarkAll;
-	delete[] bSyncReady;
-	delete[] bIdle;
-}
- */
 //Run the actual simulation, asking each domain and schemes therein in turn etc.
 void	CModel::runNext(const double next_time_point)
 {
@@ -502,11 +332,7 @@ void	CModel::runNext(const double next_time_point)
 	CBenchmark::sPerformanceMetrics* sTotalMetrics;
 	CBenchmark* pBenchmarkAll;
 
-	// Write out the simulation details
-	//this->logDetails();
-
 	// Track time for the whole simulation
-	//model::log->logInfo("Collecting time and performance data...");
 	pBenchmarkAll = new CBenchmark(true);
 	sTotalMetrics = pBenchmarkAll->getMetrics();
 
@@ -520,20 +346,16 @@ void	CModel::runNext(const double next_time_point)
 	// Run the main management loop
 	// ---------
 	// Even if user has forced abort, still wait until all idle state is reached
-	while (this->dCurrentTime < dTargetTime)
+	while (this->dCurrentTime < dTargetTime - 1e-5)
 	{
 		// Assess the overall state of the simulation at present
-		this->runModelDomainAssess(&bIdle);
+		dEarliestTime = 0.0;
 
+		// Minimum time
+		dCurrentTime = domain->getScheme()->getCurrentTime();
 
-		// Don't proceed beyond this point if we need to rollback
-		if (bRollbackRequired) {
-			std::cout << "Rollback Required...Simulation failed! Try a different sync step.";
-			continue;
-		}
-
-		// Schedule new work
-		if (bIdle) {
+		// Either we're not ready to sync, or we were still synced from the last run
+		if (domain->getScheme()->isRunning() == false && domain->getDevice()->isBusy() == false) {
 			domain->getScheme()->runSimulation(dTargetTime, sTotalMetrics->dSeconds);
 		}
 
@@ -573,11 +395,6 @@ void	CModel::runNext(const double next_time_point)
 	//model::log->writeDivide();
 
 	delete   pBenchmarkAll;
-}
-
-//Attached the logger class to the CModel
-void CModel::setLogger(CLog* cLog) {
-	this->log = cLog;
 }
 
 //Attached the profiler class to the CModel

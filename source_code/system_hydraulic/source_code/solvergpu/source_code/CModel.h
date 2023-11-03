@@ -37,24 +37,14 @@ class CModel
 		CModel(CLoggingInterface* = NULL, bool profilingOn = false);															// Constructor
 		~CModel(void);															// Destructor
 
-		bool					setExecutor(CExecutorControlOpenCL*);					// Sets the type of executor to use for the model
+		bool					setExecutor(CExecutorControlOpenCL*);			// Sets the type of executor to use for the model
 		CExecutorControlOpenCL*	getExecutor(void);								// Gets the executor object currently in use
 		CDomainCartesian*		getDomain(void);								// Gets the domain
-		CMPIManager*			getMPIManager(void);							// Gets the MPI manager
 		void					setSelectedDevice(unsigned int);
 		unsigned int			getSelectedDevice();
 
-		bool					runModel(void);									// Execute the model
-		void					runModelPrepare(void);							// Prepare for model run
-		void					runModelPrepareDomains(void);					// Prepare domains and domain links
-		//void					runModelMain(void);								// Main model run loop
-		void					runModelDomainAssess( bool* );			// Assess domain states
-		void					runModelDomainExchange(void);					// Exchange domain data
-		void					runModelUpdateTarget(double);					// Calculate a new target time
+		bool					ValidateAndPrepareModel(void);					// Execute the model
 		void					runModelUI( CBenchmark::sPerformanceMetrics * );// Update progress data etc.
-		void					runModelBlockGlobal(void);						// Block all domains until all are done
-		void					runModelBlockNode(void);						// Block further processing on this node only
-		void					runModelCleanup(void);							// Clean up after a simulation completes/aborts
 
 		void					logDetails();									// Spit some info out to the log
 		double					getSimulationLength();							// Get total length of simulation
@@ -68,7 +58,6 @@ class CModel
 		void					runNext(const double);
 
 		// Public variables
-		void					setLogger(CLog*);								// Sets the logger class 
 		CLog*					log;											// Handle for the log singular class
 		void					setUIStatus(bool);								// Turns on/off the UI
 
@@ -90,17 +79,12 @@ class CModel
 		double					dVisualisationTime;								// Current visualisation time
 		double					dProcessingTime;								// Total processing time
 		double					dOutputFrequency;								// Frequency of outputs
-		double					dLastSyncTime;									//
-		double					dLastOutputTime;								//
 		double					dLastProgressUpdate;							//
 		double					dTargetTime;									// 
 		double					dEarliestTime;									//
 		double					dGlobalTimestep;								//
 		unsigned long			ulRealTimeStart;
 		bool					bRollbackRequired;								// 
-		bool					bAllIdle;										//
-		bool					bWaitOnLinks;									//
-		bool					bSynchronised;									//
 		unsigned char			ucFloatSize;									// Size of single/double precision floats used
 		cursorCoords			pProgressCoords;								// Buffer coords of the progress output
 		bool					showProgess;									// Show Progess UI

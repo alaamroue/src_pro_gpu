@@ -200,8 +200,17 @@ bool COCLKernel::assignArgument(
 		&clBuffer
 	);
 
-	if (iErrorID != CL_SUCCESS)
+	if (iErrorID != CL_SUCCESS) {
+		model::doError(
+			"Assignment of arguments to buffer was not successful. Got an error: [" 
+				+ std::to_string(iErrorID) + "] returned from clSetKernelArg with buffer: [" 
+				+ aBuffer->getName() + "] on argument [" + std::to_string(ucArgumentIndex ) + "].",
+			model::errorCodes::kLevelFatal,
+			"bool COCLKernel::assignArgument",
+			"If you're a developer, check the code. If you're a user, try a restart."
+		);
 		return false;
+	}
 
 	return true;
 }

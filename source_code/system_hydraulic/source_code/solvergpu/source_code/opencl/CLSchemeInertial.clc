@@ -136,7 +136,7 @@ void ine_cacheDisabled (
 	if ( pNeigDataE.x - dNeigBedElevE < VERY_SMALL || dNeigBedElevE == -9999.0 ) ucDryCount++;
 	if ( pNeigDataW.x - dNeigBedElevW < VERY_SMALL || dNeigBedElevW == -9999.0 ) ucDryCount++;
 	if ( pNeigDataS.x - dNeigBedElevS < VERY_SMALL || dNeigBedElevS == -9999.0 ) ucDryCount++;
-
+	
 	// All neighbours are dry? Don't bother calculating
 	if ( ucDryCount == 5 ){
 		return;
@@ -277,17 +277,35 @@ void ine_cacheDisabled (
 		pCellData.x = dCellBedElev;
 	
 	//if (ulIdx == 7116 ){
-	//	printf("opt_z %f opt_s %f ",dCellBedElev, pCellData.x);
-	//	//printf("opt_h %f", (pCellData.x-dCellBedElev));
-	//	printf("pN %f pE %f pS %f pW %f ",usePoleniN ? 1.0 : 0.0, usePoleniE ? 1.0 : 0.0, usePoleniS ? 1.0 : 0.0, usePoleniW ? 1.0 : 0.0);
-	//	printf("dOpt_zxmax %f dOpt_cx %f dOpt_zymax %f dOpt_cy %f ",dOpt_zxmax, dOpt_cx, dOpt_zymax, dOpt_cy);
-	//	printf("N %f E %f S %f W %f", pNeigDataN.x,pNeigDataE.x,pNeigDataS.x,pNeigDataW.x);
-	//	printf("dN %f dE %f dS %f dW %f", dDischarge[ DOMAIN_DIR_N ],dDischarge[ DOMAIN_DIR_E ],dDischarge[ DOMAIN_DIR_S ],dDischarge[ DOMAIN_DIR_W ]);
-	//	//printf("Cell.x %f cell.z %f cell.w %f", pCellData.x, pCellData.z, pCellData.w);
-	//	printf("\n");
+		//printf("opt_z %f opt_s %f ",dCellBedElev, pCellData.x);
+		//printf("opt_h %f", (pCellData.x-dCellBedElev));
+		//printf("pN %f pE %f pS %f pW %f ",usePoleniN ? 1.0 : 0.0, usePoleniE ? 1.0 : 0.0, usePoleniS ? 1.0 : 0.0, usePoleniW ? 1.0 : 0.0);
+		//printf("dOpt_zxmax %f dOpt_cx %f dOpt_zymax %f dOpt_cy %f ",dOpt_zxmax, dOpt_cx, dOpt_zymax, dOpt_cy);
+		//printf("N %f E %f S %f W %f", pNeigDataN.x,pNeigDataE.x,pNeigDataS.x,pNeigDataW.x);
+		//printf("dN %f dE %f dS %f dW %f", dDischarge[ DOMAIN_DIR_N ],dDischarge[ DOMAIN_DIR_E ],dDischarge[ DOMAIN_DIR_S ],dDischarge[ DOMAIN_DIR_W ]);
+		//printf("ulIdx %f dN %f dE %f dS %f dW %f \n", ulIdx*1.0, dDischarge[ DOMAIN_DIR_N ],dDischarge[ DOMAIN_DIR_E ],dDischarge[ DOMAIN_DIR_S ],dDischarge[ DOMAIN_DIR_W ]);
+		//printf("Cell.x %f cell.z %f cell.w %f", pCellData.x, pCellData.z, pCellData.w);
+		//printf("\n");
 	//}
 
-	// Commit to global memory
+
+	//double toDiv = 1.0;
+	//
+	//if(lIdxX >= DOMAIN_COLS - 1 || dNeigBedElevE == -9999.0){
+	//	pNeigDataE = 0.0;
+	//}else{toDiv+=1.0;}
+	//if( lIdxY >= DOMAIN_ROWS - 1 || dNeigBedElevN == -9999.0) {
+	//	pNeigDataN = 0.0;
+	//}else{toDiv+=1.0;}
+	//if( lIdxX <= 0 || dNeigBedElevW == -9999.0) {
+	//	pNeigDataW = 0.0;
+	//}else{toDiv+=1.0;}
+	//if( lIdxY <= 0 || dNeigBedElevS == -9999.0) {
+	//	pNeigDataS = 0.0;
+	//}else{toDiv+=1.0;}
+	//
+	//// Commit to global memory
+	//pCellData.x		= (pCellData.x + pNeigDataN.x+pNeigDataE.x+pNeigDataS.x+pNeigDataW.x)/toDiv;
 	pCellStateDst[ ulIdx ] = pCellData;
 }
 
@@ -377,14 +395,14 @@ cl_double calculateInertialFlux(
 		cl_double sug = (cl_double)(DOMAIN_DELTAY)* fabs(dLevelDownstream-dLevelUpstream)/(4.0*dTimestep);
 		cl_double diff = fabs(dDischarge) - sug;
 		cl_double diffp = diff/fabs(dDischarge);
-
+	
 	
 		if(fabs(dDischarge) < 0.01){
 			percAdd =diffp*diffp/40.0; // decrease the denominator to make bates stronger at low discharges, 10 was bad
 		}else{
 			percAdd = diffp*diffp/320.0; // we also need bates at high discharges but to a lesser degree
 		}
-
+	
 		dDischarge = fabs(Q)*(1.0-percAdd)+sug*(percAdd);
 		if (Q<0.0)
 			dDischarge = dDischarge * (-1.0);

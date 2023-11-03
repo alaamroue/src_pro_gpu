@@ -39,7 +39,6 @@ CSchemePromaides::CSchemePromaides(void)
 CSchemePromaides::~CSchemePromaides(void)
 {
 	this->releaseResources();
-	model::log->logInfo("The promaides formula scheme was unloaded from memory.");
 }
 
 /*
@@ -229,8 +228,6 @@ void CSchemePromaides::releaseResources()
 {
 	this->bReady = false;
 
-	model::log->logInfo("Releasing scheme resources held for OpenCL.");
-
 	this->releasePromaidesResources();
 	this->release1OResources();
 }
@@ -241,8 +238,6 @@ void CSchemePromaides::releaseResources()
 void CSchemePromaides::releasePromaidesResources()
 {
 	this->bReady = false;
-
-	model::log->logInfo("Releasing Promaides scheme resources held for OpenCL.");
 
 	// Nothing to do?
 }

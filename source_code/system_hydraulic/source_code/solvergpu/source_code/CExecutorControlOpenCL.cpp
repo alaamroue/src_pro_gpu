@@ -48,8 +48,6 @@ CExecutorControlOpenCL::~CExecutorControlOpenCL(void)
 
 	this->pDevices.clear();
 	delete [] this->clPlatforms;
-
-	model::log->logInfo( "The OpenCL executor is now unloaded." );
 }
 
 //Ascertain the number of, and store a pointer to each device available to us.
@@ -128,23 +126,22 @@ bool CExecutorControlOpenCL::getPlatforms(void)
 //Sends the details about the platforms to the log.
 void CExecutorControlOpenCL::logPlatforms(void)
 {
-	CLog*		pLog			= model::log;
 	std::string	sPlatformNo;
 
-	pLog->writeDivide();
-	pLog->logInfo("OPENCL PLATFORMS");
+	model::log->writeDivide();
+	model::log->logInfo("OPENCL PLATFORMS");
 
 	for (unsigned int iPlatformID = 0; iPlatformID < this->clPlatformCount; iPlatformID++)
 	{
 		sPlatformNo = "  " + toStringExact(iPlatformID + 1) + ". ";
 
-		pLog->logInfo(
+		model::log->logInfo(
 			sPlatformNo + this->platformInfo[iPlatformID].cName);
-		pLog->logInfo(
+		model::log->logInfo(
 			std::string(sPlatformNo.size(), ' ') + std::string(this->platformInfo[iPlatformID].cVersion) + " with " + toStringExact(this->platformInfo[iPlatformID].uiDeviceCount) + " device(s)");
 	}
 
-	pLog->writeDivide();
+	model::log->writeDivide();
 }
 
 //Create a new instance of the device class for each device we can identify on the platforms.

@@ -49,7 +49,6 @@ COCLDevice::~COCLDevice(void)
 	delete[] this->clDeviceOpenCLVersion;
 	delete[] this->clDeviceOpenCLDriver;
 
-	model::log->logInfo("An OpenCL device has been released (#" + toStringExact(this->uiDeviceNo) + ").");
 }
 
 //Obtain the size and value for a device info field
@@ -195,10 +194,9 @@ T COCLDevice::getDeviceInfo(cl_device_info clInfo)
 //Write details of this device to the log
 void COCLDevice::logDevice()
 {
-	CLog* pLog = model::log;
 	std::string	sPlatformNo;
 
-	pLog->writeDivide();
+	model::log->writeDivide();
 
 	std::string sDeviceType = " UNKNOWN DEVICE TYPE";
 	if (this->clDeviceType & CL_DEVICE_TYPE_CPU)			sDeviceType = " CENTRAL PROCESSING UNIT";
@@ -214,26 +212,26 @@ void COCLDevice::logDevice()
 		", " << this->clDeviceMaxWorkItemSizes[1] <<
 		", " << this->clDeviceMaxWorkItemSizes[2] << "]";
 
-	pLog->logInfo("#" + toStringExact(this->uiDeviceNo) + sDeviceType);
+	model::log->logInfo("#" + toStringExact(this->uiDeviceNo) + sDeviceType);
 
-	pLog->logInfo("  Suitability:       " + (std::string)(this->clDeviceAvailable ? "Available" : "Unavailable") + ", " + (std::string)(this->clDeviceCompilerAvailable ? "Compiler found" : "No compiler available"));
-	pLog->logInfo("  Processor type:    " + std::string(this->clDeviceName));
-	pLog->logInfo("  Vendor:            " + std::string(this->clDeviceVendor));
-	pLog->logInfo("  OpenCL driver:     " + std::string(this->clDeviceOpenCLDriver));
-	pLog->logInfo("  Compute units:     " + toStringExact(this->clDeviceComputeUnits));
-	pLog->logInfo("  Profile:           " + (std::string)(std::string(this->clDeviceProfile).compare("FULL_PROFILE") == 0 ? "Full" : "Embedded"));
-	pLog->logInfo("  Clock speed:       " + toStringExact(this->clDeviceClockFrequency) + " MHz");
-	pLog->logInfo("  Memory:            " + toStringExact((unsigned int)(this->clDeviceGlobalMemSize / 1024 / 1024)) + " Mb");
-	pLog->logInfo("  OpenCL C:          " + std::string(this->clDeviceOpenCLVersion));
-	pLog->logInfo("  Max global size:   " + toStringExact(this->clDeviceGlobalSize));
-	pLog->logInfo("  Max group items:   " + toStringExact(this->clDeviceMaxWorkGroupSize));
-	pLog->logInfo("  Max group:         " + ssGroupDimensions.str());
-	pLog->logInfo("  Max constant args: " + toStringExact(this->clDeviceMaxConstants));
-	pLog->logInfo("  Max allocation:    " + toStringExact(this->clDeviceMaxMemAlloc / 1024 / 1024) + "MB");
-	pLog->logInfo("  Max argument size: " + toStringExact(this->clDeviceMaxParamSize / 1024) + "kB");
-	pLog->logInfo("  Double precision:  " + sDoubleSupport);
+	model::log->logInfo("  Suitability:       " + (std::string)(this->clDeviceAvailable ? "Available" : "Unavailable") + ", " + (std::string)(this->clDeviceCompilerAvailable ? "Compiler found" : "No compiler available"));
+	model::log->logInfo("  Processor type:    " + std::string(this->clDeviceName));
+	model::log->logInfo("  Vendor:            " + std::string(this->clDeviceVendor));
+	model::log->logInfo("  OpenCL driver:     " + std::string(this->clDeviceOpenCLDriver));
+	model::log->logInfo("  Compute units:     " + toStringExact(this->clDeviceComputeUnits));
+	model::log->logInfo("  Profile:           " + (std::string)(std::string(this->clDeviceProfile).compare("FULL_PROFILE") == 0 ? "Full" : "Embedded"));
+	model::log->logInfo("  Clock speed:       " + toStringExact(this->clDeviceClockFrequency) + " MHz");
+	model::log->logInfo("  Memory:            " + toStringExact((unsigned int)(this->clDeviceGlobalMemSize / 1024 / 1024)) + " Mb");
+	model::log->logInfo("  OpenCL C:          " + std::string(this->clDeviceOpenCLVersion));
+	model::log->logInfo("  Max global size:   " + toStringExact(this->clDeviceGlobalSize));
+	model::log->logInfo("  Max group items:   " + toStringExact(this->clDeviceMaxWorkGroupSize));
+	model::log->logInfo("  Max group:         " + ssGroupDimensions.str());
+	model::log->logInfo("  Max constant args: " + toStringExact(this->clDeviceMaxConstants));
+	model::log->logInfo("  Max allocation:    " + toStringExact(this->clDeviceMaxMemAlloc / 1024 / 1024) + "MB");
+	model::log->logInfo("  Max argument size: " + toStringExact(this->clDeviceMaxParamSize / 1024) + "kB");
+	model::log->logInfo("  Double precision:  " + sDoubleSupport);
 
-	pLog->writeDivide();
+	model::log->writeDivide();
 }
 
 //Create the context and command queue for this device

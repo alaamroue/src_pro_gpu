@@ -40,7 +40,6 @@ CSchemeInertial::CSchemeInertial()
 CSchemeInertial::~CSchemeInertial(void)
 {
 	this->releaseResources();
-	model::log->logInfo("The inertial formula scheme was unloaded from memory.");
 }
 
 /*
@@ -281,8 +280,6 @@ void CSchemeInertial::releaseResources()
 {
 	this->bReady = false;
 
-	model::log->logInfo("Releasing scheme resources held for OpenCL.");
-
 	this->releaseInertialResources();
 	this->release1OResources();
 }
@@ -293,8 +290,6 @@ void CSchemeInertial::releaseResources()
 void CSchemeInertial::releaseInertialResources()
 {
 	this->bReady = false;
-
-	model::log->logInfo("Releasing inertial scheme resources held for OpenCL.");
 
 	// Nothing to do?
 }

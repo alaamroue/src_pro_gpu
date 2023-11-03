@@ -45,7 +45,6 @@ class CScheme
 		virtual void		logDetails() = 0;														// Write some details about the scheme
 		virtual void		prepareAll() = 0;														// Prepare absolutely everything for a model run
 		virtual void		prepareSetup(CModel*, model::SchemeSettings) = 0;						// Prepare absolutely everything for a model run
-		virtual double		proposeSyncPoint( double ) = 0;											// Propose a synchronisation point
 		virtual void		forceTimestep(double) = 0;												// Force a specific timestep
 		void				setQueueMode( unsigned char );											// Set the queue mode
 		unsigned char		getQueueMode();															// Get the queue mode
@@ -79,7 +78,6 @@ class CScheme
 		virtual void		cleanupSimulation() = 0;												// Dispose of transient data and clean-up this domain
 		virtual void		rollbackSimulation( double, double ) = 0;								// Roll back cell states to the last successful round
 		virtual void		saveCurrentState() = 0;													// Save current cell states
-		virtual void		forceTimeAdvance() = 0;													// Force time advance (when synced will stall)
 		virtual bool		isSimulationFailure( double ) = 0;										// Check whether we successfully reached a specific time
 		virtual bool		isSimulationSyncReady( double ) = 0;									// Are we ready to synchronise? i.e. have we reached the set sync time?
 		virtual COCLBuffer*	getLastCellSourceBuffer() = 0;											// Get the last source cell state buffer

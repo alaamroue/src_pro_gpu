@@ -149,7 +149,7 @@ void tst_Advance_Normal(
 		dLclTimestep = TIMESTEP_EARLY_LIMIT;
 		
 	// Don't exceed the target (DECREASE)
-	if ( ( dLclTime + dLclTimestep ) > dLclSyncTime ){
+	if ( ( dLclTime + dLclTimestep ) > dLclSyncTime  - 1e-5 ){
 		dLclTimestep = dLclSyncTime - dLclTime;
 	}
 

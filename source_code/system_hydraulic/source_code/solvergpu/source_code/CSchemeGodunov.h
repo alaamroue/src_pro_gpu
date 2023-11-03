@@ -13,17 +13,17 @@
 #include <mutex>
 
 
-/*
- *  SCHEME CLASS
- *  CSchemeGodunov
- *
- *  Stores and invokes relevant methods for the actual
- *  hydraulic computations using a first-order scheme
- */
+ /*
+  *  SCHEME CLASS
+  *  CSchemeGodunov
+  *
+  *  Stores and invokes relevant methods for the actual
+  *  hydraulic computations using a first-order scheme
+  */
 class CSchemeGodunov : public CScheme
 {
 
-	public:
+public:
 
 		CSchemeGodunov( void );						// Default constructor
 		virtual ~CSchemeGodunov( void );											// Destructor
@@ -32,9 +32,8 @@ class CSchemeGodunov : public CScheme
 		virtual void		logDetails();											// Write some details about the scheme
 		virtual void		prepareAll();											// Prepare absolutely everything for a model run
 		virtual void		scheduleIteration( bool,								// Schedule an iteration of the scheme
-											   COCLDevice*,
+		COCLDevice*,
 											   CDomainCartesian* );					
-		double				proposeSyncPoint( double );								// Propose a synchronisation point
 		void				forceTimestep( double );								// Force a specific timestep
 		void				setDryThreshold( double );								// Set the dry cell threshold depth
 		double				getDryThreshold();										// Get the dry cell threshold depth
@@ -60,7 +59,7 @@ class CSchemeGodunov : public CScheme
 		static DWORD		Threaded_runBatchLaunch(LPVOID param);
 		#endif
 		#ifdef PLATFORM_UNIX
-		static void*		Threaded_runBatchLaunch(void* param);
+			static void*		Threaded_runBatchLaunch(void* param);
 		#endif
 
 		void				runBatchThread();
@@ -74,14 +73,13 @@ class CSchemeGodunov : public CScheme
 		virtual void		runSimulation( double, double );						// Run this simulation until the specified time
 		virtual void		cleanupSimulation();									// Dispose of transient data and clean-up this domain
 		virtual void		saveCurrentState();										// Save current cell states
-		virtual void		forceTimeAdvance();										// Force time advance (when synced will stall)
 		virtual void		rollbackSimulation( double, double );					// Roll back cell states to the last successful round
 		virtual bool		isSimulationFailure( double );							// Check whether we successfully reached a specific time
 		virtual bool		isSimulationSyncReady( double );						// Are we ready to synchronise? i.e. have we reached the set sync time?
 		virtual void		dumpMemory( void );										// Read all buffers so that memory can be dumped
 
 
-	protected:
+protected:
 
 		// Private variables
 		cl_ulong			ulCachedWorkgroupSizeX, ulCachedWorkgroupSizeY;
@@ -97,18 +95,15 @@ class CSchemeGodunov : public CScheme
 		unsigned char		ucSolverType;											// Code for the Riemann solver type
 		double				dThresholdVerySmall;									// Threshold value for 'very small'
 		double				dThresholdQuiteSmall;									// Threshold value for 'quite small'
-		double				dLastSyncTime;											// What was the last synchronisation time?
 		bool				bDebugOutput;											// Debug output enabled in the scheme?
 		bool				bFrictionInFluxKernel;									// Process friction in the flux kernel?
 		bool				bUseAlternateKernel;									// Use the alternate kernel configurations (for memory)
-		bool				bUseForcedTimeAdvance;									// Force the timestep to be advanced next time?
-		bool				bOverrideTimestep;										// Force set the timestep next time?
 		bool				bUpdateTargetTime;										// Update the target time?
 		bool				bImportBoundaries;										// Import link data?
 		unsigned int		uiDebugCellX;											// Debug info cell X
 		unsigned int		uiDebugCellY;											// Debug info cell Y
 		unsigned int		uiTimestepReductionWavefronts;							// Number of wavefronts used in reduction
-		
+
 		// Private functions
 		virtual bool		prepareCode();											// Prepare the code required
 		virtual void		releaseResources();										// Release OpenCL resources consumed
