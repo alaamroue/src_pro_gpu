@@ -229,7 +229,7 @@ void Hyd_Param_Global::create_table(QSqlDatabase *ptr_database){
 			tab_col[6].name=hyd_label::maxstepsize;
 			tab_col[6].type=sys_label::tab_col_type_double;
 			tab_col[6].unsigned_flag=true;
-			tab_col[6].default_value=="100.0";
+			tab_col[6].default_value="100.0";
 
 			tab_col[7].name=hyd_label::inistepsize;
 			tab_col[7].type=sys_label::tab_col_type_double;
@@ -933,7 +933,7 @@ string Hyd_Param_Global::convert_precontype2txt(_hyd_prec_type type){
 			txt=hyd_label::precon_right_type;
 			break;
 		default:
-			txt==label::unknown_type;
+			txt=label::unknown_type;
 	}
 	return txt;
 }

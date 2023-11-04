@@ -45,6 +45,10 @@ CSchemeGodunov::CSchemeGodunov(void)
 	this->uiDebugCellX = 9999;
 	this->uiDebugCellY = 9999;
 
+	this->uiIterationsTotal = 0;
+	this->uiSuccessfulIterationsTotal = 0;
+	this->uiSkippedIterationsTotal = 0;
+
 	this->bImportBoundaries = false;
 	this->bUpdateTargetTime = false;
 	this->bUseAlternateKernel = false;
@@ -1000,8 +1004,7 @@ void	CSchemeGodunov::prepareSimulation()
 
 	// Zero counters
 	ulCurrentCellsCalculated = 0;
-	uiIterationsSinceSync = 0;
-	uiIterationsSinceProgressCheck = 0;
+	uiIterationsSinceTargetChanged = 0;
 
 	// States
 	bRunning = false;
@@ -1089,7 +1092,7 @@ void CSchemeGodunov::Threaded_runBatch()
 			oclBufferTimeTarget->queueWriteAll();
 			pDomain->getDevice()->queueBarrier();
 
-			this->uiIterationsSinceSync = 0;
+			this->uiIterationsSinceTargetChanged = 0;
 
 			if (dCurrentTime + dCurrentTimestep > dTargetTime) {
 				this->dCurrentTimestep = dTargetTime - dCurrentTime;
@@ -1114,7 +1117,7 @@ void CSchemeGodunov::Threaded_runBatch()
 			pDomain->getDevice()->queueBarrier();
 
 			// Last sync time
-			this->uiIterationsSinceSync = 0;
+			this->uiIterationsSinceTargetChanged = 0;
 
 			// Reset Counters
 			oclKernelResetCounters->scheduleExecution();
@@ -1162,8 +1165,7 @@ void CSchemeGodunov::Threaded_runBatch()
 					pDomain->getDevice(),
 					pDomain
 				);
-				uiIterationsSinceSync++;
-				uiIterationsSinceProgressCheck++;
+				uiIterationsSinceTargetChanged++;
 				ulCurrentCellsCalculated += this->pDomain->getCellCount();
 				bUseAlternateKernel = !bUseAlternateKernel;
 			}
@@ -1176,11 +1178,14 @@ void CSchemeGodunov::Threaded_runBatch()
 		oclBufferBatchSkipped->queueReadAll();
 		oclBufferBatchSuccessful->queueReadAll();
 		oclBufferBatchTimesteps->queueReadAll();
-		uiIterationsSinceProgressCheck = 0;
 		this->pDomain->getDevice()->blockUntilFinished();
 
 		this->readKeyStatistics();
-		//std::cout << "3. Batch Suc:" << uiBatchSuccessful << " Skip:" << uiBatchSkipped << std::endl;
+		uiIterationsTotal += uiIterationsSinceTargetChanged;
+		uiSuccessfulIterationsTotal += uiBatchSuccessful;
+		uiSkippedIterationsTotal += uiBatchSkipped;
+
+		std::cout << "uiIterationsTotal: " << uiIterationsTotal << " uiSuccessfulIterationsTotal: " << uiSuccessfulIterationsTotal << " uiSkippedIterationsTotal: " << uiSkippedIterationsTotal << std::endl;
 
 		// Wait until further work is scheduled
 		this->bRunning = false;
@@ -1279,7 +1284,7 @@ void	CSchemeGodunov::rollbackSimulation(double dCurrentTime, double dTargetTime)
 	// Wait until any pending tasks have completed first...
 	this->getDomain()->getDevice()->blockUntilFinished();
 
-	uiIterationsSinceSync = 0;
+	uiIterationsSinceTargetChanged = 0;
 
 	this->dCurrentTime = dCurrentTime;
 	this->dTargetTime = dTargetTime;
@@ -1508,7 +1513,7 @@ void CSchemeGodunov::saveCurrentState()
 
 	// Reset iteration tracking
 	// TODO: Should this be moved into the sync function?
-	uiIterationsSinceSync = 0;
+	uiIterationsSinceTargetChanged = 0;
 
 	// Block until complete
 	// TODO: Investigate - does this need to be a blocking command?

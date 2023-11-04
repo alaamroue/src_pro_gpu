@@ -106,14 +106,16 @@ class CScheme
 		bool				bAutomaticQueue;														// Automatic queue size detection?
 		double				dTimestep;																// Constant/initial timestep
 		unsigned int		uiQueueAdditionSize;													// Number of runs to queue at once
-		unsigned int		uiIterationsSinceSync;													// Number of iterations since we last synchronised
-		unsigned int		uiIterationsSinceProgressCheck;											// How many iterations since we downloaded progress data
+		unsigned int		uiIterationsSinceTargetChanged;											// Number of iterations since target time changed
+		unsigned int		uiIterationsTotal;														// Number of total iterations
+		cl_double			dBatchTimesteps;														// Cumulative batch timesteps
+		cl_uint				uiBatchSuccessful;														// Number of successful batch iterations
+		unsigned int		uiSuccessfulIterationsTotal;
+		cl_uint				uiBatchSkipped;															// Number of skipped batch 
+		unsigned int		uiSkippedIterationsTotal;
 		double				dCourantNumber;															// Courant number for CFL condition
 		bool				bDynamicTimestep;														// Dynamic timestepping enabled?
 		double				dBatchStartedTime;														// Time at which the batch was started
-		cl_double			dBatchTimesteps;														// Cumulative batch timesteps
-		cl_uint				uiBatchSkipped;															// Number of skipped batch iterations
-		cl_uint				uiBatchSuccessful;														// Number of successful batch iterations
 		cl_uint				uiBatchRate;															// Number of successful iterations per second
 		CDomainCartesian*	pDomain;																// Domain which this scheme is attached to
 		double				outputFrequency;

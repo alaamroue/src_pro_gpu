@@ -450,7 +450,7 @@ void Hyd_Instationary_Boundary::create_point_table(QSqlDatabase *ptr_database){
 
 			tab_col[3].name=hyd_label::bounddata_value;
 			tab_col[3].type=sys_label::tab_col_type_double;
-			tab_col[3].default_value=="0.0";
+			tab_col[3].default_value="0.0";
 
 			tab_col[4].name=hyd_label::instatbound_time;
 			tab_col[4].type=sys_label::tab_col_type_double;

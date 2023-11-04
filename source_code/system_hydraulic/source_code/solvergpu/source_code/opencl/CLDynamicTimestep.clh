@@ -11,7 +11,7 @@
 #define TIMESTEP_START_MINIMUM			1E-10
 #define TIMESTEP_START_MINIMUM_DURATION	1.0
 #define TIMESTEP_MINIMUM				1E-10
-#define TIMESTEP_MAXIMUM				15.0   //was 5
+#define TIMESTEP_MAXIMUM				30.0   //was 5. Was actually 15 not 5.
 
 #ifdef USE_FUNCTION_STUBS
 // Function definitions
