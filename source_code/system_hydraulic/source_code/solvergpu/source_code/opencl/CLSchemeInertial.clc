@@ -78,7 +78,7 @@ void ine_cacheDisabled (
 		pCellStateDst[ ulIdx ] = pCellStateSrc[ ulIdx ];
 		return;
 	}
-
+	
 	// Load cell data
 	dCellBedElev		= dBedElevation[ ulIdx ];
 	pCellData			= pCellStateSrc[ ulIdx ];
@@ -141,9 +141,11 @@ void ine_cacheDisabled (
 	if ( ucDryCount == 5 ){
 		return;
 	}
-
+	
 	bool debug = false;
-
+	//if(ulIdx==8888){
+	//	debug = true;
+	//}
 
 	if (!usePoleniN){
 		dDischarge[ DOMAIN_DIR_N ] = calculateInertialFlux(
@@ -153,7 +155,8 @@ void ine_cacheDisabled (
 			pNeigDataN.x,
 			dNeigBedElevN,
 			pCellData.x,
-			dCellBedElev
+			dCellBedElev,
+			debug
 		);
 				}else{
 					dDischarge[ DOMAIN_DIR_N ] = poleni_Solver(
@@ -177,7 +180,8 @@ void ine_cacheDisabled (
 			pNeigDataE.x,
 			dNeigBedElevE,
 			pCellData.x,
-			dCellBedElev
+			dCellBedElev,
+			debug
 		);
 				}else{
 					dDischarge[ DOMAIN_DIR_E ] = poleni_Solver(
@@ -201,7 +205,8 @@ void ine_cacheDisabled (
 			pCellData.x,
 			dCellBedElev,
 			pNeigDataS.x,
-			dNeigBedElevS
+			dNeigBedElevS,
+			debug
 		);
 				}else{
 					dDischarge[ DOMAIN_DIR_S ] = -1.0*poleni_Solver(
@@ -225,7 +230,8 @@ void ine_cacheDisabled (
 			pCellData.x,
 			dCellBedElev,
 			pNeigDataW.x,
-			dNeigBedElevW
+			dNeigBedElevW,
+			debug
 		);
 				}else{
 					dDischarge[ DOMAIN_DIR_W ] = -1.0*poleni_Solver(
@@ -264,7 +270,8 @@ void ine_cacheDisabled (
 	// Calculation of change values per timestep and spatial dimension
 	dDeltaFSL		= ( dDischarge[DOMAIN_DIR_E] - dDischarge[DOMAIN_DIR_W] + 
 					    dDischarge[DOMAIN_DIR_N] - dDischarge[DOMAIN_DIR_S] )/DOMAIN_DELTAY;
-
+	if(debug)					
+		printf("ulIdx %f old_opts %f new_opts %f dLclTimestep %f dDeltaFSL %f dN %f dE %f dS %f dW %f \n", ulIdx*1.0, pCellData.x, pCellData.x+ dLclTimestep * dDeltaFSL,dLclTimestep, dDeltaFSL, dDischarge[ DOMAIN_DIR_N ],dDischarge[ DOMAIN_DIR_E ],dDischarge[ DOMAIN_DIR_S ],dDischarge[ DOMAIN_DIR_W ]);
 	// Update the flow state
 	pCellData.x		= pCellData.x + dLclTimestep * dDeltaFSL;
 
@@ -276,16 +283,16 @@ void ine_cacheDisabled (
 	if ( pCellData.x - dCellBedElev < VERY_SMALL )
 		pCellData.x = dCellBedElev;
 	
-	//if (ulIdx == 7116 ){
-		//printf("opt_z %f opt_s %f ",dCellBedElev, pCellData.x);
-		//printf("opt_h %f", (pCellData.x-dCellBedElev));
-		//printf("pN %f pE %f pS %f pW %f ",usePoleniN ? 1.0 : 0.0, usePoleniE ? 1.0 : 0.0, usePoleniS ? 1.0 : 0.0, usePoleniW ? 1.0 : 0.0);
-		//printf("dOpt_zxmax %f dOpt_cx %f dOpt_zymax %f dOpt_cy %f ",dOpt_zxmax, dOpt_cx, dOpt_zymax, dOpt_cy);
-		//printf("N %f E %f S %f W %f", pNeigDataN.x,pNeigDataE.x,pNeigDataS.x,pNeigDataW.x);
-		//printf("dN %f dE %f dS %f dW %f", dDischarge[ DOMAIN_DIR_N ],dDischarge[ DOMAIN_DIR_E ],dDischarge[ DOMAIN_DIR_S ],dDischarge[ DOMAIN_DIR_W ]);
-		//printf("ulIdx %f dN %f dE %f dS %f dW %f \n", ulIdx*1.0, dDischarge[ DOMAIN_DIR_N ],dDischarge[ DOMAIN_DIR_E ],dDischarge[ DOMAIN_DIR_S ],dDischarge[ DOMAIN_DIR_W ]);
-		//printf("Cell.x %f cell.z %f cell.w %f", pCellData.x, pCellData.z, pCellData.w);
-		//printf("\n");
+	//if (ulIdx == 706 ){
+	//	printf("opt_z %f opt_s %f ",dCellBedElev, pCellData.x);
+	//	//printf("opt_h %f", (pCellData.x-dCellBedElev));
+	//	//printf("pN %f pE %f pS %f pW %f ",usePoleniN ? 1.0 : 0.0, usePoleniE ? 1.0 : 0.0, usePoleniS ? 1.0 : 0.0, usePoleniW ? 1.0 : 0.0);
+	//	//printf("dOpt_zxmax %f dOpt_cx %f dOpt_zymax %f dOpt_cy %f ",dOpt_zxmax, dOpt_cx, dOpt_zymax, dOpt_cy);
+	//	printf("N %f E %f S %f W %f", pNeigDataN.x,pNeigDataE.x,pNeigDataS.x,pNeigDataW.x);
+	//	printf("dN %f dE %f dS %f dW %f", dDischarge[ DOMAIN_DIR_N ],dDischarge[ DOMAIN_DIR_E ],dDischarge[ DOMAIN_DIR_S ],dDischarge[ DOMAIN_DIR_W ]);
+	//	printf("ulIdx %f dN %f dE %f dS %f dW %f \n", ulIdx*1.0, dDischarge[ DOMAIN_DIR_N ],dDischarge[ DOMAIN_DIR_E ],dDischarge[ DOMAIN_DIR_S ],dDischarge[ DOMAIN_DIR_W ]);
+	//	//printf("Cell.x %f cell.z %f cell.w %f", pCellData.x, pCellData.z, pCellData.w);
+	//	printf("\n");
 	//}
 
 
@@ -319,7 +326,8 @@ cl_double calculateInertialFlux(
 		cl_double		dLevelUpstream,					// Upstream current level
 		cl_double		dBedUpstream,					// Upstream bed elevation
 		cl_double		dLevelDownstream,				// Downstream current level
-		cl_double		dBedDownstream					// Downstream bed elevation
+		cl_double		dBedDownstream,					// Downstream bed elevation
+		bool			debug
 )
 {
 	cl_double dDischarge = 0.0;
@@ -330,6 +338,12 @@ cl_double calculateInertialFlux(
 	dDischarge = ( dPreviousDischarge - ( GRAVITY * dDepth * dTimestep * dSlope ) ) /
 			     ( 1.0 + GRAVITY * dDepth * dTimestep * dManningCoef * dManningCoef * fabs( dPreviousDischarge ) /
 				   pow( dDepth, 10.0/3.0 ) );
+
+	if (debug){
+		printf("dDepth %f dLevelDownstream %f dLevelUpstream %f \n",dDepth, dLevelDownstream, dLevelUpstream);
+		printf("dSlope %f dLevelDownstream %f dLevelUpstream %f \n",dSlope, dLevelDownstream, dLevelUpstream);
+		printf("dDischarge %f dPreviousDischarge %f GRAVITY %f dTimestep %f dManningCoef %f \n",dDischarge, dPreviousDischarge, GRAVITY, dTimestep, dManningCoef );
+	}
 
 	//Promaides
 	//cl_double dDischarge2 = 0.0;

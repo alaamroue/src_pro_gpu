@@ -7,7 +7,7 @@
  */
 
 #define FROUDE_LIMIT			0.8
-#define TIMESTEP_SIMPLIFIED		1			// Calculated based on sqrt(gh) instead of u + sqrt(gh)
+#define INERTIAL_SCHEME		1			// Calculated based on sqrt(gh) instead of u + sqrt(gh)
 
 // Structure definitions
 typedef struct sFaceStructure {
@@ -49,7 +49,8 @@ cl_double calculateInertialFlux(
 	cl_double,
 	cl_double,
 	cl_double,
-	cl_double
+	cl_double,
+	bool
 );
 
 cl_double poleni_Solver(

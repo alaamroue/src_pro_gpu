@@ -356,13 +356,13 @@ cl_double2 manning_Solver(
 					//dDischarge = 0.0 - flow_depth * sqrt( GRAVITY * flow_depth ) * 4.0;
 
 					// Bates(2010):
-					cl_double Q = dDischarge;
-					
+						cl_double Q = dDischarge;
+	
 					dDischarge = fmin(fabs(Q), DOMAIN_DELTAX* DOMAIN_DELTAY* abs_delta_h/(4.0*timestep) / (DOMAIN_DELTAY+DOMAIN_DELTAX-DeltaXY));
-
+	
 							if (Q<0.0){
-								dDischarge = dDischarge * (-1.0);
-							}
+							dDischarge = dDischarge * (-1.0);
+					}
 					
 					
 					

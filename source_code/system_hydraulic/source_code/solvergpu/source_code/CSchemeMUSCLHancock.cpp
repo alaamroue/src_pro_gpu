@@ -612,16 +612,6 @@ bool	CSchemeMUSCLHancock::getExtrapolatedContiguity()
 }
 
 /*
-*	Fetch the pointer to the last cell source buffer
-*/
-COCLBuffer* CSchemeMUSCLHancock::getLastCellSourceBuffer()
-{
-	// TODO: Max caching should return alternating like 
-	// the 1st order scheme
-	return oclBufferCellStates;
-}
-
-/*
 *	Fetch the pointer to the next cell source buffer
 */
 COCLBuffer* CSchemeMUSCLHancock::getNextCellSourceBuffer()

@@ -6,6 +6,9 @@
  * See OriginalSourceCode.zip for changes. (Based on 1e62acf6b9b480e08646b232361b68c1827d91ae from https://github.com/lukeshope/hipims-ocl )
  */
 
+ #define MUSCL_SCHEME 1
+ #define GODUNOV_OR_MUSCL 1
+
 // Structure definitions
 typedef struct sFaceStructure {
 	cl_double4	pN;

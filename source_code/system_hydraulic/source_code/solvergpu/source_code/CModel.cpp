@@ -327,74 +327,23 @@ void	CModel::runModelUI(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 //Run the actual simulation, asking each domain and schemes therein in turn etc.
 void	CModel::runNext(const double next_time_point)
 {
-	bool bIdle;
-	double							dCellRate = 0.0;
-	CBenchmark::sPerformanceMetrics* sTotalMetrics;
-	CBenchmark* pBenchmarkAll;
-
-	// Track time for the whole simulation
-	pBenchmarkAll = new CBenchmark(true);
-	sTotalMetrics = pBenchmarkAll->getMetrics();
-
-	// Track total processing time
-	dProcessingTime = sTotalMetrics->dSeconds;
-	dVisualisationTime = dProcessingTime;
-
-	//dSimulationTime = next_time_point;
 	dTargetTime = next_time_point;
-	// ---------
-	// Run the main management loop
-	// ---------
-	// Even if user has forced abort, still wait until all idle state is reached
-	while (this->dCurrentTime < dTargetTime - 1e-5)
-	{
-		// Assess the overall state of the simulation at present
-		dEarliestTime = 0.0;
 
-		// Minimum time
+	while (this->dCurrentTime < dTargetTime - 1e-5){
+		// Current Time
 		dCurrentTime = domain->getScheme()->getCurrentTime();
 
 		// Either we're not ready to sync, or we were still synced from the last run
 		if (domain->getScheme()->isRunning() == false && domain->getDevice()->isBusy() == false) {
-			domain->getScheme()->runSimulation(dTargetTime, sTotalMetrics->dSeconds);
-		}
-
-		// Update progress bar after each batch, not every time
-		sTotalMetrics = pBenchmarkAll->getMetrics();
-		if (showProgess) {
-			this->runModelUI(sTotalMetrics);
+			domain->getScheme()->runSimulation(dTargetTime);
 		}
 
 		if (this->dCurrentTime > next_time_point) {
 			std::cout << "We are off, next point should " << next_time_point << " but we are at " << this->dCurrentTime << std::endl;
-			break;
 		}
 
 	}
 
-	/*
-	// Update to 100% progress bar
-	pBenchmarkAll->finish();
-	sTotalMetrics = pBenchmarkAll->getMetrics();
-	this->runModelUI(
-		sTotalMetrics
-	);
-	*/
-
-	// Get the total number of cells calculated
-	unsigned long long	ulCurrentCellsCalculated = 0;
-	double				dVolume = 0.0;
-
-	ulCurrentCellsCalculated += domain->getScheme()->getCellsCalculated();
-	dVolume += abs(domain->getVolume());
-	unsigned long ulRate = static_cast<unsigned long>(static_cast<double>(ulCurrentCellsCalculated) / sTotalMetrics->dSeconds);
-
-	//model::log->logInfo("Simulation time:     " + Util::secondsToTime(sTotalMetrics->dSeconds));
-	//model::log->logInfo( "Calculation rate:    " + toStringExact( floor(dCellRate) ) + " cells/sec" );
-	//model::log->logInfo( "Final volume:        " + toStringExact( static_cast<int>( dVolume ) ) + "m3" );
-	//model::log->writeDivide();
-
-	delete   pBenchmarkAll;
 }
 
 //Attached the profiler class to the CModel

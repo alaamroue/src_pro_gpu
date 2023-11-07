@@ -1301,7 +1301,7 @@ void Hyd_Model_Floodplain::solve_model_gpu(const double next_time_point, const s
 		//profiler->profile("SetBoundaryConditionsArray", Profiler::profilerFlags::END_PROFILING);
 
 		// Request to import Boundary condition and new coupled water heights
-		myScheme->importLinkZoneData();
+		myScheme->importBoundaries();
 
 		//profiler->profile("run_solver_gpu", Profiler::profilerFlags::START_PROFILING);
 		// Run the simulations until the target time, the results on the simulation are saved in readBuffers_opt_h

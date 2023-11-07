@@ -40,7 +40,6 @@ class CSchemeMUSCLHancock : public CSchemeGodunov
 		void				setExtrapolatedContiguity( bool );				// Store extrapolated data contiguously?
 		bool				getExtrapolatedContiguity();					// Is extrapolated data stored contiguously?
 		void				readDomainAll();								// Fetch back all the domain data
-		COCLBuffer*			getLastCellSourceBuffer();						// Get the last source cell state buffer
 		COCLBuffer*			getNextCellSourceBuffer();						// Get the next source cell state buffer
 
 	protected:

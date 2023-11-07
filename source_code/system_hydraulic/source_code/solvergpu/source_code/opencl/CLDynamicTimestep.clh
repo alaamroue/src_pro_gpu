@@ -36,15 +36,6 @@ void tst_ResetCounters(
 	__global	cl_uint *
 );
 
-__kernel  __attribute__((reqd_work_group_size(1, 1, 1)))
-void tst_UpdateTimestep ( 
-	__global	cl_double *,
-	__global	cl_double *,
-	__global	cl_double *,
-	__global	cl_double *,
-	__global	cl_double *
-);
-
 __kernel  REQD_WG_SIZE_LINE
 void tst_Reduce ( 
 	__global	cl_double4 *,

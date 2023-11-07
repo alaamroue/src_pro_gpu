@@ -6,8 +6,8 @@
  * See OriginalSourceCode.zip for changes. (Based on 1e62acf6b9b480e08646b232361b68c1827d91ae from https://github.com/lukeshope/hipims-ocl )
  */
 
-//#define TIMESTEP_SIMPLIFIED		1			// Calculated based on sqrt(gh) instead of u + sqrt(gh)
-#define TIMESTEP_PROMAIDES 1
+//#define INERTIAL_SCHEME		1			// Calculated based on sqrt(gh) instead of u + sqrt(gh)
+#define DIFFUSIVE_SCHEME 1
 
 // Structure definitions
 typedef struct sFaceStructure {

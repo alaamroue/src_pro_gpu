@@ -34,7 +34,6 @@ public:
 		virtual void		scheduleIteration( bool,								// Schedule an iteration of the scheme
 		COCLDevice*,
 											   CDomainCartesian* );					
-		void				forceTimestep( double );								// Force a specific timestep
 		void				setDryThreshold( double );								// Set the dry cell threshold depth
 		double				getDryThreshold();										// Get the dry cell threshold depth
 		void				setReductionWavefronts( unsigned int );					// Set number of wavefronts used in reductions
@@ -51,7 +50,6 @@ public:
 		void				setNonCachedWorkgroupSize( unsigned char, unsigned char );	// Set the work-group size
 		void				setTargetTime( double );								// Set the target sync time
 		double				getAverageTimestep();									// Get batch average timestep
-		virtual COCLBuffer*	getLastCellSourceBuffer();								// Get the last source cell state buffer
 		virtual COCLBuffer*	getNextCellSourceBuffer();								// Get the next source cell state buffer
 		void				setDebugger(unsigned int debugX, unsigned int debugY);
 
@@ -66,16 +64,12 @@ public:
 		void				Threaded_runBatch();
 
 		virtual void		readDomainAll();										// Read back all domain data
-		virtual void		importLinkZoneData();									// Load in data
+		virtual void		importBoundaries();									// Load in data
 		void				prepareSetup(CModel*, model::SchemeSettings);			// Set everything up to start running for this domain
 		virtual void		prepareSimulation();									// Set everything up to start running for this domain
 		virtual void		readKeyStatistics();									// Fetch the key details back to the right places in memory
-		virtual void		runSimulation( double, double );						// Run this simulation until the specified time
+		virtual void		runSimulation( double );						// Run this simulation until the specified time
 		virtual void		cleanupSimulation();									// Dispose of transient data and clean-up this domain
-		virtual void		saveCurrentState();										// Save current cell states
-		virtual void		rollbackSimulation( double, double );					// Roll back cell states to the last successful round
-		virtual bool		isSimulationFailure( double );							// Check whether we successfully reached a specific time
-		virtual bool		isSimulationSyncReady( double );						// Are we ready to synchronise? i.e. have we reached the set sync time?
 		virtual void		dumpMemory( void );										// Read all buffers so that memory can be dumped
 
 
@@ -122,7 +116,6 @@ protected:
 		COCLKernel*			oclKernelTimestepReduction;
 		COCLKernel*			oclKernelTimeAdvance;
 		COCLKernel*			oclKernelResetCounters;
-		COCLKernel*			oclKernelTimestepUpdate;
 		COCLBuffer*			oclBufferCellStates;
 		COCLBuffer*			oclBufferCellStatesAlt;
 		COCLBuffer*			oclBufferCellManning;

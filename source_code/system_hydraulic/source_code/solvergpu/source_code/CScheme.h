@@ -45,7 +45,6 @@ class CScheme
 		virtual void		logDetails() = 0;														// Write some details about the scheme
 		virtual void		prepareAll() = 0;														// Prepare absolutely everything for a model run
 		virtual void		prepareSetup(CModel*, model::SchemeSettings) = 0;						// Prepare absolutely everything for a model run
-		virtual void		forceTimestep(double) = 0;												// Force a specific timestep
 		void				setQueueMode( unsigned char );											// Set the queue mode
 		unsigned char		getQueueMode();															// Get the queue mode
 		void				setQueueSize( unsigned int );											// Set the queue size (or initial)
@@ -71,16 +70,11 @@ class CScheme
 		unsigned int		getIterationsSuccessful()		{ return uiBatchSuccessful; }			// Get the successful iterations
 		unsigned int		getIterationsSkipped()			{ return uiBatchSkipped; }				// Get the number of iterations skipped
 		virtual void		readDomainAll() = 0;													// Read back all domain data
-		virtual void		importLinkZoneData() = 0;												// Read back synchronisation zone data
+		virtual void		importBoundaries() = 0;												// Read back synchronisation zone data
 		virtual void		prepareSimulation() = 0;												// Set everything up to start running for this domain
 		virtual void		readKeyStatistics() = 0;												// Fetch the key statistics back to the right places in memory
-		virtual void		runSimulation( double, double ) = 0;									// Run this simulation until the specified time
+		virtual void		runSimulation( double ) = 0;									// Run this simulation until the specified time
 		virtual void		cleanupSimulation() = 0;												// Dispose of transient data and clean-up this domain
-		virtual void		rollbackSimulation( double, double ) = 0;								// Roll back cell states to the last successful round
-		virtual void		saveCurrentState() = 0;													// Save current cell states
-		virtual bool		isSimulationFailure( double ) = 0;										// Check whether we successfully reached a specific time
-		virtual bool		isSimulationSyncReady( double ) = 0;									// Are we ready to synchronise? i.e. have we reached the set sync time?
-		virtual COCLBuffer*	getLastCellSourceBuffer() = 0;											// Get the last source cell state buffer
 		virtual COCLBuffer*	getNextCellSourceBuffer() = 0;											// Get the next source cell state buffer
 		virtual void		dumpMemory() = 0;														// Read back all domain data
 		void				setOutputFreq(double);
@@ -109,13 +103,13 @@ class CScheme
 		unsigned int		uiIterationsSinceTargetChanged;											// Number of iterations since target time changed
 		unsigned int		uiIterationsTotal;														// Number of total iterations
 		cl_double			dBatchTimesteps;														// Cumulative batch timesteps
+		double				dAvgTimestep;														
 		cl_uint				uiBatchSuccessful;														// Number of successful batch iterations
 		unsigned int		uiSuccessfulIterationsTotal;
 		cl_uint				uiBatchSkipped;															// Number of skipped batch 
 		unsigned int		uiSkippedIterationsTotal;
 		double				dCourantNumber;															// Courant number for CFL condition
 		bool				bDynamicTimestep;														// Dynamic timestepping enabled?
-		double				dBatchStartedTime;														// Time at which the batch was started
 		cl_uint				uiBatchRate;															// Number of successful iterations per second
 		CDomainCartesian*	pDomain;																// Domain which this scheme is attached to
 		double				outputFrequency;
