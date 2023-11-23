@@ -329,7 +329,7 @@ void	CModel::runNext(const double next_time_point)
 {
 	dTargetTime = next_time_point;
 
-	while (this->dCurrentTime < dTargetTime - 1e-5){
+	while (this->dCurrentTime < dTargetTime - 1e-8){
 		// Current Time
 		dCurrentTime = domain->getScheme()->getCurrentTime();
 
@@ -385,11 +385,4 @@ void model::doError(std::string error_reason, unsigned char error_type, std::str
 {
 	model::log->logError(error_reason, error_type, error_place, error_help);
 
-	//if (error_type & model::errorCodes::kLevelModelStop)
-	//	model::log->logInfo("model forceAbort was requested by a function.");
-	//
-	//if (error_type & model::errorCodes::kLevelFatal) {
-	//	model::doPause();
-	//	exit(model::appReturnCodes::kAppFatal);
-	//}
 }

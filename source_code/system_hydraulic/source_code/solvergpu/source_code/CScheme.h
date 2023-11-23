@@ -55,6 +55,8 @@ class CScheme
 		unsigned char		getTimestepMode();														// Get the timestep mode
 		void				setTimestep( double );													// Set the timestep
 		double				getTimestep();															// Get the timestep
+		void				setSchemeType(model::schemeTypes::schemeTypes);														// Set the scheme type
+		model::schemeTypes::schemeTypes		getSchemeType();										// Gets the scheme type
 		virtual double		getAverageTimestep() = 0;												// Get batch average timestep
 		void				setFrictionStatus( bool );												// Enable/disable friction effects
 		bool				getFrictionStatus();													// Get enabled/disabled for friction
@@ -70,10 +72,10 @@ class CScheme
 		unsigned int		getIterationsSuccessful()		{ return uiBatchSuccessful; }			// Get the successful iterations
 		unsigned int		getIterationsSkipped()			{ return uiBatchSkipped; }				// Get the number of iterations skipped
 		virtual void		readDomainAll() = 0;													// Read back all domain data
-		virtual void		importBoundaries() = 0;												// Read back synchronisation zone data
+		virtual void		importBoundaries() = 0;													// Read back synchronisation zone data
 		virtual void		prepareSimulation() = 0;												// Set everything up to start running for this domain
 		virtual void		readKeyStatistics() = 0;												// Fetch the key statistics back to the right places in memory
-		virtual void		runSimulation( double ) = 0;									// Run this simulation until the specified time
+		virtual void		runSimulation( double ) = 0;											// Run this simulation until the specified time
 		virtual void		cleanupSimulation() = 0;												// Dispose of transient data and clean-up this domain
 		virtual COCLBuffer*	getNextCellSourceBuffer() = 0;											// Get the next source cell state buffer
 		virtual void		dumpMemory() = 0;														// Read back all domain data
@@ -114,6 +116,7 @@ class CScheme
 		CDomainCartesian*	pDomain;																// Domain which this scheme is attached to
 		double				outputFrequency;
 		CModel*				cModel;
+		model::schemeTypes::schemeTypes	schemeType;
 		
 };
 

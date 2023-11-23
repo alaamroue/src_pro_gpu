@@ -231,3 +231,19 @@ void	CScheme::setOutputFreq(double freq)
 {
 	outputFrequency = freq;
 }
+
+/*
+ *	Sets the scheme type
+ */
+void	CScheme::setSchemeType(model::schemeTypes::schemeTypes type)
+{
+	this->schemeType = type;
+}
+
+/*
+ *	Gets the scheme type
+ */
+model::schemeTypes::schemeTypes	CScheme::getSchemeType(void)
+{
+	return this->schemeType;
+}

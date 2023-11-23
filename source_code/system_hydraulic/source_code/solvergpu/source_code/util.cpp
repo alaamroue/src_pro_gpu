@@ -90,5 +90,12 @@ namespace Util
 		return os.str();
 	}
 
+	void SwapEnd(float& var)
+	{
+		char* varArray = reinterpret_cast<char*>(&var);
+		for (long i = 0; i < static_cast<long>(sizeof(var) / 2); i++)
+			std::swap(varArray[sizeof(var) - 1 - i], varArray[i]);
+	}
+
 }
 

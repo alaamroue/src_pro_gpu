@@ -25,6 +25,7 @@ CDomainCartesian::CDomainCartesian(void)
 	this->dCellResolutionY			= std::numeric_limits<double>::quiet_NaN();
 	this->ulRows					= std::numeric_limits<unsigned long>::quiet_NaN();
 	this->ulCols					= std::numeric_limits<unsigned long>::quiet_NaN();
+	this->domainName				= "";
 	this->bUseOptimizedBoundary		= false;
 	this->ulCouplingArraySize		= 0;
 
@@ -104,6 +105,14 @@ void	CDomainCartesian::setDevice(COCLDevice* pDevice)
 COCLDevice* CDomainCartesian::getDevice()
 {
 	return this->pDevice;
+}
+
+std::string CDomainCartesian::getName(void) {
+	return this->domainName;
+}
+
+void CDomainCartesian::setName(std::string name) {
+	this->domainName = name;
 }
 
 //Creates an OpenCL memory buffer for the specified data store
@@ -367,6 +376,18 @@ void	CDomainCartesian::getCellResolution(double* dResolutionX, double* dResoluti
 	*dResolutionY = this->dCellResolutionY;
 }
 
+//Fetch cell resolution
+double	CDomainCartesian::getCellResolutionX()
+{
+	return this->dCellResolutionX;
+}
+
+//Fetch cell resolution
+double	CDomainCartesian::getCellResolutionY()
+{
+	return this->dCellResolutionY;
+}
+
 //Gets the scheme we're running on this domain
 dataProgress	CDomainCartesian::getDataProgress(){
 	dataProgress pResponse;
@@ -436,6 +457,22 @@ double	CDomainCartesian::getBedElevation(unsigned long ulCellID)
 	if (this->ucFloatSize == 4)
 		return static_cast<double>(this->fBedElevations[ulCellID]);
 	return this->dBedElevations[ulCellID];
+}
+
+//Gets the bed elevation for a given cell
+double	CDomainCartesian::getZxmax(unsigned long ulCellID)
+{
+	if (this->ucFloatSize == 4)
+		return static_cast<double>(this->fOpt_zxmaxValues[ulCellID]);
+	return this->dOpt_zxmaxValues[ulCellID];
+}
+
+//Gets the bed elevation for a given cell
+double	CDomainCartesian::getZymax(unsigned long ulCellID)
+{
+	if (this->ucFloatSize == 4)
+		return static_cast<double>(this->fOpt_zymaxValues[ulCellID]);
+	return this->dOpt_zymaxValues[ulCellID];
 }
 
 //Gets a state variable for a given cell
@@ -518,7 +555,7 @@ void CDomainCartesian::readBuffers_opt_h(double* valueArray)
 }
 
 //Read water depth, velocity in x, velocity in , to a double pointer
-void CDomainCartesian::readBuffers_h_vx_vy(double** arrayOf_h_vx_vy)
+void CDomainCartesian::readBuffers_h_vx_vy(double* opt_h, double* v_x, double* v_y)
 {
 	// Read the data back first...
 	// TODO: Review whether this is necessary, isn't it a sync point anyway?
@@ -526,25 +563,38 @@ void CDomainCartesian::readBuffers_h_vx_vy(double** arrayOf_h_vx_vy)
 	pScheme->readDomainAll();
 	pDevice->blockUntilFinished();
 
+	//temp
+	//double highestV = 0 ;
+	//int index = 0;
+	////temp
+
+
 	unsigned long	ulCellID;
 	double dDepth, dV_x, dV_y;
-
-	double* opt_h = arrayOf_h_vx_vy[0];
-	double* v_x = arrayOf_h_vx_vy[1];
-	double* v_y = arrayOf_h_vx_vy[2];
 
 	for (unsigned long iRow = 0; iRow < this->getRows(); ++iRow) {
 		for (unsigned long iCol = 0; iCol < this->getCols(); ++iCol) {
 			ulCellID = this->getCellID(iCol, iRow);
 			dDepth = this->getStateValue(ulCellID, model::domainValueIndices::kValueFreeSurfaceLevel) - this->getBedElevation(ulCellID);
+			//TODO: Alaa should i divide by the cell_size, isn't this m3/s /m now only? so the result is m2/s?
 			dV_x = dDepth > 1E-8 ? (this->getStateValue(ulCellID, model::domainValueIndices::kValueDischargeX) / dDepth) : 0.0;
 			dV_y = dDepth > 1E-8 ? (this->getStateValue(ulCellID, model::domainValueIndices::kValueDischargeY) / dDepth) : 0.0;
+
+			//TEMP
+			//if (abs(dV_x) + abs(dV_y) > highestV) {
+			//	index = ulCellID;
+			//	highestV = abs(dV_x) + abs(dV_y);
+			//}
+			//TEMP
 
 			opt_h[ulCellID] = dDepth;
 			v_x[ulCellID] = dV_x;
 			v_y[ulCellID] = dV_y;
 		}
 	}
+	//temp
+	//std::cout << "Highest V: " << highestV << " at " << index << std::endl;
+	//temp
 }
 
 //Read Velocity in x buffer to double pointer
@@ -896,83 +946,83 @@ void	CDomainCartesian::memoryDump()
 
 	unsigned long ulCellCount = this->ulRows * this->ulCols;
 
-	//model::log->logInfo("Dumping dCellStates: ");
-	//for (int i = 0; i < ulCellCount; i++) {
-	//	model::log->logInfo(std::to_string(i) + ": " +
-	//						"  0:" + std::to_string(this->dCellStates[i].s[0]) + 
-	//						"  1:" + std::to_string(this->dCellStates[i].s[1]) +
-	//						"  2:" + std::to_string(this->dCellStates[i].s[2]) +
-	//						"  3:" + std::to_string(this->dCellStates[i].s[3])
-	//	);
-	//}
-	//
-	//model::log->logInfo("Dumping dBedElevations: ");
-	//for (int i = 0; i < ulCellCount; i++) {
-	//	model::log->logInfo(std::to_string(i) + ": " +
-	//		std::to_string(this->dBedElevations[i])
-	//	);
-	//}
-	//
-	//model::log->logInfo("Dumping dManningValues: ");
-	//for (int i = 0; i < ulCellCount; i++) {
-	//	model::log->logInfo(std::to_string(i) + ": " +
-	//		std::to_string(this->dManningValues[i])
-	//	);
-	//}
-	//
-	//model::log->logInfo("Dumping dOpt_zxmaxValues: ");
-	//for (int i = 0; i < ulCellCount; i++) {
-	//	model::log->logInfo(std::to_string(i) + ": " +
-	//		std::to_string(this->dOpt_zxmaxValues[i])
-	//	);
-	//}
-	//
-	//model::log->logInfo("Dumping dOpt_zymaxValues: ");
-	//for (int i = 0; i < ulCellCount; i++) {
-	//	model::log->logInfo(std::to_string(i) + ": " +
-	//		std::to_string(this->dOpt_zymaxValues[i])
-	//	);
-	//}
-	//
-	//model::log->logInfo("Dumping dOpt_cxValues: ");
-	//for (int i = 0; i < ulCellCount; i++) {
-	//	model::log->logInfo(std::to_string(i) + ": " +
-	//		std::to_string(this->dOpt_cxValues[i])
-	//	);
-	//}
-	//
-	//model::log->logInfo("Dumping dOpt_cyValues: ");
-	//for (int i = 0; i < ulCellCount; i++) {
-	//	model::log->logInfo(std::to_string(i) + ": " +
-	//		std::to_string(this->dOpt_cyValues[i])
-	//	);
-	//}
-	//
-	//
-	//if (this->bUseOptimizedBoundary == false) {
-	//
-	//	model::log->logInfo("Dumping dBoundaryValues: ");
-	//	for (int i = 0; i < ulCellCount; i++) {
-	//		model::log->logInfo(std::to_string(i) + ": " +
-	//			std::to_string(this->dBoundaryValues[i])
-	//		);
-	//	}
-	//}
-	//else {
-	//	model::log->logInfo("Dumping dCouplingValues: ");
-	//	for (int i = 0; i < ulCellCount; i++) {
-	//		model::log->logInfo(std::to_string(i) + ": " +
-	//			std::to_string(this->dCouplingValues[i])
-	//		);
-	//	}
-	//
-	//	model::log->logInfo("Dumping ulCouplingIDs: ");
-	//	for (int i = 0; i < ulCouplingArraySize; i++) {
-	//		model::log->logInfo(std::to_string(i) + ": " +
-	//			std::to_string(this->ulCouplingIDs[i])
-	//		);
-	//	}
-	//}
+	model::log->logInfo("Dumping dCellStates: ");
+	for (int i = 0; i < ulCellCount; i++) {
+		model::log->logInfo(std::to_string(i) + ": " +
+							"  0:" + std::to_string(this->dCellStates[i].s[0]) + 
+							"  1:" + std::to_string(this->dCellStates[i].s[1]) +
+							"  2:" + std::to_string(this->dCellStates[i].s[2]) +
+							"  3:" + std::to_string(this->dCellStates[i].s[3])
+		);
+	}
+	
+	model::log->logInfo("Dumping dBedElevations: ");
+	for (int i = 0; i < ulCellCount; i++) {
+		model::log->logInfo(std::to_string(i) + ": " +
+			std::to_string(this->dBedElevations[i])
+		);
+	}
+	
+	model::log->logInfo("Dumping dManningValues: ");
+	for (int i = 0; i < ulCellCount; i++) {
+		model::log->logInfo(std::to_string(i) + ": " +
+			std::to_string(this->dManningValues[i])
+		);
+	}
+	
+	model::log->logInfo("Dumping dOpt_zxmaxValues: ");
+	for (int i = 0; i < ulCellCount; i++) {
+		model::log->logInfo(std::to_string(i) + ": " +
+			std::to_string(this->dOpt_zxmaxValues[i])
+		);
+	}
+	
+	model::log->logInfo("Dumping dOpt_zymaxValues: ");
+	for (int i = 0; i < ulCellCount; i++) {
+		model::log->logInfo(std::to_string(i) + ": " +
+			std::to_string(this->dOpt_zymaxValues[i])
+		);
+	}
+	
+	model::log->logInfo("Dumping dOpt_cxValues: ");
+	for (int i = 0; i < ulCellCount; i++) {
+		model::log->logInfo(std::to_string(i) + ": " +
+			std::to_string(this->dOpt_cxValues[i])
+		);
+	}
+	
+	model::log->logInfo("Dumping dOpt_cyValues: ");
+	for (int i = 0; i < ulCellCount; i++) {
+		model::log->logInfo(std::to_string(i) + ": " +
+			std::to_string(this->dOpt_cyValues[i])
+		);
+	}
+	
+	
+	if (this->bUseOptimizedBoundary == false) {
+	
+		model::log->logInfo("Dumping dBoundaryValues: ");
+		for (int i = 0; i < ulCellCount; i++) {
+			model::log->logInfo(std::to_string(i) + ": " +
+				std::to_string(this->dBoundaryValues[i])
+			);
+		}
+	}
+	else {
+		model::log->logInfo("Dumping dCouplingValues: ");
+		for (int i = 0; i < ulCellCount; i++) {
+			model::log->logInfo(std::to_string(i) + ": " +
+				std::to_string(this->dCouplingValues[i])
+			);
+		}
+	
+		model::log->logInfo("Dumping ulCouplingIDs: ");
+		for (int i = 0; i < ulCouplingArraySize; i++) {
+			model::log->logInfo(std::to_string(i) + ": " +
+				std::to_string(this->ulCouplingIDs[i])
+			);
+		}
+	}
 
 
 	model::log->logInfo("Dumping bPoleniValues: ");
@@ -984,5 +1034,116 @@ void	CDomainCartesian::memoryDump()
 			"  W:" + std::to_string(this->bPoleniValues[i].usePoliniW)
 		);
 	}
+
+}
+
+//Output the result members per timestep to Paraview
+void CDomainCartesian::output_to_vtk_file(std::string path, double time, std::string rasterName, int sizeX, int sizeY, double* opt_z, double* opt_zx_max, double* opt_zy_max, double* opt_h, double* opt_s, double* opt_v_x, double* opt_v_y) {
+
+	//get the file name
+	float temp_float;
+	std::string filename = path;
+	int sizeT = sizeX * sizeY;
+
+	//open the file
+	std::ofstream txt(filename, std::ios::binary);
+
+	//output the file header
+	txt << "# vtk DataFile Version 3.0" << std::endl;
+	txt << "Result of floodplain " << rasterName << " for time " << time << std::endl;
+	txt << "BINARY" << std::endl;
+	txt << "DATASET STRUCTURED_GRID" << std::endl;
+	txt << "DIMENSIONS " << sizeX + 1 << " " << sizeY + 1 << " 1" << std::endl;
+	txt << "POINTS " << (sizeX + 1) * (sizeY + 1) << " float" << std::endl;
+
+	// Generate grid points
+	float xCoord, yCoord, zCoord;
+	for (int y = 0; y <= sizeY; ++y) {
+		for (int x = 0; x <= sizeX; ++x) {
+
+			xCoord = static_cast<float>(x);
+			yCoord = static_cast<float>(y);
+			zCoord = static_cast<float>(0.0);
+
+			Util::SwapEnd(xCoord);
+			Util::SwapEnd(yCoord);
+			Util::SwapEnd(zCoord);
+
+			// Write the coordinates in binary
+			txt.write(reinterpret_cast<const char*>(&xCoord), sizeof(float));
+			txt.write(reinterpret_cast<const char*>(&yCoord), sizeof(float));
+			txt.write(reinterpret_cast<const char*>(&zCoord), sizeof(float));
+
+		}
+	}
+
+	//output data
+	std::string buff_unit;
+	txt << "CELL_DATA " << sizeT << std::endl;
+
+	txt << "SCALARS  opt_z float" << std::endl;
+	txt << "LOOKUP_TABLE default" << std::endl;
+
+	for (int i = 0; i < sizeT; i++) {
+		temp_float = opt_z[i];
+		Util::SwapEnd(temp_float);
+		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+	}
+	txt << std::endl;
+
+	txt << "SCALARS  opt_zx_max float" << std::endl;
+	txt << "LOOKUP_TABLE default" << std::endl;
+	for (int i = 0; i < sizeT; i++) {
+		temp_float = opt_zx_max[i];
+		Util::SwapEnd(temp_float);
+		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+	}
+	txt << std::endl;
+
+	txt << "SCALARS  opt_zy_max float" << std::endl;
+	txt << "LOOKUP_TABLE default" << std::endl;
+	for (int i = 0; i < sizeT; i++) {
+		temp_float = opt_zy_max[i];
+		Util::SwapEnd(temp_float);
+		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+	}
+	txt << std::endl;
+
+	txt << "SCALARS  opt_h float" << std::endl;
+	txt << "LOOKUP_TABLE default" << std::endl;
+	for (int i = 0; i < sizeT; i++) {
+		temp_float = opt_h[i];
+		Util::SwapEnd(temp_float);
+		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+	}
+	txt << std::endl;
+
+	txt << "SCALARS  opt_s float" << std::endl;
+	txt << "LOOKUP_TABLE default" << std::endl;
+	for (int i = 0; i < sizeT; i++) {
+		temp_float = opt_s[i];
+		Util::SwapEnd(temp_float);
+		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+	}
+	txt << std::endl;
+
+	txt << "SCALARS  opt_v_x float" << std::endl;
+	txt << "LOOKUP_TABLE default" << std::endl;
+	for (int i = 0; i < sizeT; i++) {
+		temp_float = opt_v_x[i];
+		Util::SwapEnd(temp_float);
+		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+	}
+	txt << std::endl;
+
+	txt << "SCALARS  opt_v_y float" << std::endl;
+	txt << "LOOKUP_TABLE default" << std::endl;
+	for (int i = 0; i < sizeT; i++) {
+		temp_float = opt_v_y[i];
+		Util::SwapEnd(temp_float);
+		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+	}
+
+	txt.close();
 
 }

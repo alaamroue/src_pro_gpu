@@ -7,3 +7,4 @@
 /out
 /CMakePresets.json
 /CMakeUserPresets.json
+*.aps

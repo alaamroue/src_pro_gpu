@@ -13,6 +13,7 @@
 // Constructor
 CLog::CLog(CLoggingInterface* externalLogger_input){
 	externalLogger = nullptr;
+	MAIN_THREAD_ID = std::this_thread::get_id();
 
 	//Check and attach to external logging functions
 	if (externalLogger_input != NULL) {
@@ -71,7 +72,10 @@ void CLog::logWarning(const std::string& message) {
 
 //Actual outputting of error message to user
 void CLog::logError(std::string error_reason, unsigned char error_type, std::string error_place, std::string error_help) {
-	if (useDefaultLogger) {
+
+	bool onNonMainThread = std::this_thread::get_id() != MAIN_THREAD_ID;
+
+	if (useDefaultLogger || onNonMainThread) {
 		std::string sErrorPrefix;
 
 		switch (error_type) {

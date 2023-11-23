@@ -168,7 +168,7 @@ void CSchemeGodunov::logDetails()
 void CSchemeGodunov::prepareSetup(CModel* cModel, model::SchemeSettings schemeSettings) {
 
 	this->cModel = cModel;
-
+	this->setSchemeType(schemeSettings.scheme_type);
 	this->setCourantNumber(schemeSettings.CourantNumber);
 	this->setDryThreshold(schemeSettings.DryThreshold);
 	this->setTimestepMode(schemeSettings.TimestepMode);
@@ -1137,11 +1137,11 @@ void CSchemeGodunov::Threaded_runBatch()
 
 		// Can only schedule one iteration before we need to sync timesteps
 		unsigned int uiQueueAmount = 1;
-		uiQueueAmount = 3;
+		uiQueueAmount = 4;
 
 
 		// Schedule a batch-load of work for the device
-		if (this->dCurrentTime < dTargetTime - 1e-5) {
+		if (this->dCurrentTime < dTargetTime - 1e-8) {
 			oclKernelResetCounters->scheduleExecution();
 			for (unsigned int i = 0; i < uiQueueAmount; i++) {
 
@@ -1164,6 +1164,46 @@ void CSchemeGodunov::Threaded_runBatch()
 		oclBufferBatchSuccessful->queueReadAll();
 		oclBufferBatchTimesteps->queueReadAll();
 		this->pDomain->getDevice()->blockUntilFinished();
+		
+		//if (uiIterationsTotal % 50 == 0) {
+		//	std::cout << this->getDomain()->getName() << " Time: " << dCurrentTime << " Step: " << dCurrentTimestep << " Succ: " << uiBatchSuccessful << " Skipped:" << uiBatchSkipped << std::endl;
+		//}
+		//
+		//std::string path;
+		//
+		//if (dCurrentTime > 120000.0) {
+		//	std::cout << this->getDomain()->getName() << " Time: " << dCurrentTime << " Step: " << dCurrentTimestep << " Succ: " << uiBatchSuccessful << " Skipped:" << uiBatchSkipped << std::endl;
+		//	double* opt_h_gpu = new double[this->getDomain()->getCellCount()];
+		//	double* opt_v_x_gpu = new double[this->getDomain()->getCellCount()];
+		//	double* opt_v_y_gpu = new double[this->getDomain()->getCellCount()];
+		//	this->getDomain()->readBuffers_h_vx_vy(opt_h_gpu, opt_v_x_gpu, opt_v_y_gpu);
+		//
+		//
+		//	double* opt_z = new double[this->getDomain()->getCellCount()];
+		//	double* opt_zx_max = new double[this->getDomain()->getCellCount()];
+		//	double* opt_zy_max = new double[this->getDomain()->getCellCount()];
+		//	double* opt_s_gpu = new double[this->getDomain()->getCellCount()];
+		//	for (int i = 0; i < this->getDomain()->getCellCount(); i++){
+		//		opt_z[i] = this->getDomain()->getBedElevation(i);
+		//		opt_zx_max[i] = this->getDomain()->getZxmax(i);
+		//		opt_zy_max[i] = this->getDomain()->getZymax(i);
+		//		opt_s_gpu[i]  = this->getDomain()->getBedElevation(i) + opt_h_gpu[i];
+		//	}
+		//
+		//
+		//	path = "C:/Users/abaghdad/Desktop/temp/vtksTemp/fp_" + std::to_string(static_cast<long>((dCurrentTime - 120000.0)*100000)) + ".vtk";
+		//	this->getDomain()->output_to_vtk_file(path, dCurrentTime, "rasterName", this->getDomain()->getCols(), this->getDomain()->getRows(), opt_z, opt_zx_max, opt_zy_max, opt_h_gpu, opt_s_gpu, opt_v_x_gpu, opt_v_y_gpu);
+		//	
+		//	delete[] opt_h_gpu;
+		//	delete[] opt_v_x_gpu;
+		//	delete[] opt_v_y_gpu;
+		//	delete[] opt_z;
+		//	delete[] opt_zx_max;
+		//	delete[] opt_zy_max;
+		//	delete[] opt_s_gpu;
+		//}
+
+
 
 		this->readKeyStatistics();
 		dAvgTimestep = (dAvgTimestep * uiIterationsTotal + dCurrentTimestep * uiIterationsSinceTargetChanged) / (uiIterationsTotal + uiIterationsSinceTargetChanged);
@@ -1172,9 +1212,6 @@ void CSchemeGodunov::Threaded_runBatch()
 		uiSkippedIterationsTotal += uiBatchSkipped;
 
 		//std::cout << "uiIterationsSinceTargetChanged: " << uiIterationsSinceTargetChanged << " uiBatchSuccessful: " << uiBatchSuccessful << " uiBatchSkipped: " << uiBatchSkipped << std::endl;
-		if (uiIterationsTotal % 100 == 0) {
-			std::cout << "dCurrentTimestep: " << dCurrentTimestep << std::endl;
-		}
 
 		// Wait until further work is scheduled
 		this->bRunning = false;

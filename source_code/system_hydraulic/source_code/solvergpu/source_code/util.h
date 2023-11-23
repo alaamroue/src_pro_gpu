@@ -35,6 +35,8 @@ namespace Util
 	double			round(double, unsigned int);
 	std::string     to_string_exact(double);
 
+	void			SwapEnd(float& var);
+
 }
 
 #endif

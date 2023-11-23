@@ -3695,7 +3695,6 @@ void Hyd_Hydraulic_System::make_calculation_floodplainmodel(void){
 		Hyd_Multiple_Hydraulic_Systems::check_stop_thread_flag();
 		//if (constant::gpu2d_applied == false) {
 		if(my_fpmodels[i].Param_FP.get_scheme_info().scheme_type != model::schemeTypes::kDiffusiveCPU){
-			//cout << "using gpu" << endl;
 			this->my_fpmodels[i].solve_model_gpu(this->next_internal_time - this->global_parameters.get_startime(), this->get_identifier_prefix(false));
 		}else{
 			this->my_fpmodels[i].solve_model(this->next_internal_time-this->global_parameters.get_startime(), this->get_identifier_prefix(false));

@@ -259,7 +259,7 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 
 	//Create the GPU model with our own logger attached
 	Hyd_SolverGPU_LoggingWrapper* hyd_SolverGPU_LoggingWrapper = new Hyd_SolverGPU_LoggingWrapper(); //Deleted by pManager destructor
-	pManager = new CModel(hyd_SolverGPU_LoggingWrapper, true); //Deleted by _Hyd_Model destructor
+	pManager = new CModel(hyd_SolverGPU_LoggingWrapper, false); //Deleted by _Hyd_Model destructor
 
 	//Set up the Manager Settings
 	pManager->setSelectedDevice(scheme_info.selected_device);							// Set GPU device to Use. Important: Has to be called after setExecutor. Default is the faster one.
@@ -272,8 +272,9 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	ourCartesianDomain->setCellResolution(*myFloodplain->Param_FP.get_ptr_width_x(), *myFloodplain->Param_FP.get_ptr_width_y());
 	ourCartesianDomain->setCols(myFloodplain->Param_FP.get_no_elems_x());
 	ourCartesianDomain->setRows(myFloodplain->Param_FP.get_no_elems_y());
-	ourCartesianDomain->setUseOptimizedCoupling(myFloodplain->get_number_boundary_conditions() == 0);
+	ourCartesianDomain->setUseOptimizedCoupling(myFloodplain->get_number_boundary_conditions() == 0 && myFloodplain->get_number_coupling_conditions() > 0 );
 	ourCartesianDomain->setOptimizedCouplingSize(myFloodplain->get_number_coupling_conditions());
+	ourCartesianDomain->setName(myFloodplain->Param_FP.get_floodplain_name());
 	
 	//Create the Scheme,
 	model::SchemeSettings schemeSettings;
@@ -337,7 +338,7 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 
 		}
 	}
-	if (ourCartesianDomain->getUseOptimizedCoupling()) {
+	if (ourCartesianDomain->getUseOptimizedCoupling() ) {
 		//set id array
 		for (int i = 0; i < ourCartesianDomain->getOptimizedCouplingSize(); i++) {
 			ourCartesianDomain->setOptimizedCouplingCondition(i, 0.0);

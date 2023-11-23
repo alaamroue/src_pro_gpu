@@ -72,14 +72,7 @@ struct sUsePoleni {
 };
 
 // Basic functions and variables used throughout
-namespace model
-{
-	// Application return codes
-	namespace appReturnCodes{ enum appReturnCodes {
-		kAppSuccess							= 0,	// Success
-		kAppInitFailure						= 1,	// Initialization failure
-		kAppFatal							= 2		// Fatal error
-	}; }
+namespace model{
 
 	// Floating point precision
 	namespace floatPrecision{
@@ -149,16 +142,6 @@ namespace model
 		}
 	}
 
-
-	// Model domain structure types
-	namespace domainStructureTypes {
-		enum domainStructureTypes {
-			kStructureCartesian = 0,	// Cartesian
-			kStructureRemote = 1,	// Remotely held domain
-			kStructureInvalid = 255	// Error state, cannot work with this type of domain
-		};
-	}
-
 	//CDomain
 	// Model domain structure types
 	namespace domainValueIndices {
@@ -182,14 +165,6 @@ namespace model
 		};
 	}
 
-	// Executor types
-	namespace executorTypes {
-		enum executorTypes {
-			executorTypeOpenCL = 0					// OpenCL-based executor
-		};
-	}
-
-
 // Device-type filers
 	namespace filters {
 		namespace devices {
@@ -202,28 +177,14 @@ namespace model
 	};
 
 	// Model scheme types
-	namespace dataValues {
-		enum dataValues {
-			kBedElevation = 0,		// Bed elevation
-			kDepth = 1,				// Depth
-			kFreeSurfaceLevel = 2,	// Free surface level
-			kVelocityX = 3,			// Initial velocity X
-			kVelocityY = 4,			// Initial velocity Y
-			kDischargeX = 5,		// Initial discharge X
-			kDischargeY = 6,		// Initial discharge Y
-			kManningCoefficient = 7,// Manning coefficient
-			kDisabledCells = 8,		// Disabled cells
-		};
-	};
-
-	// Model scheme types
 	namespace schemeTypes {
 		enum schemeTypes {
-			kGodunovGPU		= 0,	// Godunov (first-order)
-			kMUSCLGPU		= 1,	// MUSCL-Hancock (second-order)
-			kInertialGPU	= 2,	// Inertial simplification
-			kDiffusiveGPU	= 3,	// Inertial simplification
-			kDiffusiveCPU	= 4		// Diffusive CPU
+			kUndefined = 0,	// Undefined
+			kGodunovGPU = 1,	// Godunov (first-order)
+			kMUSCLGPU = 2,	// MUSCL-Hancock (second-order)
+			kInertialGPU = 3,	// Inertial simplification
+			kDiffusiveGPU = 4,	// Inertial simplification
+			kDiffusiveCPU = 5		// Diffusive CPU
 		};
 	}
 
@@ -258,10 +219,6 @@ namespace model
 		};
 	}
 
-	int						loadConfiguration();
-	int						commenceSimulation();
-	int						closeConfiguration();
-	void					outputVersion();
 	void					doPause();
 	int						doClose(int);
 
@@ -282,7 +239,7 @@ namespace model
 	};
 
 	struct SchemeSettings {
-		model::schemeTypes::schemeTypes scheme_type;
+		model::schemeTypes::schemeTypes scheme_type = model::schemeTypes::kUndefined;
 		double CourantNumber = 0.5;
 		double DryThreshold = 1e-10;
 		unsigned char TimestepMode = model::timestepMode::kCFL;

@@ -76,10 +76,14 @@ class CDomainCartesian
 		void			setCols(unsigned long);									// Fetch cell resolution
 		void			setRollbackLimit(unsigned int);									// Set the number of iterations before a rollback is required
 		void			getCellResolution( double* , double*);					// Fetch cell resolution
+		double			getCellResolutionX();									
+		double			getCellResolutionY();									
 		unsigned long	getRows();												// Get the number of rows in the domain
 		unsigned long	getCols();												// Get the number of columns in the domain
 		unsigned int	getRollbackLimit();										// How many iterations before a rollback is required?
 		unsigned long	getCellCount();											// X Return the total number of cells
+		void			setName(std::string);
+		std::string		getName(void);
 
 		void			setUseOptimizedCoupling(bool);
 		void			setOptimizedCouplingSize(unsigned long);
@@ -93,7 +97,7 @@ class CDomainCartesian
 
 		double			getVolume();											// Calculate the amount of volume in all the cells
 		double			getBoundaryVolume();									// 
-		void			readBuffers_h_vx_vy(double**);							// Read GPU Buffers (All three Values)
+		void			readBuffers_h_vx_vy(double*, double*,double*);							// Read GPU Buffers (All three Values)
 		void			readBuffers_opt_h(double*);								// Read GPU Buffers (Water Depth: Surface Level - Bed Elevation)
 		void			readBuffers_v_x(double*);								// Read GPU Buffers (Velocity in X)
 		void			readBuffers_v_y(double*);								// Read GPU Buffers (Velocity in Y)
@@ -126,6 +130,8 @@ class CDomainCartesian
 		void			setPoleniConditionY(unsigned long, bool);				// Sets the poleni condition in y for a cell
 		double			getStateValue(unsigned long , unsigned char);			// Gets a state variable for a given cell
 		double			getBedElevation(unsigned long);							// Gets the bed elevation for a given cell
+		double			getZxmax(unsigned long);							// Gets the bed elevation for a given cell
+		double			getZymax(unsigned long);							// Gets the bed elevation for a given cell
 		double			getBoundaryCondition(unsigned long ulCellID);
 		bool			isDoublePrecision() { return (ucFloatSize == 8); };		// Are we using double-precision?
 
@@ -134,6 +140,9 @@ class CDomainCartesian
 		void				getCellIndices(unsigned long ulID, unsigned long* lIdxX, unsigned long* lIdxY); //	Fetch the X and Y indices for a cell using its ID
 		unsigned long		getNeighbourID(unsigned long ulCellID, unsigned char  ucDirection);				//	Fetch the ID for a neighboring cell in the domain
 		void				memoryDump();																	//	Dumps memory for debugging
+		void				output_to_vtk_file(std::string path, double time, std::string rasterName,
+									int sizeX, int sizeY, double* opt_z, double* opt_zx_max, double* opt_zy_max,
+										double* opt_h, double* opt_s, double* opt_v_x, double* opt_v_y);
 
 	private:
 
@@ -147,6 +156,7 @@ class CDomainCartesian
 		unsigned int	uiRollbackLimit;			// Iteration Limit before declaring failure
 		dataProgress	sDataProgress;				// Data on this domain's progress
 		CScheme* pScheme;							// Scheme we are running for this particular domain
+		std::string		domainName;
 		COCLDevice* pDevice;						// Device responsible for running this domain
 
 		// Private Domain GPU heaps

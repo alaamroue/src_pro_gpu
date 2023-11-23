@@ -1265,7 +1265,7 @@ void Hyd_Model_Floodplain::solve_model_gpu(const double next_time_point, const s
 	try {
 		unsigned long ulCellID;
 		CDomainCartesian* myCarDomain = pManager->getDomain();
-		CScheme* myScheme = (CScheme*)pManager->getDomain()->getScheme();
+		CScheme* myScheme = pManager->getDomain()->getScheme();
 		
 		//profiler->profile("SetBoundaryConditionsArray", Profiler::profilerFlags::START_PROFILING);
 		// Zero out the boundary conditions array
@@ -1312,70 +1312,71 @@ void Hyd_Model_Floodplain::solve_model_gpu(const double next_time_point, const s
 
 		// OLD CODE ............................................... Better for inertial Scheme
 		
-		// Read water depth values and set them to element
-		//profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::START_PROFILING);
-		//std::unique_ptr<double[]> opt_h_gpu = std::make_unique<double[]>(this->NEQ);
-		double* opt_h_gpu = new double[this->NEQ];
-		pManager->getDomain()->readBuffers_opt_h(opt_h_gpu);
-		//profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::END_PROFILING);
+		if (myScheme->getSchemeType() == model::schemeTypes::kInertialGPU || myScheme->getSchemeType() == model::schemeTypes::kDiffusiveGPU) {
 
-		//profiler->profile("update_ds_dt", Profiler::profilerFlags::START_PROFILING);
-		//update ds_dt value (Used for Output and Display)
-		for (int i = 0; i < this->NEQ; i++) {
-				this->floodplain_elems[i].element_type->set_ds2dt_value(opt_h_gpu[i] - this->floodplain_elems[i].element_type->get_h_value());
-		}
-		//profiler->profile("update_ds_dt", Profiler::profilerFlags::END_PROFILING);
+			// Read water depth values and set them to element
+			//profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::START_PROFILING);
+			double* opt_h_gpu = new double[this->NEQ];
+			pManager->getDomain()->readBuffers_opt_h(opt_h_gpu);
+			//profiler->profile("solve_gpu_readBuffers_opt_h", Profiler::profilerFlags::END_PROFILING);
 
-		//profiler->profile("update_h_value", Profiler::profilerFlags::START_PROFILING);
-		//Update h_value and s_value used for everything
-		for (int i = 0; i < this->NEQ; i++) {
-				this->floodplain_elems[i].element_type->set_solver_result_value(opt_h_gpu[i]);
-		}
-		//profiler->profile("update_h_value", Profiler::profilerFlags::END_PROFILING);
-
-		//profiler->profile("calculate_ds_dt", Profiler::profilerFlags::START_PROFILING);
-		//uses values from set_solver_result_value to calculate velocity
-		for (int i = 0; i < this->NEQ; i++) {
-			this->floodplain_elems[i].element_type->calculate_ds_dt();
-		}
-		//profiler->profile("calculate_ds_dt", Profiler::profilerFlags::END_PROFILING);
-		
-		delete[] opt_h_gpu;
-
-		///New Code..................... Better for Godunov Scheme
-		/*
-		double** results = pManager->getDomainSet()->getDomain(0)->readBuffers_h_vx_vy();
-		double* opt_h_gpu = results[0];
-		double* opt_v_x_gpu = results[1];
-		double* opt_v_y_gpu = results[2];
-
-		//update ds_dt value (Used for Output and Display)
-		for (int i = 0; i < this->NEQ; i++) {
-			if (this->floodplain_elems[i].get_elem_type() == _hyd_elem_type::STANDARD_ELEM || this->floodplain_elems[i].get_elem_type() == _hyd_elem_type::DIKELINE_ELEM) {
-				this->floodplain_elems[i].element_type->set_ds2dt_value(opt_h_gpu[i] - this->floodplain_elems[i].element_type->get_h_value());
+			//profiler->profile("update_ds_dt", Profiler::profilerFlags::START_PROFILING);
+			//update ds_dt value (Used for Output and Display)
+			for (int i = 0; i < this->NEQ; i++) {
+					this->floodplain_elems[i].element_type->set_ds2dt_value(opt_h_gpu[i] - this->floodplain_elems[i].element_type->get_h_value());
 			}
-		}
+			//profiler->profile("update_ds_dt", Profiler::profilerFlags::END_PROFILING);
 
-		//Update h_value and s_value used for everything
-		for (int i = 0; i < this->NEQ; i++) {
-			if (this->floodplain_elems[i].get_elem_type() == _hyd_elem_type::STANDARD_ELEM || this->floodplain_elems[i].get_elem_type() == _hyd_elem_type::DIKELINE_ELEM) {
-				this->floodplain_elems[i].element_type->set_solver_result_value(opt_h_gpu[i]);
+			//profiler->profile("update_h_value", Profiler::profilerFlags::START_PROFILING);
+			//Update h_value and s_value used for everything
+			for (int i = 0; i < this->NEQ; i++) {
+					this->floodplain_elems[i].element_type->set_solver_result_value(opt_h_gpu[i]);
 			}
-		}
+			//profiler->profile("update_h_value", Profiler::profilerFlags::END_PROFILING);
 
-		//uses values from set_solver_result_value to calculate velocity
-		for (int i = 0; i < this->NEQ; i++) {
-			this->floodplain_elems[i].element_type->set_flowvelocity_vx(opt_v_x_gpu[i]);
-			this->floodplain_elems[i].element_type->set_flowvelocity_vy(opt_v_y_gpu[i]);
-		}
+			//profiler->profile("calculate_ds_dt", Profiler::profilerFlags::START_PROFILING);
+			//uses values from set_solver_result_value to calculate velocity
+			for (int i = 0; i < this->NEQ; i++) {
+				this->floodplain_elems[i].element_type->calculate_ds_dt();
+			}
+			//profiler->profile("calculate_ds_dt", Profiler::profilerFlags::END_PROFILING);
+			
+			delete[] opt_h_gpu;
 
-		delete[] opt_h_gpu;
-		delete[] opt_v_x_gpu;
-		delete[] opt_v_y_gpu;
-		delete[] results;
-		*/
+		}else {
 		
+			//Send double* for the solvergpu library to fill them with the correct data
+			double* opt_h_gpu = new double[this->NEQ];
+			double* opt_v_x_gpu = new double[this->NEQ];
+			double* opt_v_y_gpu = new double[this->NEQ];
+			pManager->getDomain()->readBuffers_h_vx_vy(opt_h_gpu, opt_v_x_gpu, opt_v_y_gpu);
 
+			//update ds_dt value (Used for Output and Display)
+			for (int i = 0; i < this->NEQ; i++) {
+				if (this->floodplain_elems[i].get_elem_type() == _hyd_elem_type::STANDARD_ELEM || this->floodplain_elems[i].get_elem_type() == _hyd_elem_type::DIKELINE_ELEM) {
+					this->floodplain_elems[i].element_type->set_ds2dt_value(opt_h_gpu[i] - this->floodplain_elems[i].element_type->get_h_value());
+				}
+			}
+
+			//Update h_value and s_value used for everything
+			for (int i = 0; i < this->NEQ; i++) {
+				if (this->floodplain_elems[i].get_elem_type() == _hyd_elem_type::STANDARD_ELEM || this->floodplain_elems[i].get_elem_type() == _hyd_elem_type::DIKELINE_ELEM) {
+					this->floodplain_elems[i].element_type->set_solver_result_value(opt_h_gpu[i]);
+				}
+			}
+
+			//uses values from set_solver_result_value to calculate velocity
+			for (int i = 0; i < this->NEQ; i++) {
+				this->floodplain_elems[i].element_type->set_flowvelocity_vx(opt_v_x_gpu[i]);
+				this->floodplain_elems[i].element_type->set_flowvelocity_vy(opt_v_y_gpu[i]);
+			}
+
+			delete[] opt_h_gpu;
+			delete[] opt_v_x_gpu;
+			delete[] opt_v_y_gpu;
+
+		}
+		
 	}
 	catch (Error msg) {
 		ostringstream info;

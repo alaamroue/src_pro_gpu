@@ -43,6 +43,7 @@ class CLog : public CLoggingInterface
 		void writeCharToFile(char*, const char*, bool addTime = false);
 
 	private:
+		std::thread::id MAIN_THREAD_ID;
 		CLoggingInterface* externalLogger;
 		bool useDefaultLogger;
 };
