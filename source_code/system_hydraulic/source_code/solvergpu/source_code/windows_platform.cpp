@@ -73,84 +73,100 @@ char*	Util::getFileResource( const char * sName, const char * sType )
 	return cResource;
 }
 
-/*
- *  Get the system hostname
- */
-void Util::getHostname(char* cHostname)
-{
-	std::strcpy(cHostname, "Unknown");
-}
-
 #endif
 
 #ifdef PLATFORM_UNIX
+
+#include <limits.h>
 
 inline std::string getOCLResourceFilename(std::string sID)
 {
 	const char* cID = sID.c_str();
 	std::string sBaseDir = "";
 
-	sBaseDir = "./";
+	//Windows
+	//char buffer[256];
+	//GetModuleFileName(NULL, buffer, 256);
+	//std::string executablePath(buffer);
+	//size_t lastBackslash = executablePath.find_last_of("\\");
+	//std::string executableDirectory = executablePath.substr(0, lastBackslash + 1);
+	
+	//Linux
+	char buffer[PATH_MAX];
+	ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+	std::string executableDirectory = "";
 
-	if (strcmp(cID, "CLUniversalHeader_H") == 0)
-		return sBaseDir + "OpenCL/Executors/CLUniversalHeader.clh";
+	if (len != -1) {
+		buffer[len] = '\0'; // Null-terminate the string
+		std::string executablePath(buffer);
+		size_t lastSlash = executablePath.find_last_of("/");
+		executableDirectory = executablePath.substr(0, lastSlash + 1);
+	}
 
-	if (strcmp(cID, "CLFriction_H") == 0)
-		return sBaseDir + "Schemes/CLFriction.clh";
-
-	if (strcmp(cID, "CLSchemeGodunov_H") == 0)
-		return sBaseDir + "Schemes/CLSchemeGodunov.clh";
-
-	if (strcmp(cID, "CLSchemeMUSCLHancock_H") == 0)
-		return sBaseDir + "Schemes/CLSchemeMUSCLHancock.clh";
-
-	if (strcmp(cID, "CLSchemeInertial_H") == 0)
-		return sBaseDir + "Schemes/CLSchemeInertial.clh";
-
-	if (strcmp(cID, "CLSolverHLLC_H") == 0)
-		return sBaseDir + "Solvers/CLSolverHLLC.clh";
-
-	if (strcmp(cID, "CLDynamicTimestep_H") == 0)
-		return sBaseDir + "Schemes/CLDynamicTimestep.clh";
-
-	if (strcmp(cID, "CLDomainCartesian_H") == 0)
-		return sBaseDir + "Domain/Cartesian/CLDomainCartesian.clh";
-
-	if (strcmp(cID, "CLSlopeLimiterMINMOD_H") == 0)
-		return sBaseDir + "Schemes/Limiters/CLSlopeLimiterMINMOD.clh";
-
-	if (strcmp(cID, "CLBoundaries_H") == 0)
-		return sBaseDir + "Boundaries/CLBoundaries.clh";
-
-	if (strcmp(cID, "CLVerifyDataStructure_C") == 0)
-		return sBaseDir + "OpenCL/Executors/CLVerifyDataStructure.clc";
-
-	if (strcmp(cID, "CLFriction_C") == 0)
-		return sBaseDir + "Schemes/CLFriction.clc";
-
-	if (strcmp(cID, "CLSchemeGodunov_C") == 0)
-		return sBaseDir + "Schemes/CLSchemeGodunov.clc";
-
-	if (strcmp(cID, "CLSchemeMUSCLHancock_C") == 0)
-		return sBaseDir + "Schemes/CLSchemeMUSCLHancock.clc";
-
-	if (strcmp(cID, "CLSchemeInertial_C") == 0)
-		return sBaseDir + "Schemes/CLSchemeInertial.clc";
-
-	if (strcmp(cID, "CLSolverHLLC_C") == 0)
-		return sBaseDir + "Solvers/CLSolverHLLC.clc";
-
-	if (strcmp(cID, "CLDynamicTimestep_C") == 0)
-		return sBaseDir + "Schemes/CLDynamicTimestep.clc";
-
-	if (strcmp(cID, "CLDomainCartesian_C") == 0)
-		return sBaseDir + "Domain/Cartesian/CLDomainCartesian.clc";
-
-	if (strcmp(cID, "CLSlopeLimiterMINMOD_C") == 0)
-		return sBaseDir + "Schemes/Limiters/CLSlopeLimiterMINMOD.clc";
+	sBaseDir = executableDirectory + "/opencl/";
 
 	if (strcmp(cID, "CLBoundaries_C") == 0)
-		return sBaseDir + "Boundaries/CLBoundaries.clc";
+		return sBaseDir + "CLBoundaries.clc";
+
+	if (strcmp(cID, "CLBoundaries_H") == 0)
+		return sBaseDir + "CLBoundaries.clh";
+
+	if (strcmp(cID, "CLDomainCartesian_C") == 0)
+		return sBaseDir + "CLDomainCartesian.clc";
+
+	if (strcmp(cID, "CLDomainCartesian_H") == 0)
+		return sBaseDir + "CLDomainCartesian.clh";
+
+	if (strcmp(cID, "CLDynamicTimestep_C") == 0)
+		return sBaseDir + "CLDynamicTimestep.clc";
+
+	if (strcmp(cID, "CLDynamicTimestep_H") == 0)
+		return sBaseDir + "CLDynamicTimestep.clh";
+
+	if (strcmp(cID, "CLFriction_C") == 0)
+		return sBaseDir + "CLFriction.clc";
+
+	if (strcmp(cID, "CLFriction_H") == 0)
+		return sBaseDir + "CLFriction.clh";
+
+	if (strcmp(cID, "CLSchemeGodunov_C") == 0)
+		return sBaseDir + "CLSchemeGodunov.clc";
+
+	if (strcmp(cID, "CLSchemeGodunov_H") == 0)
+		return sBaseDir + "CLSchemeGodunov.clh";
+
+	if (strcmp(cID, "CLSchemeInertial_C") == 0)
+		return sBaseDir + "CLSchemeInertial.clc";
+
+	if (strcmp(cID, "CLSchemeInertial_H") == 0)
+		return sBaseDir + "CLSchemeInertial.clh";
+
+	if (strcmp(cID, "CLSchemeMUSCLHancock_C") == 0)
+		return sBaseDir + "CLSchemeMUSCLHancock.clc";
+
+	if (strcmp(cID, "CLSchemeMUSCLHancock_H") == 0)
+		return sBaseDir + "CLSchemeMUSCLHancock.clh";
+
+	if (strcmp(cID, "CLSchemePromaides_C") == 0)
+		return sBaseDir + "CLSchemePromaides.clc";
+
+	if (strcmp(cID, "CLSchemePromaides_H") == 0)
+		return sBaseDir + "CLSchemePromaides.clh";
+
+	if (strcmp(cID, "CLSlopeLimiterMINMOD_C") == 0)
+		return sBaseDir + "CLSlopeLimiterMINMOD.clc";
+
+	if (strcmp(cID, "CLSlopeLimiterMINMOD_H") == 0)
+		return sBaseDir + "CLSlopeLimiterMINMOD.clh";
+
+	if (strcmp(cID, "CLSolverHLLC_C") == 0)
+		return sBaseDir + "CLSolverHLLC.clc";
+
+	if (strcmp(cID, "CLSolverHLLC_H") == 0)
+		return sBaseDir + "CLSolverHLLC.clh";
+
+	if (strcmp(cID, "CLUniversalHeader_H") == 0)
+		return sBaseDir + "CLUniversalHeader.clh";
 
 	return "";
 }
@@ -160,6 +176,7 @@ inline std::string getOCLResourceFilename(std::string sID)
  */
 char* Util::getFileResource(const char* sName, const char* sType)
 {
+
 	std::string sFilename = getOCLResourceFilename(sName);
 
 	if (sFilename.length() <= 0)
@@ -201,11 +218,4 @@ char* Util::getFileResource(const char* sName, const char* sType)
 	}
 }
 
-/*
- *  Get the system hostname
- */
-void Util::getHostname(char* cHostname)
-{
-	gethostname(cHostname, 255);
-}
 #endif

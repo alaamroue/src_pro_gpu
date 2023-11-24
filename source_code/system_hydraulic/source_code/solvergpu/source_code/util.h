@@ -29,9 +29,6 @@ namespace Util
 
 	// Resource handling
 	char*			getFileResource(const char*, const char*);
-	//cursorCoords	getCursorPosition();
-	void			getHostname(char*);
-	//void			setCursorPosition(cursorCoords);
 	double			round(double, unsigned int);
 	std::string     to_string_exact(double);
 

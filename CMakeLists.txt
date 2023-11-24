@@ -238,6 +238,17 @@ qt_wrap_ui(UI_FILES ${UI_FILES})
 
 
 ######## POST BUILD STUFF ########
+
+
+if (UNIX AND NOT APPLE)
+add_custom_command(TARGET ProMaIDeS POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_CURRENT_SOURCE_DIR}/source_code/system_hydraulic/source_code/solvergpu/source_code/opencl
+    $<TARGET_FILE_DIR:ProMaIDeS>/opencl
+)
+endif (UNIX AND NOT APPLE)
+
+
 ## Copying dlls
 if (WIN32)
 add_custom_command(TARGET ProMaIDeS POST_BUILD
