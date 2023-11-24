@@ -50,6 +50,7 @@ jobs:
           rm -r build/*
           mv ${{env.UNIXNAME}} build/${{env.UNIXNAME}}
           cp ${{github.workspace}}/source_code/Vendors/StaticLibs/Linux/* build/ -r
+          cp ${{github.workspace}}/source_code/system_hydraulic/source_code/solvergpu/source_code/opencl build/ -r
 
     
     - name: '📃 Output Current Files'
