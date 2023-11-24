@@ -82,6 +82,7 @@ jobs:
         #Not sure why that is
         #TODO: Check why exectuable only loads the sql library if it is directly next to it. Is this by design?
         cp build/sqldrivers appdir/usr/bin/ -r
+        cp build/opencl appdir/usr/bin/ -r
         
         ./linuxdeploy-x86_64.AppImage --appdir appdir --output appimage
         
