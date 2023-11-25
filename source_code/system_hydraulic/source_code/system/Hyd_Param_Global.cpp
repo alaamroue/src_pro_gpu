@@ -902,6 +902,7 @@ void Hyd_Param_Global::calculate_total_numbers(void){
 _hyd_prec_type Hyd_Param_Global::convert_txt2precontype(string txt){
 	_hyd_prec_type type;
 	_Hyd_Parse_IO::string2lower(&txt);
+	_Hyd_Parse_IO::erase_carriageReturn(&txt);
 	_Hyd_Parse_IO::erase_leading_whitespace_tabs(&txt);
 	_Hyd_Parse_IO::erase_end_whitespace_tabs(&txt);
 
@@ -941,6 +942,7 @@ string Hyd_Param_Global::convert_precontype2txt(_hyd_prec_type type){
 _hyd_gs_scheme_type Hyd_Param_Global::convert_txt2gramschmidttype(string txt){
 	_hyd_gs_scheme_type type;
 	_Hyd_Parse_IO::string2lower(&txt);
+	_Hyd_Parse_IO::erase_carriageReturn(&txt);
 	_Hyd_Parse_IO::erase_leading_whitespace_tabs(&txt);
 	_Hyd_Parse_IO::erase_end_whitespace_tabs(&txt);
 

@@ -514,6 +514,7 @@ void Hyd_Parse_FP::parse_2d_result_file(_hyd_keyword_file Key, word Command){
 		RemoveDelimiters(Command, buffer);
 		UseLinuxSlash(buffer);
 		string buff2=buffer;
+		_Hyd_Parse_IO::erase_carriageReturn(&buff2);
 		_Hyd_Parse_IO::erase_leading_whitespace_tabs(&buff2);
 		_Hyd_Parse_IO::erase_end_whitespace_tabs(&buff2);
 		ostringstream info;

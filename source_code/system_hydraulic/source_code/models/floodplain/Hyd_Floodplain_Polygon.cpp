@@ -49,6 +49,7 @@ void Hyd_Floodplain_Polygon::input_members(const int index, const string filenam
 				getline(ifile, myline,'\n');
 				line_counter++;
 				_Hyd_Parse_IO::erase_comment(&myline);
+				_Hyd_Parse_IO::erase_carriageReturn(&myline);
 				_Hyd_Parse_IO::erase_leading_whitespace_tabs(&myline);
 				_Hyd_Parse_IO::erase_end_whitespace_tabs(&myline);
 				pos=myline.rfind("!BEGIN");
@@ -67,6 +68,7 @@ void Hyd_Floodplain_Polygon::input_members(const int index, const string filenam
 				getline(ifile, myline,'\n');
 				line_counter++;
 				_Hyd_Parse_IO::erase_comment(&myline);
+				_Hyd_Parse_IO::erase_carriageReturn(&myline);
 				_Hyd_Parse_IO::erase_leading_whitespace_tabs(&myline);
 				_Hyd_Parse_IO::erase_end_whitespace_tabs(&myline);
 			}
@@ -139,6 +141,7 @@ void Hyd_Floodplain_Polygon::input_members(const int index, const string filenam
 			getline(ifile, myline,'\n');
 			line_counter++;
 			_Hyd_Parse_IO::erase_comment(&myline);
+			_Hyd_Parse_IO::erase_carriageReturn(&myline);
 			_Hyd_Parse_IO::erase_leading_whitespace_tabs(&myline);
 			_Hyd_Parse_IO::erase_end_whitespace_tabs(&myline);
 			if(myline.empty()!=true){
@@ -193,6 +196,7 @@ void Hyd_Floodplain_Polygon::input_members(const int index, const string filenam
 		getline(ifile, myline,'\n');
 		line_counter++;
 		_Hyd_Parse_IO::erase_comment(&myline);
+		_Hyd_Parse_IO::erase_carriageReturn(&myline);
 		_Hyd_Parse_IO::erase_leading_whitespace_tabs(&myline);
 		_Hyd_Parse_IO::erase_end_whitespace_tabs(&myline);
 		pos=myline.rfind("!END");

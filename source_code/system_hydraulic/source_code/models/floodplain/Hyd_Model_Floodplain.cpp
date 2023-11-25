@@ -4275,6 +4275,7 @@ void Hyd_Model_Floodplain::read_elems(void){
 		getline(ifile, myline,'\n');
 		line_counter++;
 		_Hyd_Parse_IO::erase_comment(&myline);
+		_Hyd_Parse_IO::erase_carriageReturn(&myline);
 		_Hyd_Parse_IO::erase_leading_whitespace_tabs(&myline);
 		_Hyd_Parse_IO::erase_end_whitespace_tabs(&myline);
 		pos=myline.rfind("!BEGIN");
@@ -4296,6 +4297,7 @@ void Hyd_Model_Floodplain::read_elems(void){
 		getline(ifile, myline,'\n');
 		line_counter++;
 		_Hyd_Parse_IO::erase_comment(&myline);
+		_Hyd_Parse_IO::erase_carriageReturn(&myline);
 		_Hyd_Parse_IO::erase_leading_whitespace_tabs(&myline);
 		_Hyd_Parse_IO::erase_end_whitespace_tabs(&myline);
 		if(myline.empty()==true){
@@ -4349,6 +4351,7 @@ void Hyd_Model_Floodplain::read_elems(void){
 	getline(ifile, myline,'\n');
 	line_counter++;
 	_Hyd_Parse_IO::erase_comment(&myline);
+	_Hyd_Parse_IO::erase_carriageReturn(&myline);
 	_Hyd_Parse_IO::erase_leading_whitespace_tabs(&myline);
 	_Hyd_Parse_IO::erase_end_whitespace_tabs(&myline);
 	pos=0;
@@ -4947,7 +4950,7 @@ void Hyd_Model_Floodplain::set_function2solver(void){
 	int flag=-1;
 
 	//set the function where the diff equation is specified
-	//The function CVodeMalloc provides required problem and solution speci¯cations, allocates internal memory, and initializes cvode.
+	//The function CVodeMalloc provides required problem and solution speciï¿½cations, allocates internal memory, and initializes cvode.
 	//flag = CVodeMalloc(this->cvode_mem, f2D_equation2solve, 0.0, this->results, CV_SS, this->Param_FP.get_relative_solver_tolerance(),this->Param_FP.get_absolute_solver_tolerance());
 	flag = CVodeInit(this->cvode_mem, f2D_equation2solve, 0.0, this->results);
 
@@ -4964,7 +4967,7 @@ void Hyd_Model_Floodplain::set_function2solver(void){
 		msg.make_second_info(info.str());
 		throw msg;
 	}
-	//The function CVodeSetFdata speci¯es the user data block f data, for use by the user right-hand side function f, and attaches it to the main cvode memory block
+	//The function CVodeSetFdata speciï¿½es the user data block f data, for use by the user right-hand side function f, and attaches it to the main cvode memory block
 	//flag = CVodeSetFdata(this->cvode_mem, this);
 	flag = CVodeSetUserData(this->cvode_mem, this);
 

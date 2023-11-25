@@ -41,8 +41,8 @@ endif()
 # - The QT directory is added to CMAKE_PREFIX_PATH which is where CMake looks for packages
 # - To give Qt access uncomment and change one of the lines below based on your QT installation directory
 #set(QT_DIR "C:/Qt/5.15.2/msvc2019_64/")
-set(QT_DIR "/home/ubuntu/Qt/5.15.2/gcc_64/")
-set(CMAKE_PREFIX_PATH ${QT_DIR} ) # Uncomment one of the above and change it according to your system
+#set(QT_DIR "/home/ubunntu/Qt/5.15.2/gcc_64/")
+#set(CMAKE_PREFIX_PATH "/home/ubunntu/Qt/5.15.2/gcc_64/" ) # Uncomment one of the above and change it according to your system
 
 # - Second way (recommended) to allow find_package to find the files is to add the qt directory to the environment
 # - To do this open cmd
@@ -69,7 +69,7 @@ endif (UNIX AND NOT APPLE)
 ## Output variables from python
 message("QT_DIR set to: " ${QT_DIR})
 message("QWT_INCLUDE_DIR set to: " ${QWT_INCLUDE_DIR})
-message("QWT_LIBRARY_RELEASE Library Release set to: " ${QWT_LIBRARY_RELEASE})
+message("QWT_LIBRARY_RELEASE set to: " ${QWT_LIBRARY_RELEASE})
 message("QWT_LIBRARY_DEBUG set to: " ${QWT_LIBRARY_DEBUG})
 message("STATIC_LIBS_DIR set to: " ${STATIC_LIBS_DIR})
 message("")

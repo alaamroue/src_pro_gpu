@@ -194,7 +194,8 @@ int main(int argc , char *argv[]){
         //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/rur21OnlyRaster0/HQ21oneOnly.ilm");
         //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/rur21Raster5/HQ21Raster5.ilm");
 
-        //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/khan/HR1000_l_12m.ilm");
+        //system_1->set_system_per_file("/home/ubunntu/Documents/khan/HR1000_l_12m.ilm");
+        //system_1->set_system_per_file("/home/ubunntu/Documents/herrenkrug/herrenkrug.ilm");
         //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/SpeedTesting/1D-2D-Modell mit Deichbruechen 2002/HYD/Elbe_Deichbrueche_2002.ilm");
         //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/SpeedTesting/1D-2D-Modell mit Deichbruechen 2002/HYD/Elbe_Deichbrueche_2002_gpu.ilm");
         //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/SpeedTesting/1D-2D-Modell ohne Deichbrueche 2002/HYD/Elbe_ohne_Deichbrueche_2002.ilm");

@@ -615,6 +615,7 @@ Error Hyd_Param_FP::set_error(const int err_type){
 model::schemeTypes::schemeTypes Hyd_Param_FP::convert_txt2schemetype(string txt) {
 	model::schemeTypes::schemeTypes type;
 	_Hyd_Parse_IO::string2lower(&txt);
+	_Hyd_Parse_IO::erase_carriageReturn(&txt);
 	_Hyd_Parse_IO::erase_leading_whitespace_tabs(&txt);
 	_Hyd_Parse_IO::erase_end_whitespace_tabs(&txt);
 

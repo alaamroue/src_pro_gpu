@@ -58,6 +58,7 @@ void _Hyd_Parse_IO::close_input_file(void){
 bool _Hyd_Parse_IO::transform_string2boolean(string my_string_flag){
 
 	string2lower(&my_string_flag);
+	erase_carriageReturn(&my_string_flag);
 	erase_leading_whitespace_tabs(&my_string_flag);
 	erase_end_whitespace_tabs(&my_string_flag);
 
@@ -188,6 +189,7 @@ bool _Hyd_Parse_IO::GetLine(char* Return){
 		if (!Command.empty()){
 			_Hyd_Parse_IO::erase_comment(&Command);
 			// delete white spaces and tabs at begin
+			_Hyd_Parse_IO::erase_carriageReturn(&Command);
 			_Hyd_Parse_IO::erase_leading_whitespace_tabs(&Command);
 		}
 
@@ -226,6 +228,8 @@ _hyd_keyword_file _Hyd_Parse_IO::ParseNextKeyword(char *CommandList){
 		Command.erase(pos);
 	}
 
+	this->erase_carriageReturn(&Command);
+
 	//erase leading white spaces
 	this->erase_leading_whitespace_tabs(&Command);
 
@@ -234,7 +238,7 @@ _hyd_keyword_file _Hyd_Parse_IO::ParseNextKeyword(char *CommandList){
 		Command[i]=toupper(Command[i]);
 	}
 
-	// Let´s see, which command we found. 
+	// Letï¿½s see, which command we found. 
 	//string RValueString;
 	string Command1=Command;
 	int PosA = Command.find_first_of(">", 0);
