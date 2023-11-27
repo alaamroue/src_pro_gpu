@@ -8,3 +8,5 @@
 /CMakePresets.json
 /CMakeUserPresets.json
 *.aps
+/.cache
+/.vscode
