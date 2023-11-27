@@ -301,7 +301,7 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 				ourCartesianDomain->setBedElevation(ulCellID, myFloodplain->floodplain_elems[ulCellID].get_z_value());
 			}else {
 				ourCartesianDomain->setBedElevation(ulCellID, -9999.0);
-				ourCartesianDomain->setFSL(ulCellID, -9999.0);
+				ourCartesianDomain->setFSL(ulCellID, -9999.0); //Todo: Alaa, remove this. it is redundant
 			}
 			//Manning Coefficient
 			ourCartesianDomain->setManningCoefficient(ulCellID, myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().n_value);

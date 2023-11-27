@@ -13,6 +13,7 @@
 //#define test_sc_break
 //#define sizes1
 //#define solver
+//#define solvergpu
 
 //#define my
 
@@ -701,3 +702,119 @@ int main(int argc, char *argv[]){
 }
 #endif
 //end solver
+
+#ifdef solvergpu
+
+#include "common.h"
+#include "CDomainCartesian.h"
+#include "COCLDevice.h"
+#include "Profiler.h"
+
+
+int main(int argc, char* argv[]) {
+
+    double outputFrequency = 10.0;
+    double simulationLength = 100.0;
+
+    CModel* pManager = new CModel(NULL, false);
+
+    //Set up the Manager Settings
+    pManager->setSelectedDevice(1);							                // Set GPU device to Use. 
+    pManager->setSimulationLength(simulationLength);						// Set Simulation Length
+    pManager->setOutputFrequency(outputFrequency);							// Set Output Frequency
+    pManager->setFloatPrecision(model::floatPrecision::kDouble);			// Set Precision
+
+    //Create the domain
+    CDomainCartesian* ourCartesianDomain = pManager->getDomain();
+    ourCartesianDomain->setCellResolution(1.0, 1.0);
+    ourCartesianDomain->setCols(100);
+    ourCartesianDomain->setRows(100);
+    ourCartesianDomain->setUseOptimizedCoupling(false);
+    ourCartesianDomain->setOptimizedCouplingSize(0);
+    ourCartesianDomain->setName("main.cpp Domain");
+
+    //Create the Scheme,
+    model::SchemeSettings schemeSettings;
+    schemeSettings.scheme_type = model::schemeTypes::kGodunovGPU;
+    schemeSettings.CourantNumber = 0.5;
+    schemeSettings.DryThreshold = 1E-10;
+    schemeSettings.Timestep = 0.1;
+    schemeSettings.ReductionWavefronts = 200;
+    schemeSettings.FrictionStatus = false;
+    schemeSettings.NonCachedWorkgroupSize[0] = 8;
+    schemeSettings.NonCachedWorkgroupSize[1] = 8;
+    schemeSettings.debuggerOn = false;
+    CScheme::createScheme(pManager, ourCartesianDomain, schemeSettings);
+
+
+    pManager->log->logInfo("Setting Data...");
+    unsigned long ulCellID;
+    unsigned char	ucRounding = 6;
+    for (unsigned long iRow = 0; iRow < ourCartesianDomain->getRows(); iRow++) {
+        for (unsigned long iCol = 0; iCol < ourCartesianDomain->getCols(); iCol++) {
+            ulCellID = ourCartesianDomain->getCellID(iCol, ourCartesianDomain->getRows() - iRow - 1);
+            //Elevations
+            ourCartesianDomain->setBedElevation(ulCellID, 0.0);
+            ourCartesianDomain->setFSL(ulCellID, 0.0);
+            //Manning Coefficient
+            ourCartesianDomain->setManningCoefficient(ulCellID, 0.028);
+            //Depth
+            ourCartesianDomain->setFSL(ulCellID, 0.0);
+            //MaxDepth
+            ourCartesianDomain->setMaxFSL(ulCellID, 0.0);
+            //VelocityX
+            ourCartesianDomain->setDischargeX(ulCellID, 0.0);
+            //VelocityY
+            ourCartesianDomain->setDischargeY(ulCellID, 0.0);
+            //Boundary Condition
+            ourCartesianDomain->setBoundaryCondition(ulCellID, 0.0);
+            //Poleni Conditions
+            ourCartesianDomain->setPoleniConditionX(ulCellID, false);
+            //Poleni Conditions
+            ourCartesianDomain->setPoleniConditionY(ulCellID, false);
+            //Zxmax
+            ourCartesianDomain->setZxmax(ulCellID, 0.0);
+            //cx
+            ourCartesianDomain->setcx(ulCellID, 0.0);
+            //Zymax
+            ourCartesianDomain->setZymax(ulCellID, 0.0);
+            //cy
+            ourCartesianDomain->setcy(ulCellID, 0.0);
+            //Coupling Condition
+            //ourCartesianDomain->setCouplingCondition(ulCellID, 0.0);
+
+        }
+    }
+
+    pManager->log->logInfo("The computational engine is now ready.");
+    pManager->ValidateAndPrepareModel();
+
+
+
+    /// Running
+    pManager->log->logInfo("Setting boundary conditions.");
+    ourCartesianDomain->resetBoundaryCondition();
+    for (unsigned long cellId = 0; cellId < ourCartesianDomain->getCellCount(); cellId++){
+        ourCartesianDomain->setBoundaryCondition(cellId, 0.0);
+
+    }
+    ourCartesianDomain->getScheme()->importBoundaries();
+    pManager->runNext(10);
+
+    //Result Import
+    pManager->log->logInfo("Importing results.");
+    double* opt_h_gpu = new double[ourCartesianDomain->getCellCount()];
+    double* opt_v_x_gpu = new double[ourCartesianDomain->getCellCount()];
+    double* opt_v_y_gpu = new double[ourCartesianDomain->getCellCount()];
+    pManager->getDomain()->readBuffers_h_vx_vy(opt_h_gpu, opt_v_x_gpu, opt_v_y_gpu);
+
+    delete[] opt_h_gpu;
+    delete[] opt_v_x_gpu;
+    delete[] opt_v_y_gpu;
+
+
+    pManager->log->logInfo("Deleting model...");
+    //Deletion
+    delete pManager;
+}
+#endif
