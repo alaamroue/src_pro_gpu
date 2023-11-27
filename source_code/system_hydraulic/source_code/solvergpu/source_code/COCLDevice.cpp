@@ -264,7 +264,7 @@ void COCLDevice::createQueue()
 	if (iErrorID != CL_SUCCESS)
 	{
 		model::doError(
-			"Error creating device context. Got an error: [" + std::to_string(iErrorID) + "] from clCreateContext using device [" + this->clDeviceName + "]",
+			"Error creating device context. Got an error: [" + Util::get_error_str(iErrorID) + "] from clCreateContext using device [" + this->clDeviceName + "]",
 			model::errorCodes::kLevelWarning,
 			"void COCLDevice::createQueue()",
 			"Try to restart the program or PC."
@@ -282,7 +282,7 @@ void COCLDevice::createQueue()
 	if (iErrorID != CL_SUCCESS)
 	{
 		model::doError(
-			"Error creating device command queue. Got an error: [" + std::to_string(iErrorID) + "] from clCreateCommandQueue using device [" + this->clDeviceName + "]",
+			"Error creating device command queue. Got an error: [" + Util::get_error_str(iErrorID) + "] from clCreateCommandQueue using device [" + this->clDeviceName + "]",
 			model::errorCodes::kLevelWarning,
 			"void COCLDevice::createQueue()",
 			"Try to restart the program or PC."

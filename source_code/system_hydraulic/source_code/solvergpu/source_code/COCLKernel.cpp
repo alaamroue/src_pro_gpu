@@ -83,8 +83,8 @@ void COCLKernel::scheduleExecution()
 	{
 		// The model cannot continue in this case
 		model::doError(
-			"Kernel queue failed for device #" + toStringExact( this->uiDeviceID ) + ". Error " + toStringExact( iErrorID ) + ".\n" 
-			+ "  " + sName,
+			"Kernel queue failed for device #" + toStringExact( this->uiDeviceID ) + ". Got error " + Util::get_error_str(iErrorID) + "." 
+			+ " When running the kernel: " + sName,
 			model::errorCodes::kLevelModelStop,
 			"void COCLKernel::scheduleExecution()",
 			"Try to restart the program or PC."
@@ -106,7 +106,7 @@ void COCLKernel::scheduleExecution()
 			// The model cannot continue in this case, odd though it is...
 			// Shouldn't ever really happen, but you never know
 			model::doError(
-				"Attaching thread callback failed for device #" + toStringExact( this->uiDeviceID ) + ".",
+				"Attaching thread callback failed for device #" + toStringExact( this->uiDeviceID ) + ". Got error [" + Util::get_error_str(iErrorID) + "]",
 				model::errorCodes::kLevelModelStop,
 				"void COCLKernel::scheduleExecution()",
 				"Try to restart the program or PC."
@@ -136,7 +136,7 @@ void COCLKernel::scheduleExecutionAndFlush()
 		// The model cannot continue in this case, odd though it is...
 		// Shouldn't ever really happen, but you never know
 		model::doError(
-			"Failed flushing commands to device #" + toStringExact( this->uiDeviceID ) + ".",
+			"Failed flushing commands to device #" + toStringExact( this->uiDeviceID ) + ". Got error [" + Util::get_error_str(iErrorID) + "]",
 			model::errorCodes::kLevelModelStop,
 			"void COCLKernel::scheduleExecutionAndFlush()",
 			"Try to restart the program or PC."
@@ -203,7 +203,7 @@ bool COCLKernel::assignArgument(
 	if (iErrorID != CL_SUCCESS) {
 		model::doError(
 			"Assignment of arguments to buffer was not successful. Got an error: [" 
-				+ std::to_string(iErrorID) + "] returned from clSetKernelArg with buffer: [" 
+				+ Util::get_error_str(iErrorID) + "] returned from clSetKernelArg with buffer: [" 
 				+ aBuffer->getName() + "] on argument [" + std::to_string(ucArgumentIndex ) + "].",
 			model::errorCodes::kLevelFatal,
 			"bool COCLKernel::assignArgument",
@@ -233,7 +233,7 @@ void COCLKernel::prepareKernel()
 	{
 		model::doError(
 			"Could not prepare the kernel to run on device #" + toStringExact(this->program->device->uiDeviceNo) + 
-				". Got Error code: [" + std::to_string(iErrorID) + "] from clCreateKernel",
+				". Got Error code: [" + Util::get_error_str(iErrorID) + "] from clCreateKernel",
 			model::errorCodes::kLevelModelStop,
 			"void COCLKernel::prepareKernel()",
 			"Try restarting the program or PC"
@@ -256,7 +256,7 @@ void COCLKernel::prepareKernel()
 	{
 		model::doError(
 			"Could not identify argument count for '" + sName + "' kernel." +
-			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetKernelInfo",
+			" Got Error code: [" + Util::get_error_str(iErrorID) + "] from clGetKernelInfo",
 			model::errorCodes::kLevelModelStop,
 			"void COCLKernel::prepareKernel()",
 			"Try restarting the program or PC"
@@ -277,7 +277,7 @@ void COCLKernel::prepareKernel()
 	{
 		model::doError(
 			"Could not identify work-group constraints for '" + sName + "' kernel." +
-			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetKernelWorkGroupInfo",
+			" Got Error code: [" + Util::get_error_str(iErrorID) + "] from clGetKernelWorkGroupInfo",
 			model::errorCodes::kLevelWarning,
 			"void COCLKernel::prepareKernel()",
 			"Try restarting the program or PC"
@@ -307,7 +307,7 @@ void COCLKernel::prepareKernel()
 	{
 		model::doError(
 			"Could not identify private mem usage for '" + sName + "' kernel." +
-			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetKernelWorkGroupInfo",
+			" Got Error code: [" + Util::get_error_str(iErrorID) + "] from clGetKernelWorkGroupInfo",
 			model::errorCodes::kLevelWarning,
 			"void COCLKernel::prepareKernel()",
 			"Try restarting the program or PC"
@@ -328,7 +328,7 @@ void COCLKernel::prepareKernel()
 	{
 		model::doError(
 			"Could not identify local mem usage for '" + sName + "' kernel." +
-			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetKernelWorkGroupInfo",
+			" Got Error code: [" + Util::get_error_str(iErrorID) + "] from clGetKernelWorkGroupInfo",
 			model::errorCodes::kLevelWarning,
 			"void COCLKernel::prepareKernel()",
 			"Try restarting the program or PC"

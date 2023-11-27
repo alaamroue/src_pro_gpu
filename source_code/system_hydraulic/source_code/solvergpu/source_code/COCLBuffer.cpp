@@ -104,7 +104,7 @@ bool COCLBuffer::createBuffer()
 	{
 		// The model cannot continue in this case
 		model::doError(
-			"Memory buffer creation failed for '" + this->sName + "'. Error " + toStringExact( iErrorID ) + ".",
+			"Memory buffer creation failed for '" + this->sName + "'. Error " + Util::get_error_str(iErrorID) + ".",
 			model::errorCodes::kLevelModelStop,
 			"bool COCLBuffer::createBuffer()",
 			"Try restarting the program"
@@ -198,9 +198,8 @@ void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBl
 
 	if (iReturn != CL_SUCCESS)
 	{
-		model::log->logInfo("Error code returned from memory read is " + toStringExact(iReturn));
 		model::doError(
-			"Unable to read memory buffer from device back to host  " + this->sName + " (" + toStringExact( iReturn ) + ")",
+			"Unable to read memory buffer from device back to host [" + this->sName + "] (" + Util::get_error_str(iReturn) + ")",
 			model::errorCodes::kLevelModelStop,
 			"void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock)",
 			"Something went wrong reading data from the GPU. Try restarting the program."
@@ -219,7 +218,7 @@ void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBl
 		if ( iReturn != CL_SUCCESS )
 		{
 			model::doError(
-				"Attaching thread callback failed for device #" + toStringExact( this->uiDeviceID ) + ".",
+				"Attaching thread callback failed for device #" + toStringExact( this->uiDeviceID ) + ". Got error ["+ Util::get_error_str(iReturn) +"].",
 				model::errorCodes::kLevelModelStop,
 				"void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock)",
 				"Something went wrong reading data from the GPU. Try restarting the program."
@@ -267,7 +266,7 @@ void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemB
 	if ( iReturn != CL_SUCCESS )
 	{
 		model::doError(
-			"Unable to write to memory buffer for device\n  " 
+			"Unable to write to memory buffer for device. Got Error: [" + Util::get_error_str(iReturn) + "]\n"
 			+ this->sName + " (" + toStringExact( iReturn ) + ")\n"
 			+ "  Offset: " + toStringExact( ulOffset ) 
 			+ "  Size: " + toStringExact( ulSize ) 
@@ -292,7 +291,7 @@ void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemB
 		if ( iReturn != CL_SUCCESS )
 		{
 			model::doError(
-				"Attaching thread callback failed for device #" + toStringExact( this->uiDeviceID ) + ".",
+				"Attaching thread callback failed for device #" + toStringExact( this->uiDeviceID ) + ". Got error: [" + Util::get_error_str(iReturn) + "].",
 				model::errorCodes::kLevelModelStop,
 				"void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock )",
 				"Something went wrong writing data to the GPU. Try restarting the program."

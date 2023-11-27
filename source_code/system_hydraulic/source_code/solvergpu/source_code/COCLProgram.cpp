@@ -93,7 +93,7 @@ bool COCLProgram::compileProgram(
 
 		model::doError(
 			"Could not create a program to run on device #" + toStringExact(this->device->getDeviceID()) + "." +
-			" Got Error code: [" + std::to_string(iErrorID) + "] from clCreateProgramWithSource",
+			" Got Error code: [" + Util::get_error_str(iErrorID) + "] from clCreateProgramWithSource",
 			model::errorCodes::kLevelModelStop,
 			"bool COCLProgram::compileProgram( bool bIncludeStandardElements )",
 			"Your device might not be supported."
@@ -120,7 +120,7 @@ bool COCLProgram::compileProgram(
 
 		model::doError(
 			"Could not build the program to run on device #" + toStringExact(this->device->getDeviceID()) + "." +
-			" Got Error code: [" + std::to_string(iErrorID) + "] from clBuildProgram",
+			" Got Error code: [" + Util::get_error_str(iErrorID) + "] from clBuildProgram",
 			model::errorCodes::kLevelModelStop,
 			"bool COCLProgram::compileProgram( bool bIncludeStandardElements )",
 			"Please contact the developers. See log above."
@@ -253,7 +253,7 @@ std::string COCLProgram::getCompileLog()
 		// The model cannot continue in this case
 		model::doError(
 			"Could not obtain a build log for the program on device #" + toStringExact( this->device->getDeviceID() ) + "." +
-			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetProgramBuildInfo",
+			" Got Error code: [" + Util::get_error_str(iErrorID) + "] from clGetProgramBuildInfo",
 			model::errorCodes::kLevelModelStop,
 			"std::string COCLProgram::getCompileLog()",
 			"Please check error code"
@@ -277,7 +277,7 @@ std::string COCLProgram::getCompileLog()
 		// The model cannot continue in this case
 		model::doError(
 			"Could not obtain a build log for the program on device #" + toStringExact( this->device->getDeviceID() ) + "." +
-			" Got Error code: [" + std::to_string(iErrorID) + "] from clGetProgramBuildInfo",
+			" Got Error code: [" + Util::get_error_str(iErrorID) + "] from clGetProgramBuildInfo",
 			model::errorCodes::kLevelModelStop,
 			"std::string COCLProgram::getCompileLog()",
 			"Please check error code"

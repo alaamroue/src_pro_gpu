@@ -69,7 +69,7 @@ bool CExecutorControlOpenCL::getPlatforms(void)
 	if ( iErrorID != CL_SUCCESS ) 
 	{
 		model::doError( 
-			"Error obtaining the number of CL platforms. Got an error [" + std::to_string(iErrorID) + "] ",
+			"Error obtaining the number of CL platforms. Got an error [" + Util::get_error_str(iErrorID) + "] ",
 			model::errorCodes::kLevelFatal,
 			"clGetPlatformIDs( NULL, NULL, &this->clPlatformCount )",
 			"Your system might not be supported yet"
@@ -85,7 +85,7 @@ bool CExecutorControlOpenCL::getPlatforms(void)
 	if ( iErrorID != CL_SUCCESS ) 
 	{
 		model::doError( 
-			"Error obtaining the CL platforms. Got an error [" + std::to_string(iErrorID) + "] ",
+			"Error obtaining the CL platforms. Got an error [" + Util::get_error_str(iErrorID) + "] ",
 			model::errorCodes::kLevelFatal,
 			"clGetPlatformIDs( this->clPlatformCount, this->clPlatforms, &this->clPlatformCount )",
 			"Your system might not be supported yet"
@@ -109,7 +109,7 @@ bool CExecutorControlOpenCL::getPlatforms(void)
 		if ( iErrorID != CL_SUCCESS ) 
 		{
 			model::doError( 
-				"Error obtaining the number of devices on each CL platform. Got an error [" + std::to_string(iErrorID) + "] ",
+				"Error obtaining the number of devices on each CL platform. Got an error [" + Util::get_error_str(iErrorID) + "] ",
 				model::errorCodes::kLevelFatal,
 				"clGetDeviceIDs( this->clPlatforms[ iPlatformID ], CL_DEVICE_TYPE_ALL, 0, NULL, &this->platformInfo[ iPlatformID ].uiDeviceCount )",
 				"Your system might not be supported yet"
@@ -169,7 +169,9 @@ bool CExecutorControlOpenCL::createDevices(void)
 		if (iErrorID != CL_SUCCESS)
 		{
 			model::doError(
-				"Error obtaining the devices for CL platform '" + std::string(this->platformInfo[iPlatformID].cName) + "'",
+				"Error obtaining the devices for CL platform '" + std::string(this->platformInfo[iPlatformID].cName) + "'. Got error: ["+
+				Util::get_error_str(iErrorID) + "]."
+				,
 				model::errorCodes::kLevelFatal,
 				"clGetDeviceIDs( this->clPlatforms[iPlatformID], CL_DEVICE_TYPE_ALL, this->platformInfo[iPlatformID].uiDeviceCount, clDevice, NULL );",
 				"Your device might not be supported yet. Try to updating graphics drivers."

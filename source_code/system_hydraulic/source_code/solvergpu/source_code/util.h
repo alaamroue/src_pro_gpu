@@ -31,6 +31,7 @@ namespace Util
 	char*			getFileResource(const char*, const char*);
 	double			round(double, unsigned int);
 	std::string     to_string_exact(double);
+	std::string		get_error_str(int);
 
 	void			SwapEnd(float& var);
 
