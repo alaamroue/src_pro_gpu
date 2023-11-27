@@ -113,9 +113,21 @@ bool COCLProgram::compileProgram(
 	if (iErrorID != CL_SUCCESS)
 	{
 
+		size_t totalLength = 0;
+		for (const char* str : oclCodeStack) {
+			totalLength += strlen(str);
+		}
+		// Allocate memory for the concatenated string plus null terminator
+		char* concatenatedString = new char[totalLength + 1];
+		// Concatenate the strings
+		concatenatedString[0] = '\0'; // Ensure the string is initially empty
+		for (const char* str : oclCodeStack) {
+			strcat(concatenatedString, str);
+		}
 
 		model::log->logInfo(this->getCompileLog());
-		model::log->writeCharToFile(*orcCode, "failedBuildLog.txt");
+		model::log->writeCharToFile(concatenatedString, "failedBuildLog.txt");
+    	delete[] concatenatedString;
 		model::log->logInfo("The source code has been written to failedBuildLog.txt. Please check it for errors.");
 
 		model::doError(

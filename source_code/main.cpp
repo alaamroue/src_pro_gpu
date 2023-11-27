@@ -195,8 +195,13 @@ int main(int argc , char *argv[]){
         //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/rur21OnlyRaster0/HQ21oneOnly.ilm");
         //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/rur21Raster5/HQ21Raster5.ilm");
 
-        //system_1->set_system_per_file("/home/ubunntu/Documents/khan/HR1000_l_12m.ilm");
+        system_1->set_system_per_file("/home/ubunntu/Documents/khan/HR1000_l_12m.ilm");
+        //system_1->set_system_per_file("/home/ubunntu/Documents/1M_Perlin_30/project.ilm");
         //system_1->set_system_per_file("/home/ubunntu/Documents/herrenkrug/herrenkrug.ilm");
+        //system_1->set_system_per_file("/home/ubunntu/Documents/simpleCoupling/simpleCoupling.ilm");
+        //system_1->set_system_per_file("/home/ubunntu/Documents/TestCase_Aachen/ac_rain.ilm");
+        //system_1->set_system_per_file("/home/ubunntu/Documents/newcastleWithCoupling/newcastleCouple.ilm");
+
         //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/SpeedTesting/1D-2D-Modell mit Deichbruechen 2002/HYD/Elbe_Deichbrueche_2002.ilm");
         //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/SpeedTesting/1D-2D-Modell mit Deichbruechen 2002/HYD/Elbe_Deichbrueche_2002_gpu.ilm");
         //system_1->set_system_per_file("C:/Users/abaghdad/Desktop/HYD_DAM_RISK_test_case/SpeedTesting/1D-2D-Modell ohne Deichbrueche 2002/HYD/Elbe_ohne_Deichbrueche_2002.ilm");
@@ -707,8 +712,6 @@ int main(int argc, char *argv[]){
 
 #include "common.h"
 #include "CDomainCartesian.h"
-#include "COCLDevice.h"
-#include "Profiler.h"
 
 
 int main(int argc, char* argv[]) {
@@ -724,11 +727,14 @@ int main(int argc, char* argv[]) {
     pManager->setOutputFrequency(outputFrequency);							// Set Output Frequency
     pManager->setFloatPrecision(model::floatPrecision::kDouble);			// Set Precision
 
+    //255 works
+    //257 no
+
     //Create the domain
     CDomainCartesian* ourCartesianDomain = pManager->getDomain();
     ourCartesianDomain->setCellResolution(1.0, 1.0);
-    ourCartesianDomain->setCols(100);
-    ourCartesianDomain->setRows(100);
+    ourCartesianDomain->setCols(65537);
+    ourCartesianDomain->setRows(1);
     ourCartesianDomain->setUseOptimizedCoupling(false);
     ourCartesianDomain->setOptimizedCouplingSize(0);
     ourCartesianDomain->setName("main.cpp Domain");
@@ -741,8 +747,8 @@ int main(int argc, char* argv[]) {
     schemeSettings.Timestep = 0.1;
     schemeSettings.ReductionWavefronts = 200;
     schemeSettings.FrictionStatus = false;
-    schemeSettings.NonCachedWorkgroupSize[0] = 8;
-    schemeSettings.NonCachedWorkgroupSize[1] = 8;
+    schemeSettings.NonCachedWorkgroupSize[0] = 27;
+    schemeSettings.NonCachedWorkgroupSize[1] = 27;
     schemeSettings.debuggerOn = false;
     CScheme::createScheme(pManager, ourCartesianDomain, schemeSettings);
 

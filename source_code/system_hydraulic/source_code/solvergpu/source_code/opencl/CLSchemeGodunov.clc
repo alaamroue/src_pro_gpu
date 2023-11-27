@@ -198,41 +198,43 @@ void gts_cacheDisabled (
 		return;
 	}
 
-	ucDirection = DOMAIN_DIR_W;
-	ulIdxNeig = getNeighbourByIndices(lIdxX, lIdxY, ucDirection);
-	dNeigBedElevW	= dBedElevation [ ulIdxNeig ];
-	dNeigBedElevW1	= dBedElevation [ ulIdxNeig ];
-	pNeigDataW		= pCellStateSrc	[ ulIdxNeig ];
-	dOpt_znxmax		= pOpt_zxmax[ ulIdxNeig ];
-	ucDirection = DOMAIN_DIR_S;
-	ulIdxNeig = getNeighbourByIndices(lIdxX, lIdxY, ucDirection);
-	dNeigBedElevS	= dBedElevation [ ulIdxNeig ];
-	dNeigBedElevS1	= dBedElevation [ ulIdxNeig ];
-	pNeigDataS		= pCellStateSrc	[ ulIdxNeig ];
-	dOpt_znymax		= pOpt_zymax[ ulIdxNeig ];
-	ucDirection = DOMAIN_DIR_N;
-	ulIdxNeig = getNeighbourByIndices(lIdxX, lIdxY, ucDirection);
-	dNeigBedElevN	= dBedElevation [ ulIdxNeig ];
-	dNeigBedElevN1	= dBedElevation [ ulIdxNeig ];
-	pNeigDataN		= pCellStateSrc	[ ulIdxNeig ];
-	ucDirection = DOMAIN_DIR_E;
-	ulIdxNeig = getNeighbourByIndices(lIdxX, lIdxY, ucDirection);
-	dNeigBedElevE	= dBedElevation [ ulIdxNeig ];
-	dNeigBedElevE1	= dBedElevation [ ulIdxNeig ];
-	pNeigDataE		= pCellStateSrc	[ ulIdxNeig ];
-	
-
 	if(lIdxX == DOMAIN_COLS - 1){
 		dNeigBedElevE = -9999.0;
-	} 
+	}else{
+		ucDirection = DOMAIN_DIR_E;
+		ulIdxNeig = getNeighbourByIndices(lIdxX, lIdxY, ucDirection);
+		dNeigBedElevE	= dBedElevation [ ulIdxNeig ];
+		dNeigBedElevE1	= dBedElevation [ ulIdxNeig ];
+		pNeigDataE		= pCellStateSrc	[ ulIdxNeig ];
+	}
 	if( lIdxY == DOMAIN_ROWS - 1) {
 		dNeigBedElevN = -9999.0;
+	}else{
+		ucDirection = DOMAIN_DIR_N;
+		ulIdxNeig = getNeighbourByIndices(lIdxX, lIdxY, ucDirection);
+		dNeigBedElevN	= dBedElevation [ ulIdxNeig ];
+		dNeigBedElevN1	= dBedElevation [ ulIdxNeig ];
+		pNeigDataN		= pCellStateSrc	[ ulIdxNeig ];
 	}
 	if( lIdxX == 0) {
 		dNeigBedElevW = -9999.0;
+	}else{
+		ucDirection = DOMAIN_DIR_W;
+		ulIdxNeig = getNeighbourByIndices(lIdxX, lIdxY, ucDirection);
+		dNeigBedElevW	= dBedElevation [ ulIdxNeig ];
+		dNeigBedElevW1	= dBedElevation [ ulIdxNeig ];
+		pNeigDataW		= pCellStateSrc	[ ulIdxNeig ];
+		dOpt_znxmax		= pOpt_zxmax[ ulIdxNeig ];
 	}
 	if( lIdxY == 0) {
 		dNeigBedElevS = -9999.0;
+	}else{
+		ucDirection = DOMAIN_DIR_S;
+		ulIdxNeig = getNeighbourByIndices(lIdxX, lIdxY, ucDirection);
+		dNeigBedElevS	= dBedElevation [ ulIdxNeig ];
+		dNeigBedElevS1	= dBedElevation [ ulIdxNeig ];
+		pNeigDataS		= pCellStateSrc	[ ulIdxNeig ];
+		dOpt_znymax		= pOpt_zymax[ ulIdxNeig ];
 	}
 
 	//if (ulIdx == 1057){
