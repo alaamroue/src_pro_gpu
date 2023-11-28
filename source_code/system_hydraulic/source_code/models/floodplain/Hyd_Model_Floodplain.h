@@ -129,8 +129,6 @@ public:
 	///Reset the model to the state before the calculation after the preproccesing
 	void reset_model(Hyd_Param_Global *global_params);
 
-	///Initialize the gpu solver with the given parameters
-	void init_solver_gpu(Hyd_Param_Global* global_params);
 	///Initialize the solver with the given parameters
 	void init_solver(Hyd_Param_Global *global_params);
 	///Reinitialize the solver

@@ -1025,21 +1025,12 @@ void Hyd_Model_Floodplain::init_solver(Hyd_Param_Global *global_params){
     this->init_opt_data_bound_coup();
     this->allocate_opt_data_reduced();
     this->init_reduced_id();
-
-	_Hyd_Model::init_solver(global_params);
-}
-//Initialize the gpy solver with the given parameters
-void Hyd_Model_Floodplain::init_solver_gpu(Hyd_Param_Global* global_params) {
-
-	//test opti
-	this->allocate_opt_data();
-	this->init_opt_data();
-	this->init_opt_data_bound_coup();
-	this->allocate_opt_data_reduced();
-	this->init_reduced_id();
-
-	_Hyd_Model::init_solver_gpu(global_params);
-
+	if (this->Param_FP.get_scheme_info().scheme_type != model::schemeTypes::kDiffusiveCPU) {
+		_Hyd_Model::init_solver_gpu(global_params);
+	}
+	else {
+		_Hyd_Model::init_solver(global_params);
+	}
 }
 //Reinitialize the solver
 void Hyd_Model_Floodplain::reinit_solver(Hyd_Param_Global *global_params){

@@ -1529,13 +1529,7 @@ void Hyd_Hydraulic_System::init_solver(void){
 			//init the solver
 			cout<<"Initialize the solver for floodplain model ..."<< endl;
 			Sys_Common_Output::output_hyd->output_txt(&cout);
-			//2DGPU Check
-			if(my_fpmodels[j].Param_FP.get_scheme_info().scheme_type != model::schemeTypes::kDiffusiveCPU) {
-				this->my_fpmodels[j].init_solver_gpu(&this->global_parameters);
-			}
-			else {
-				this->my_fpmodels[j].init_solver(&this->global_parameters);
-			}
+			this->my_fpmodels[j].init_solver(&this->global_parameters);
 			Sys_Common_Output::output_hyd->rewind_userprefix();
 			prefix.str("");
 		}
