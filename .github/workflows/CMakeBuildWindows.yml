@@ -44,7 +44,7 @@ jobs:
       
     - name: '🛠️ Build'
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j 4
       
     - name: '⬆️ Upload Exe File'
       uses: actions/upload-artifact@v3
