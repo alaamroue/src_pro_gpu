@@ -14,7 +14,12 @@
 //Constructor
 CBenchmark::CBenchmark( bool bStart )
 {
-	this->bRunning = false;
+
+	this->dStartTime	= 0;
+	this->dEndTime		= 0;
+	this->sMetrics		= {};
+
+	this->bRunning		= false;
 
 	if ( bStart )
 		this->start();

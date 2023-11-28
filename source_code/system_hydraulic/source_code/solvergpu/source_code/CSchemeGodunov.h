@@ -31,9 +31,7 @@ public:
 		// Public functions
 		virtual void		logDetails();											// Write some details about the scheme
 		virtual void		prepareAll();											// Prepare absolutely everything for a model run
-		virtual void		scheduleIteration( bool,								// Schedule an iteration of the scheme
-		COCLDevice*,
-											   CDomainCartesian* );					
+		virtual void		scheduleIteration();									// Schedule an iteration of the scheme
 		void				setDryThreshold( double );								// Set the dry cell threshold depth
 		double				getDryThreshold();										// Get the dry cell threshold depth
 		void				setReductionWavefronts( unsigned int );					// Set number of wavefronts used in reductions
@@ -44,14 +42,14 @@ public:
 		unsigned char		getCacheMode();											// Get the cache configuration
 		void				setCacheConstraints( unsigned char );					// Set LDS cache size constraints
 		unsigned char		getCacheConstraints();									// Get LDS cache size constraints
-		void				setCachedWorkgroupSize( unsigned char );				// Set the work-group size
-		void				setCachedWorkgroupSize( unsigned char, unsigned char );	// Set the work-group size
-		void				setNonCachedWorkgroupSize( unsigned char );				// Set the work-group size
-		void				setNonCachedWorkgroupSize( unsigned char, unsigned char );	// Set the work-group size
+		void				setCachedWorkgroupSize( unsigned int );					// Set the work-group size
+		void				setCachedWorkgroupSize( unsigned int, unsigned int );	// Set the work-group size
+		void				setNonCachedWorkgroupSize( unsigned int );				// Set the work-group size
+		void				setNonCachedWorkgroupSize( unsigned int, unsigned int );// Set the work-group size
 		void				setTargetTime( double );								// Set the target sync time
 		double				getAverageTimestep();									// Get batch average timestep
 		virtual COCLBuffer*	getNextCellSourceBuffer();								// Get the next source cell state buffer
-		void				setDebugger(unsigned int debugX, unsigned int debugY);
+		void				setDebugger(unsigned int debugX, unsigned int debugY);	// Set the debugger at a cell
 
 		#ifdef PLATFORM_WIN
 		static DWORD		Threaded_runBatchLaunch(LPVOID param);
@@ -64,11 +62,11 @@ public:
 		void				Threaded_runBatch();
 
 		virtual void		readDomainAll();										// Read back all domain data
-		virtual void		importBoundaries();									// Load in data
+		virtual void		importBoundaries();										// Read boundary array from CPU RAM to GPU RAM
 		void				prepareSetup(CModel*, model::SchemeSettings);			// Set everything up to start running for this domain
 		virtual void		prepareSimulation();									// Set everything up to start running for this domain
 		virtual void		readKeyStatistics();									// Fetch the key details back to the right places in memory
-		virtual void		runSimulation( double );						// Run this simulation until the specified time
+		virtual void		runSimulation( double );								// Run this simulation until the specified time
 		virtual void		cleanupSimulation();									// Dispose of transient data and clean-up this domain
 		virtual void		dumpMemory( void );										// Read all buffers so that memory can be dumped
 
@@ -99,13 +97,13 @@ protected:
 		unsigned int		uiTimestepReductionWavefronts;							// Number of wavefronts used in reduction
 
 		// Private functions
-		virtual bool		prepareCode();											// Prepare the code required
+		virtual void		prepareCode();											// Prepare the code required
 		virtual void		releaseResources();										// Release OpenCL resources consumed
-		bool				prepareGeneralKernels();								// Prepare the general kernels required
-		bool				prepare1OKernels();										// Prepare the kernels required
-		bool				prepare1OConstants();									// Assign constants to the executor
-		bool				prepare1OMemory();										// Prepare memory buffers required
-		bool				prepare1OExecDimensions();								// Size the problem for execution
+		void				prepareGeneralKernels();								// Prepare the general kernels required
+		void				prepare1OKernels();										// Prepare the kernels required
+		void				prepare1OConstants();									// Assign constants to the executor
+		void				prepare1OMemory();										// Prepare memory buffers required
+		void				prepare1OExecDimensions();								// Size the problem for execution
 		void				release1OResources();									// Release 1st-order OpenCL resources consumed
 
 		// OpenCL elements

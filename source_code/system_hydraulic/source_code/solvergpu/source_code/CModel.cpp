@@ -42,8 +42,6 @@ CModel::CModel(CLoggingInterface* CLI, bool profilingOn)
 	this->pProgressCoords.sX = -1;
 	this->pProgressCoords.sY = -1;
 
-	this->ulRealTimeStart = 0;
-
 	this->execController = NULL;
 	CExecutorControlOpenCL* pExecutor = new CExecutorControlOpenCL(model::filters::devices::devicesGPU);
 	pExecutor->createDevices();
@@ -196,7 +194,7 @@ void	CModel::setFloatPrecision(unsigned char ucPrecision)
 }
 
 //Get floating point precision
-unsigned char	CModel::getFloatPrecision()
+model::floatPrecision::floatPrecision CModel::getFloatPrecision()
 {
 	return (this->bDoublePrecision ? model::floatPrecision::kDouble : model::floatPrecision::kSingle);
 }
@@ -213,8 +211,8 @@ void	CModel::logProgress(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 	char	cProgress[57] = "                                                      ";
 	char	cProgessNumber[7] = "      ";
 
-	double		  dCurrentTime = (this->dCurrentTime > this->dSimulationTime ? this->dSimulationTime : this->dCurrentTime);
-	double		  dProgress = dCurrentTime / this->dSimulationTime;
+	double		  dCurrentTime_output = (this->dCurrentTime > this->dSimulationTime ? this->dSimulationTime : this->dCurrentTime);
+	double		  dProgress = dCurrentTime_output / this->dSimulationTime;
 
 	// TODO: These next bits will need modifying for when we have multiple domains
 	unsigned long long	ulCurrentCellsCalculated = 0;
@@ -240,7 +238,7 @@ void	CModel::logProgress(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 		cProgress[i] = (i >= (floor(55.0f * dProgress) - 1) ? '>' : '=');
 
 	// String padding stuff
-	sprintf(cTimeLine, " Simulation time:  %-15sLowest timestep: %15s", Util::secondsToTime(dCurrentTime).c_str(), Util::secondsToTime(dSmallestTimestep).c_str());
+	sprintf(cTimeLine, " Simulation time:  %-15sLowest timestep: %15s", Util::secondsToTime(dCurrentTime_output).c_str(), Util::secondsToTime(dSmallestTimestep).c_str());
 	sprintf(cCells, "%I64u", ulCurrentCellsCalculated);
 	sprintf(cCellsLine, " Cells calculated: %-24s  Rate: %13s/s", cCells, toStringExact(ulRate).c_str());
 	sprintf(cTimeLine2, " Processing time:  %-16sEst. remaining: %15s", Util::secondsToTime(sTotalMetrics->dSeconds).c_str(), Util::secondsToTime(min((1.0 - dProgress) * (sTotalMetrics->dSeconds / dProgress), 31536000.0)).c_str());
@@ -279,8 +277,8 @@ void	CModel::logProgress(CBenchmark::sPerformanceMetrics* sTotalMetrics)
 		"1",
 		sDeviceName.c_str(),
 		Util::secondsToTime(pProgress.dBatchTimesteps).c_str(),
-		toStringExact(pProgress.uiBatchSuccessful).c_str(),
-		toStringExact(pProgress.uiBatchSkipped).c_str()
+		std::to_string(pProgress.uiBatchSuccessful).c_str(),
+		std::to_string(pProgress.uiBatchSkipped).c_str()
 	);
 
 	model::log->logInfo(std::string(cDomainLine));	// ++
@@ -347,8 +345,8 @@ void	CModel::runNext(const double next_time_point)
 }
 
 //Attached the profiler class to the CModel
-void CModel::setProfiler(CProfiler* profiler) {
-	this->profiler = profiler;
+void CModel::setProfiler(CProfiler* profiler_input) {
+	this->profiler = profiler_input;
 }
 
 
@@ -357,30 +355,7 @@ void CModel::setUIStatus(bool status) {
 	this->showProgess = status;
 }
 
-
-/*
- *  Model is complete.
- */
-int model::doClose(int iCode)
-{
-	model::doPause();
-
-	return iCode;
-}
-
-/*
- *  Suspend the application temporarily pending the user
- *  pressing return to continue.
- */
-void model::doPause()
-{
-	std::cout << std::endl << "Press any key to close." << std::endl;
-	std::getchar();
-}
-
-/*
- *  Raise an error message and deal with it accordingly.
- */
+//Raise an error message and deal with it accordingly.
 void model::doError(std::string error_reason, unsigned char error_type, std::string error_place, std::string error_help)
 {
 	model::log->logError(error_reason, error_type, error_place, error_help);

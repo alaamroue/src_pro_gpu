@@ -115,7 +115,7 @@ bool COCLBuffer::createBuffer()
 	this->bReady = true;
 
 	model::log->logInfo(
-		"Memory buffer created for '" + this->sName + "' with " + toStringExact(this->ulSize) + " bytes."
+		"Memory buffer created for '" + this->sName + "' with " + std::to_string(this->ulSize) + " bytes."
 	);
 
 	return true;
@@ -135,21 +135,21 @@ bool COCLBuffer::createBufferAndInitialise()
 //Set the location of the host-copy of the buffer if it's not within this class instance
 void COCLBuffer::setPointer(
 	void* pLocation,
-	cl_ulong	ulSize
+	cl_ulong	ulSize_input
 )
 {
 	this->pHostBlock = pLocation;
-	this->ulSize = ulSize;
+	this->ulSize = ulSize_input;
 	bInternalBlock = false;
 }
 
 //Allocate a block of memory within this class instance
 void COCLBuffer::allocateHostBlock(
-	cl_ulong	ulSize
+	cl_ulong	ulSize_input
 )
 {
 	try {
-		this->pHostBlock = new cl_uchar[ulSize]();
+		this->pHostBlock = new cl_uchar[ulSize_input]();
 	}
 	catch (std::bad_alloc)
 	{
@@ -162,7 +162,7 @@ void COCLBuffer::allocateHostBlock(
 		return;
 	}
 
-	this->ulSize = ulSize;
+	this->ulSize = ulSize_input;
 	bInternalBlock = true;
 }
 
@@ -173,7 +173,7 @@ void COCLBuffer::queueReadAll()
 }
 
 //Attempt to read all of the buffer contents back from the device
-void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock)
+void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize_input, void* pMemBlock)
 {
 	cl_event	clEvent = NULL;
 
@@ -189,7 +189,7 @@ void COCLBuffer::queueReadPartial(cl_ulong ulOffset, size_t ulSize, void* pMemBl
 		clBuffer,					// Buffer object
 		CL_FALSE,					// Blocking?
 		ulOffset,					// Offset
-		ulSize,						// Size
+		ulSize_input,						// Size
 		pMemBlock,					// Target pointer
 		NULL,						// No. of events in wait list
 		NULL,						// Wait list
@@ -236,7 +236,7 @@ void COCLBuffer::queueWriteAll()
 
 
 //Attempt to write part of a buffer
-void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock )
+void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize_input, void* pMemBlock )
 {
 	// Store the event returned, so the calling function
 	// can use it to block etc.
@@ -255,7 +255,7 @@ void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemB
 		clBuffer,					// Buffer object
 		CL_FALSE,					// Blocking?
 		ulOffset,					// Offset
-		ulSize,						// Size
+		ulSize_input,						// Size
 		pMemBlock,					// Source pointer
 		NULL,						// No. of events in wait list
 		NULL,						// Wait list
@@ -267,13 +267,13 @@ void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemB
 	{
 		model::doError(
 			"Unable to write to memory buffer for device. Got Error: [" + Util::get_error_str(iReturn) + "]\n"
-			+ this->sName + " (" + toStringExact( iReturn ) + ")\n"
-			+ "  Offset: " + toStringExact( ulOffset ) 
-			+ "  Size: " + toStringExact( ulSize ) 
+			+ this->sName + " (" + std::to_string( iReturn ) + ")\n"
+			+ "  Offset: " + std::to_string( ulOffset )
+			+ "  Size: " + std::to_string(ulSize_input)
 			+ "  Pointer: check COCLBUFFER.CPP" //+ toStringExact( pMemBlock )
-			+ "  Buf size: " + toStringExact( this->ulSize ),
+			+ "  Buf size: " + std::to_string( this->ulSize ),
 			model::errorCodes::kLevelModelStop,
-			"void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize, void* pMemBlock )",
+			"void COCLBuffer::queueWritePartial(cl_ulong ulOffset, size_t ulSize_input, void* pMemBlock )",
 			"Something went wrong writing data to the GPU. Try restarting the program."
 		);
 	}

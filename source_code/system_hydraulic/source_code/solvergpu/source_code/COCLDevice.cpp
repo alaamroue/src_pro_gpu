@@ -54,10 +54,7 @@ COCLDevice::~COCLDevice(void)
 //Obtain the size and value for a device info field
 void COCLDevice::getAllInfo()
 {
-	void* vMemBlock;
 
-	// This is messy, but at least it doesn't memory leak...
-	// TODO: This should really use a template function for getDeviceInfo. That'd be sensible...
 	this->clDeviceAddressSize			= this->getDeviceInfo<cl_uint>(CL_DEVICE_ADDRESS_BITS);
 	this->clDeviceAvailable				= this->getDeviceInfo<cl_bool>(CL_DEVICE_AVAILABLE);
 	this->clDeviceCompilerAvailable		= this->getDeviceInfo<cl_bool>(CL_DEVICE_COMPILER_AVAILABLE);
@@ -218,17 +215,17 @@ void COCLDevice::logDevice()
 	model::log->logInfo("  Processor type:    " + std::string(this->clDeviceName));
 	model::log->logInfo("  Vendor:            " + std::string(this->clDeviceVendor));
 	model::log->logInfo("  OpenCL driver:     " + std::string(this->clDeviceOpenCLDriver));
-	model::log->logInfo("  Compute units:     " + toStringExact(this->clDeviceComputeUnits));
+	model::log->logInfo("  Compute units:     " + std::to_string(this->clDeviceComputeUnits));
 	model::log->logInfo("  Profile:           " + (std::string)(std::string(this->clDeviceProfile).compare("FULL_PROFILE") == 0 ? "Full" : "Embedded"));
-	model::log->logInfo("  Clock speed:       " + toStringExact(this->clDeviceClockFrequency) + " MHz");
-	model::log->logInfo("  Memory:            " + toStringExact((unsigned int)(this->clDeviceGlobalMemSize / 1024 / 1024)) + " Mb");
+	model::log->logInfo("  Clock speed:       " + std::to_string(this->clDeviceClockFrequency) + " MHz");
+	model::log->logInfo("  Memory:            " + std::to_string((unsigned int)(this->clDeviceGlobalMemSize / 1024 / 1024)) + " Mb");
 	model::log->logInfo("  OpenCL C:          " + std::string(this->clDeviceOpenCLVersion));
-	model::log->logInfo("  Max global size:   " + toStringExact(this->clDeviceGlobalSize));
-	model::log->logInfo("  Max group items:   " + toStringExact(this->clDeviceMaxWorkGroupSize));
+	model::log->logInfo("  Max global size:   " + std::to_string(this->clDeviceGlobalSize));
+	model::log->logInfo("  Max group items:   " + std::to_string(this->clDeviceMaxWorkGroupSize));
 	model::log->logInfo("  Max group:         " + ssGroupDimensions.str());
-	model::log->logInfo("  Max constant args: " + toStringExact(this->clDeviceMaxConstants));
-	model::log->logInfo("  Max allocation:    " + toStringExact(this->clDeviceMaxMemAlloc / 1024 / 1024) + "MB");
-	model::log->logInfo("  Max argument size: " + toStringExact(this->clDeviceMaxParamSize / 1024) + "kB");
+	model::log->logInfo("  Max constant args: " + std::to_string(this->clDeviceMaxConstants));
+	model::log->logInfo("  Max allocation:    " + std::to_string(this->clDeviceMaxMemAlloc / 1024 / 1024) + "MB");
+	model::log->logInfo("  Max argument size: " + std::to_string(this->clDeviceMaxParamSize / 1024) + "kB");
 	model::log->logInfo("  Double precision:  " + sDoubleSupport);
 
 	model::log->writeDivide();
@@ -402,31 +399,6 @@ void COCLDevice::flushAndSetMarker()
 	this->bBusy = true;
 	clFlush(clQueue);
 	return;
-
-	#ifdef USE_SIMPLE_ARCH_OPENCL
-	this->blockUntilFinished();
-	return;
-	#endif
-
-	if (clMarkerEvent != NULL)
-	{
-		clReleaseEvent(clMarkerEvent);
-	}
-
-	// NOTE: OpenCL 1.2 uses clEnqueueMarkerWithWaitList() instead
-	clEnqueueMarker(
-		clQueue,
-		&clMarkerEvent
-	);
-
-	clSetEventCallback(
-		clMarkerEvent,
-		CL_COMPLETE,
-		COCLDevice::markerCallback,
-		static_cast<void*>(&this->callBackData)
-	);
-
-	clFlush(clQueue);
 }
 
 //Flush the work to the device
@@ -460,30 +432,6 @@ bool COCLDevice::isBusy()
 	// To use the callback mechanism...
 	return this->bBusy;
 
-	if (clMarkerEvent == NULL)
-		return false;
-
-	cl_int iStatus;
-	size_t szStatusSize;
-	cl_int iQueryStatus = clGetEventInfo(
-		clMarkerEvent,
-		CL_EVENT_COMMAND_EXECUTION_STATUS,
-		sizeof(cl_int),
-		&iStatus,
-		&szStatusSize
-	);
-
-	if (iQueryStatus != CL_SUCCESS)
-		return true;
-
-	model::log->logInfo("Exec status for device #" + toStringExact(uiDeviceNo)+" is " + toStringExact(iStatus));
-	if (iStatus == CL_COMPLETE)
-	{
-		return false;
-	}
-	else {
-		return true;
-	}
 }
 
 

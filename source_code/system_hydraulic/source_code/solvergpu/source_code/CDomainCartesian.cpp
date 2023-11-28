@@ -29,16 +29,39 @@ CDomainCartesian::CDomainCartesian(void)
 	this->bUseOptimizedBoundary		= false;
 	this->ulCouplingArraySize		= 0;
 
+	this->uiRounding = 10;
+	this->sDataProgress.dBatchTimesteps = 0;
+	this->sDataProgress.dCurrentTime = 0.0;
+	this->sDataProgress.dCurrentTimestep = 0.0;
+	this->sDataProgress.uiBatchSize = 0;
+	this->sDataProgress.uiBatchSkipped = 0;
+	this->sDataProgress.uiBatchSuccessful = 0;
 
-	this->uiRollbackLimit = 999999999;
+	this->pDevice = NULL;
+	this->pScheme = NULL;
 
-	uiRounding = 10;
-	sDataProgress.dBatchTimesteps = 0;
-	sDataProgress.dCurrentTime = 0.0;
-	sDataProgress.dCurrentTimestep = 0.0;
-	sDataProgress.uiBatchSize = 0;
-	sDataProgress.uiBatchSkipped = 0;
-	sDataProgress.uiBatchSuccessful = 0;
+	this->dCellStates = NULL;
+	this->dBedElevations = NULL;
+	this->dManningValues = NULL;
+	this->dBoundaryValues = NULL;
+	this->dOpt_zxmaxValues = NULL;
+	this->dOpt_cxValues = NULL;
+	this->dOpt_zymaxValues = NULL;
+	this->dOpt_cyValues = NULL;
+	this->dCouplingValues = NULL;
+
+	this->fCellStates = NULL;
+	this->fBedElevations = NULL;
+	this->fManningValues = NULL;
+	this->fBoundaryValues = NULL;
+	this->fOpt_zxmaxValues = NULL;
+	this->fOpt_cxValues = NULL;
+	this->fOpt_zymaxValues = NULL;
+	this->fOpt_cyValues = NULL;
+	this->fCouplingValues = NULL;
+
+	this->bPoleniValues = NULL;
+	this->ulCouplingIDs = NULL;
 }
 
 //Destructor
@@ -46,47 +69,47 @@ CDomainCartesian::~CDomainCartesian(void)
 {
 	if (this->ucFloatSize == 4)
 	{
-		delete[] this->fCellStates;
-		delete[] this->fBedElevations;
-		delete[] this->fManningValues;
-		delete[] this->fOpt_zxmaxValues;
-		delete[] this->fOpt_cxValues;
-		delete[] this->fOpt_zymaxValues;
-		delete[] this->fOpt_cyValues;
+		if (this->fCellStates != NULL)			delete[] this->fCellStates;
+		if (this->fBedElevations != NULL)		delete[] this->fBedElevations;
+		if (this->fManningValues != NULL)		delete[] this->fManningValues;
+		if (this->fOpt_zxmaxValues != NULL)		delete[] this->fOpt_zxmaxValues;
+		if (this->fOpt_cxValues != NULL)			delete[] this->fOpt_cxValues;
+		if (this->fOpt_zymaxValues != NULL)		delete[] this->fOpt_zymaxValues;
+		if (this->fOpt_cyValues != NULL)			delete[] this->fOpt_cyValues;
 		if (this->bUseOptimizedBoundary == false) {
-			delete[] this->fBoundaryValues;
+			if (this->fBoundaryValues != NULL)	delete[] this->fBoundaryValues;
 		}
 		else {
-			delete[] fCouplingValues;
-			delete[] ulCouplingIDs;
+			if (this->fCouplingValues != NULL)	delete[] fCouplingValues;
+			if (this->ulCouplingIDs != NULL)	delete[] ulCouplingIDs;
 		}
 	}
 	else if (this->ucFloatSize == 8) {
-		delete[] this->dCellStates;
-		delete[] this->dBedElevations;
-		delete[] this->dManningValues;
-		delete[] this->dOpt_zxmaxValues;
-		delete[] this->dOpt_cxValues;
-		delete[] this->dOpt_zymaxValues;
-		delete[] this->dOpt_cyValues;
+		if (this->dCellStates != NULL)			delete[] this->dCellStates;
+		if (this->dBedElevations != NULL)		delete[] this->dBedElevations;
+		if (this->dManningValues != NULL)		delete[] this->dManningValues;
+		if (this->dOpt_zxmaxValues != NULL)		delete[] this->dOpt_zxmaxValues;
+		if (this->dOpt_cxValues != NULL)		delete[] this->dOpt_cxValues;
+		if (this->dOpt_zymaxValues != NULL)		delete[] this->dOpt_zymaxValues;
+		if (this->dOpt_cyValues != NULL)		delete[] this->dOpt_cyValues;
 		if (this->bUseOptimizedBoundary == false) {
-			delete[] this->dBoundaryValues;
+			if (this->dBoundaryValues != NULL)	delete[] this->dBoundaryValues;
 		}
 		else {
-			delete[] dCouplingValues;
-			delete[] ulCouplingIDs;
+			if (this->dCouplingValues != NULL)	delete[] dCouplingValues;
+			if (this->ulCouplingIDs != NULL)	delete[] ulCouplingIDs;
 		}
 	}
-	delete[] this->bPoleniValues;
+	if (this->bPoleniValues != NULL)			delete[] this->bPoleniValues;
 
 	if (this->pScheme != NULL)     delete pScheme;
 }
 
 
 //Sets the scheme we're running on this domain
-void	CDomainCartesian::setScheme(CScheme* pScheme)
+void	CDomainCartesian::setScheme(CScheme* pScheme_input)
 {
-	this->pScheme = pScheme;
+	this->pScheme = pScheme_input;
 }
 
 //Gets the scheme we're running on this domain
@@ -96,9 +119,9 @@ CScheme* CDomainCartesian::getScheme()
 }
 
 //Sets the device to use
-void	CDomainCartesian::setDevice(COCLDevice* pDevice)
+void	CDomainCartesian::setDevice(COCLDevice* pDevice_input)
 {
-	this->pDevice = pDevice;
+	this->pDevice = pDevice_input;
 }
 
 //Gets the scheme we're running on this domain
@@ -128,13 +151,13 @@ void	CDomainCartesian::createStoreBuffers(
 	void** vArrayOpt_cy,
 	void** vArrayCouplingIDs,
 	void** vArrayCouplingValues,
-	unsigned char	ucFloatSize
+	unsigned char	ucFloatSize_input
 )
 {
 	prepareDomain();
 
 	unsigned long ulCellCount = this->ulRows * this->ulCols;
-	this->ucFloatSize = ucFloatSize;
+	this->ucFloatSize = ucFloatSize_input;
 
 	try {
 		if (ucFloatSize == sizeof(cl_float))
@@ -353,11 +376,11 @@ void	CDomainCartesian::logDetails()
 	model::log->writeDivide();
 
 	model::log->logInfo("REGULAR CARTESIAN GRID DOMAIN");
-	model::log->logInfo("  Device number:     " + toStringExact(this->pDevice->uiDeviceNo));
-	model::log->logInfo("  Cell count:        " + toStringExact(this->ulCols*this->ulRows));
-	model::log->logInfo("  Cell resolution:   " + toStringExact(this->dCellResolutionX));
-	model::log->logInfo("  Cell dimensions:   [" + toStringExact(this->ulCols) + ", " +
-		toStringExact(this->ulRows) + "]");
+	model::log->logInfo("  Device number:     " + std::to_string(this->pDevice->uiDeviceNo));
+	model::log->logInfo("  Cell count:        " + std::to_string(this->ulCols*this->ulRows));
+	model::log->logInfo("  Cell resolution:   " + std::to_string(this->dCellResolutionX));
+	model::log->logInfo("  Cell dimensions:   [" + std::to_string(this->ulCols) + ", " +
+		std::to_string(this->ulRows) + "]");
 
 	model::log->writeDivide();
 }
@@ -391,7 +414,6 @@ double	CDomainCartesian::getCellResolutionY()
 //Gets the scheme we're running on this domain
 dataProgress	CDomainCartesian::getDataProgress(){
 	dataProgress pResponse;
-	CScheme* pScheme = getScheme();
 
 	pResponse.dBatchTimesteps = pScheme->getAverageTimestep();
 	pResponse.dCurrentTime = pScheme->getCurrentTime();
@@ -658,17 +680,6 @@ void	CDomainCartesian::resetBoundaryCondition()
 	}
 }
 
-//Set the number of iterations before a rollback is required
-void CDomainCartesian::setRollbackLimit(unsigned int uiLimit)
-{
-	uiRollbackLimit = uiLimit;
-}
-
-// Set the number of iterations before a rollback is required
-unsigned int CDomainCartesian::getRollbackLimit() {
-	return this->uiRollbackLimit;
-}
-
 //Return the total number of cells in the domain
 unsigned long	CDomainCartesian::getCellCount()
 {
@@ -678,8 +689,8 @@ unsigned long	CDomainCartesian::getCellCount()
 
 ////Progress Monitoring
 // Set some data on this domain's progress
-void CDomainCartesian::setDataProgress(dataProgress sDataProgress) {
-	this->sDataProgress = sDataProgress;
+void CDomainCartesian::setDataProgress(dataProgress sDataProgress_input) {
+	this->sDataProgress = sDataProgress_input;
 }
 
 
@@ -947,7 +958,7 @@ void	CDomainCartesian::memoryDump()
 	unsigned long ulCellCount = this->ulRows * this->ulCols;
 
 	model::log->logInfo("Dumping dCellStates: ");
-	for (int i = 0; i < ulCellCount; i++) {
+	for (unsigned long i = 0; i < ulCellCount; i++) {
 		model::log->logInfo(std::to_string(i) + ": " +
 							"  0:" + std::to_string(this->dCellStates[i].s[0]) + 
 							"  1:" + std::to_string(this->dCellStates[i].s[1]) +
@@ -957,42 +968,42 @@ void	CDomainCartesian::memoryDump()
 	}
 	
 	model::log->logInfo("Dumping dBedElevations: ");
-	for (int i = 0; i < ulCellCount; i++) {
+	for (unsigned long i = 0; i < ulCellCount; i++) {
 		model::log->logInfo(std::to_string(i) + ": " +
 			std::to_string(this->dBedElevations[i])
 		);
 	}
 	
 	model::log->logInfo("Dumping dManningValues: ");
-	for (int i = 0; i < ulCellCount; i++) {
+	for (unsigned long i = 0; i < ulCellCount; i++) {
 		model::log->logInfo(std::to_string(i) + ": " +
 			std::to_string(this->dManningValues[i])
 		);
 	}
 	
 	model::log->logInfo("Dumping dOpt_zxmaxValues: ");
-	for (int i = 0; i < ulCellCount; i++) {
+	for (unsigned long i = 0; i < ulCellCount; i++) {
 		model::log->logInfo(std::to_string(i) + ": " +
 			std::to_string(this->dOpt_zxmaxValues[i])
 		);
 	}
 	
 	model::log->logInfo("Dumping dOpt_zymaxValues: ");
-	for (int i = 0; i < ulCellCount; i++) {
+	for (unsigned long i = 0; i < ulCellCount; i++) {
 		model::log->logInfo(std::to_string(i) + ": " +
 			std::to_string(this->dOpt_zymaxValues[i])
 		);
 	}
 	
 	model::log->logInfo("Dumping dOpt_cxValues: ");
-	for (int i = 0; i < ulCellCount; i++) {
+	for (unsigned long i = 0; i < ulCellCount; i++) {
 		model::log->logInfo(std::to_string(i) + ": " +
 			std::to_string(this->dOpt_cxValues[i])
 		);
 	}
 	
 	model::log->logInfo("Dumping dOpt_cyValues: ");
-	for (int i = 0; i < ulCellCount; i++) {
+	for (unsigned long i = 0; i < ulCellCount; i++) {
 		model::log->logInfo(std::to_string(i) + ": " +
 			std::to_string(this->dOpt_cyValues[i])
 		);
@@ -1002,7 +1013,7 @@ void	CDomainCartesian::memoryDump()
 	if (this->bUseOptimizedBoundary == false) {
 	
 		model::log->logInfo("Dumping dBoundaryValues: ");
-		for (int i = 0; i < ulCellCount; i++) {
+		for (unsigned long i = 0; i < ulCellCount; i++) {
 			model::log->logInfo(std::to_string(i) + ": " +
 				std::to_string(this->dBoundaryValues[i])
 			);
@@ -1010,14 +1021,14 @@ void	CDomainCartesian::memoryDump()
 	}
 	else {
 		model::log->logInfo("Dumping dCouplingValues: ");
-		for (int i = 0; i < ulCellCount; i++) {
+		for (unsigned long i = 0; i < ulCellCount; i++) {
 			model::log->logInfo(std::to_string(i) + ": " +
 				std::to_string(this->dCouplingValues[i])
 			);
 		}
 	
 		model::log->logInfo("Dumping ulCouplingIDs: ");
-		for (int i = 0; i < ulCouplingArraySize; i++) {
+		for (unsigned long i = 0; i < ulCouplingArraySize; i++) {
 			model::log->logInfo(std::to_string(i) + ": " +
 				std::to_string(this->ulCouplingIDs[i])
 			);
@@ -1026,7 +1037,7 @@ void	CDomainCartesian::memoryDump()
 
 
 	model::log->logInfo("Dumping bPoleniValues: ");
-	for (int i = 0; i < ulCellCount; i++) {
+	for (unsigned long i = 0; i < ulCellCount; i++) {
 		model::log->logInfo(std::to_string(i) + ": " +
 			"  N:" + std::to_string(this->bPoleniValues[i].usePoliniN) +
 			"  E:" + std::to_string(this->bPoleniValues[i].usePoliniE) +
@@ -1041,7 +1052,7 @@ void	CDomainCartesian::memoryDump()
 void CDomainCartesian::output_to_vtk_file(std::string path, double time, std::string rasterName, int sizeX, int sizeY, double* opt_z, double* opt_zx_max, double* opt_zy_max, double* opt_h, double* opt_s, double* opt_v_x, double* opt_v_y) {
 
 	//get the file name
-	float temp_float;
+	double temp_double;
 	std::string filename = path;
 	int sizeT = sizeX * sizeY;
 
@@ -1054,25 +1065,25 @@ void CDomainCartesian::output_to_vtk_file(std::string path, double time, std::st
 	txt << "BINARY" << std::endl;
 	txt << "DATASET STRUCTURED_GRID" << std::endl;
 	txt << "DIMENSIONS " << sizeX + 1 << " " << sizeY + 1 << " 1" << std::endl;
-	txt << "POINTS " << (sizeX + 1) * (sizeY + 1) << " float" << std::endl;
+	txt << "POINTS " << (sizeX + 1) * (sizeY + 1) << " double" << std::endl;
 
 	// Generate grid points
-	float xCoord, yCoord, zCoord;
+	double xCoord, yCoord, zCoord;
 	for (int y = 0; y <= sizeY; ++y) {
 		for (int x = 0; x <= sizeX; ++x) {
 
-			xCoord = static_cast<float>(x);
-			yCoord = static_cast<float>(y);
-			zCoord = static_cast<float>(0.0);
+			xCoord = static_cast<double>(x);
+			yCoord = static_cast<double>(y);
+			zCoord = static_cast<double>(0.0);
 
 			Util::SwapEnd(xCoord);
 			Util::SwapEnd(yCoord);
 			Util::SwapEnd(zCoord);
 
 			// Write the coordinates in binary
-			txt.write(reinterpret_cast<const char*>(&xCoord), sizeof(float));
-			txt.write(reinterpret_cast<const char*>(&yCoord), sizeof(float));
-			txt.write(reinterpret_cast<const char*>(&zCoord), sizeof(float));
+			txt.write(reinterpret_cast<const char*>(&xCoord), sizeof(double));
+			txt.write(reinterpret_cast<const char*>(&yCoord), sizeof(double));
+			txt.write(reinterpret_cast<const char*>(&zCoord), sizeof(double));
 
 		}
 	}
@@ -1081,67 +1092,67 @@ void CDomainCartesian::output_to_vtk_file(std::string path, double time, std::st
 	std::string buff_unit;
 	txt << "CELL_DATA " << sizeT << std::endl;
 
-	txt << "SCALARS  opt_z float" << std::endl;
+	txt << "SCALARS  opt_z double" << std::endl;
 	txt << "LOOKUP_TABLE default" << std::endl;
 
 	for (int i = 0; i < sizeT; i++) {
-		temp_float = opt_z[i];
-		Util::SwapEnd(temp_float);
-		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+		temp_double = opt_z[i];
+		Util::SwapEnd(temp_double);
+		txt.write(reinterpret_cast<char*>(&temp_double), sizeof(double));
 	}
 	txt << std::endl;
 
-	txt << "SCALARS  opt_zx_max float" << std::endl;
+	txt << "SCALARS  opt_zx_max double" << std::endl;
 	txt << "LOOKUP_TABLE default" << std::endl;
 	for (int i = 0; i < sizeT; i++) {
-		temp_float = opt_zx_max[i];
-		Util::SwapEnd(temp_float);
-		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+		temp_double = opt_zx_max[i];
+		Util::SwapEnd(temp_double);
+		txt.write(reinterpret_cast<char*>(&temp_double), sizeof(double));
 	}
 	txt << std::endl;
 
-	txt << "SCALARS  opt_zy_max float" << std::endl;
+	txt << "SCALARS  opt_zy_max double" << std::endl;
 	txt << "LOOKUP_TABLE default" << std::endl;
 	for (int i = 0; i < sizeT; i++) {
-		temp_float = opt_zy_max[i];
-		Util::SwapEnd(temp_float);
-		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+		temp_double = opt_zy_max[i];
+		Util::SwapEnd(temp_double);
+		txt.write(reinterpret_cast<char*>(&temp_double), sizeof(double));
 	}
 	txt << std::endl;
 
-	txt << "SCALARS  opt_h float" << std::endl;
+	txt << "SCALARS  opt_h double" << std::endl;
 	txt << "LOOKUP_TABLE default" << std::endl;
 	for (int i = 0; i < sizeT; i++) {
-		temp_float = opt_h[i];
-		Util::SwapEnd(temp_float);
-		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+		temp_double = opt_h[i];
+		Util::SwapEnd(temp_double);
+		txt.write(reinterpret_cast<char*>(&temp_double), sizeof(double));
 	}
 	txt << std::endl;
 
-	txt << "SCALARS  opt_s float" << std::endl;
+	txt << "SCALARS  opt_s double" << std::endl;
 	txt << "LOOKUP_TABLE default" << std::endl;
 	for (int i = 0; i < sizeT; i++) {
-		temp_float = opt_s[i];
-		Util::SwapEnd(temp_float);
-		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+		temp_double = opt_s[i];
+		Util::SwapEnd(temp_double);
+		txt.write(reinterpret_cast<char*>(&temp_double), sizeof(double));
 	}
 	txt << std::endl;
 
-	txt << "SCALARS  opt_v_x float" << std::endl;
+	txt << "SCALARS  opt_v_x double" << std::endl;
 	txt << "LOOKUP_TABLE default" << std::endl;
 	for (int i = 0; i < sizeT; i++) {
-		temp_float = opt_v_x[i];
-		Util::SwapEnd(temp_float);
-		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+		temp_double = opt_v_x[i];
+		Util::SwapEnd(temp_double);
+		txt.write(reinterpret_cast<char*>(&temp_double), sizeof(double));
 	}
 	txt << std::endl;
 
-	txt << "SCALARS  opt_v_y float" << std::endl;
+	txt << "SCALARS  opt_v_y double" << std::endl;
 	txt << "LOOKUP_TABLE default" << std::endl;
 	for (int i = 0; i < sizeT; i++) {
-		temp_float = opt_v_y[i];
-		Util::SwapEnd(temp_float);
-		txt.write(reinterpret_cast<char*>(&temp_float), sizeof(float));
+		temp_double = opt_v_y[i];
+		Util::SwapEnd(temp_double);
+		txt.write(reinterpret_cast<char*>(&temp_double), sizeof(double));
 	}
 
 	txt.close();

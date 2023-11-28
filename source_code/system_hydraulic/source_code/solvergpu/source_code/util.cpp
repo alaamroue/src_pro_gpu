@@ -19,9 +19,7 @@
 
 namespace Util 
 {
-	/*
-	 *  Convert a double with seconds to a meaningful time format
-	 */
+	//Convert a double with seconds to a meaningful time format
 	std::string		secondsToTime( double dTime )
 	{
 		std::string sTime;
@@ -48,13 +46,17 @@ namespace Util
 		{
 			// Normal format including miliseconds when less than 10 minutes
 			sprintf( cTime,			"%02d:%02d:%02d", cHours, cMinutes, cSeconds );
+			//sprintf_s( cTime,			"%02d:%02d:%02d", cHours, cMinutes, cSeconds );
 			sprintf( cFractionSeconds, ".%.4f",	  fFractionSeconds );
+			//sprintf_s( cFractionSeconds, ".%.4f",	  fFractionSeconds );
 			sTime += std::string( cTime );
 			if ( fFractionSeconds > 0.0 && cMinutes < 10 && cHours < 1 && uiDays < 1 ) 
 				sTime += std::string( cFractionSeconds ).substr(2);
 		} else {
 			sprintf( cTime,				"%01d",		cSeconds );
+			//sprintf_s( cTime,				"%01d",		cSeconds );
 			sprintf( cFractionSeconds,  ".%.5f",	fFractionSeconds );
+			//sprintf_s( cFractionSeconds,  ".%.5f",	fFractionSeconds );
 			sTime += std::string( cTime );
 			sTime += std::string( cFractionSeconds ).substr(2) + "s";
 		}
@@ -62,9 +64,7 @@ namespace Util
 		return sTime;
 	}
 
-	/*
-	 *  Round a number to set decimal places
-	 */
+	//Round a number to set decimal places
 	double	round( double dValue, unsigned int ucPlaces )
 	{
 		unsigned int	uiMultiplier		= (unsigned int) std::pow( 10.0, ucPlaces );
@@ -81,22 +81,22 @@ namespace Util
 		return dMultipliedValue / uiMultiplier;
 	}
 
-
-
-
+	//Convert double to string (useful for extra small or extra large doubles like 1e-10)
 	std::string to_string_exact(double x) {
 		std::ostringstream os;
 		os << std::setprecision(std::numeric_limits<double>::max_digits10) << x;
 		return os.str();
 	}
 
-	void SwapEnd(float& var)
+	//In-place byte order swap for a double-precision floating-point number.
+	void SwapEnd(double& var)
 	{
 		char* varArray = reinterpret_cast<char*>(&var);
 		for (long i = 0; i < static_cast<long>(sizeof(var) / 2); i++)
 			std::swap(varArray[sizeof(var) - 1 - i], varArray[i]);
 	}
 
+	//Returns a string of an OpenCL error
 	std::string	get_error_str(int error_id){
 
 		switch(error_id){

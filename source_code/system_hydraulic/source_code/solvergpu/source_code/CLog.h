@@ -36,16 +36,15 @@ class CLog : public CLoggingInterface
 		void		writeDivide( void );					// Write a line to break up the output
 
 		//Interface
-		void logDebug(const std::string&);
-		void logInfo(const std::string&);
-		void logWarning(const std::string&);
-		void logError(const std::string, unsigned char error_type, const std::string, const std::string);
-		void writeCharToFile(char*, const char*, bool addTime = false);
-
+		void logDebug(const std::string&);																	// Log in debug mode
+		void logInfo(const std::string&);																	// Log in info mode
+		void logWarning(const std::string&);																// Log in warning mode
+		void logError(const std::string, unsigned char error_type, const std::string, const std::string);	// Log in error mode
+		void writeCharToFile(char* code, const char* filename, bool addTime = false);						// Write text to a file
 	private:
-		std::thread::id MAIN_THREAD_ID;
-		CLoggingInterface* externalLogger;
-		bool useDefaultLogger;
+		std::thread::id MAIN_THREAD_ID;																		// Id of main thread for debugging in thread
+		CLoggingInterface* externalLogger;																	// External logger to attach to
+		bool useDefaultLogger;																				// flag to use default debugger
 };
 
 #endif

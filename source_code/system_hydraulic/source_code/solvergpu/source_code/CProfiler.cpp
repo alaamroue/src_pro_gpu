@@ -126,13 +126,13 @@ void CProfiler::logValues() {
 
 	std::cout << "### PROFILE Results ###" << std::endl;
 	
-	int numberOfElements = this->profiledElements.size();
+	size_t numberOfElements = this->profiledElements.size();
 
 	std::string* names = new std::string[numberOfElements];
 	double* times = new double[numberOfElements];
 	double TotalTime = 0.0;
 
-	for (int i = 0; i < numberOfElements; ++i) {
+	for (size_t i = 0; i < numberOfElements; ++i) {
 		names[i] = this->profiledElements[i]->name;
 		#ifdef PLATFORM_WIN
 		times[i] = static_cast<double>(this->profiledElements[i]->totalTicks) / this->profiledElements[i]->frequency.QuadPart;
@@ -144,7 +144,7 @@ void CProfiler::logValues() {
 		TotalTime += times[i];
 	}
 
-	for (int i = 0; i < numberOfElements; ++i) {
+	for (size_t i = 0; i < numberOfElements; ++i) {
 		std::cout << names[i] << " : " << times[i] << " s (" << times[i] / TotalTime * 100.0 << "%)" << std::endl;
 	}
 	std::cout << "----" << std::endl;

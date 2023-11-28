@@ -11,9 +11,7 @@
 #include "COCLProgram.h"
 #include "COCLKernel.h"
 
-/*
- *  Constructor
- */
+//Constructor
 COCLProgram::COCLProgram(
 		CExecutorControlOpenCL*		execController,
 		COCLDevice*					device
@@ -27,9 +25,7 @@ COCLProgram::COCLProgram(
 	this->sCompileParameters	= "";
 }
 
-/*
- *  Destructor
- */
+//Destructor
 COCLProgram::~COCLProgram()
 {
 	if ( this->clProgram != NULL )
@@ -38,10 +34,8 @@ COCLProgram::~COCLProgram()
 	clearCode();
 }
 
-/*
- *  Attempt to build the program
- */
-bool COCLProgram::compileProgram(
+//Attempt to build the program
+void COCLProgram::compileProgram(
 		bool	bIncludeStandardElements
 	)
 {
@@ -90,7 +84,7 @@ bool COCLProgram::compileProgram(
 
 	if (iErrorID != CL_SUCCESS)
 	{
-
+		delete[] orcCode;
 		model::doError(
 			"Could not create a program to run on device #" + toStringExact(this->device->getDeviceID()) + "." +
 			" Got Error code: [" + Util::get_error_str(iErrorID) + "] from clCreateProgramWithSource",
@@ -98,7 +92,7 @@ bool COCLProgram::compileProgram(
 			"bool COCLProgram::compileProgram( bool bIncludeStandardElements )",
 			"Your device might not be supported."
 		);
-		return false;
+
 	}
 
 	iErrorID = clBuildProgram(
@@ -128,8 +122,10 @@ bool COCLProgram::compileProgram(
 		model::log->logInfo(this->getCompileLog());
 		model::log->writeCharToFile(concatenatedString, "failedBuildLog.txt");
     	delete[] concatenatedString;
-		model::log->logInfo("The source code has been written to failedBuildLog.txt. Please check it for errors.");
+		delete[] orcCode;
 
+		model::log->logInfo("The source code has been written to failedBuildLog.txt. Please check it for errors.");
+		
 		model::doError(
 			"Could not build the program to run on device #" + toStringExact(this->device->getDeviceID()) + "." +
 			" Got Error code: [" + Util::get_error_str(iErrorID) + "] from clBuildProgram",
@@ -137,7 +133,6 @@ bool COCLProgram::compileProgram(
 			"bool COCLProgram::compileProgram( bool bIncludeStandardElements )",
 			"Please contact the developers. See log above."
 		);
-		return false;
 	}
 
 	model::log->logInfo("Program successfully compiled for device #" + toStringExact(this->device->getDeviceID()) + ".");
@@ -145,8 +140,21 @@ bool COCLProgram::compileProgram(
 	std::string sBuildLog = this->getCompileLog();
 	if (sBuildLog.length() > 0)
 	{
+		size_t totalLength = 0;
+		for (const char* str : oclCodeStack) {
+			totalLength += strlen(str);
+		}
+		// Allocate memory for the concatenated string plus null terminator
+		char* concatenatedString = new char[totalLength + 1];
+		// Concatenate the strings
+		concatenatedString[0] = '\0'; // Ensure the string is initially empty
+		for (const char* str : oclCodeStack) {
+			strcat(concatenatedString, str);
+		}
 		model::log->logInfo(sBuildLog);
-		model::log->writeCharToFile(*orcCode, "WarningBuildLog.txt");
+		model::log->writeCharToFile(concatenatedString, "WarningBuildLog.txt");
+		delete[] concatenatedString;
+		delete[] orcCode;
 		model::log->logInfo("The source code has been written to WarningBuildLog.txt. Please check it.");
 
 		model::doError("Some messages were reported while building.",
@@ -163,22 +171,14 @@ bool COCLProgram::compileProgram(
 	delete[] orcCode;
 
 	this->bCompiled = true;
-	return true;
 }
 
-/*
- *  Append code to the program stack
- */
-void COCLProgram::appendCode(
-		OCL_RAW_CODE	oclCode
-	)
-{
+//Append code to the program stack
+void COCLProgram::appendCode(OCL_RAW_CODE	oclCode){
 	oclCodeStack.push_back( oclCode );
 }
 
-/*
- *  Prepend code to the program stack
- */
+//Prepend code to the program stack
 void COCLProgram::prependCode(
 		OCL_RAW_CODE	oclCode
 	)
@@ -186,21 +186,12 @@ void COCLProgram::prependCode(
 	oclCodeStack.insert( oclCodeStack.begin(), oclCode );
 }
 
-/*
- *  Append code to the program stack from an embedded resource
- */
-void COCLProgram::appendCodeFromResource(
-		std::string sFilename
-	)
-{
-	appendCode(
-		device->getExecController()->getOCLCode( sFilename )
-	);
+//Append code to the program stack from an embedded resource
+void COCLProgram::appendCodeFromResource(std::string sFilename){
+	appendCode(device->getExecController()->getOCLCode( sFilename ));
 }
 
-/*
- *  Prepend code to the program stack from an embedded resource
- */
+//Prepend code to the program stack from an embedded resource
 void COCLProgram::prependCodeFromResource(
 		std::string sFilename
 	)
@@ -210,9 +201,7 @@ void COCLProgram::prependCodeFromResource(
 	);
 }
 
-/*
- *  Empty the code stack
- */
+//Empty the code stack
 void COCLProgram::clearCode()
 {
 	if ( oclCodeStack.size() < 1 ) return;
@@ -227,9 +216,7 @@ void COCLProgram::clearCode()
 	oclCodeStack.clear();
 }
 
-/*
- *  Fetch a kernel from within the program and create a class to handle it
- */
+//Fetch a kernel from within the program and create a class to handle it
 COCLKernel* COCLProgram::getKernel(
 		const char*		cKernelName
 	)
@@ -242,9 +229,7 @@ COCLKernel* COCLProgram::getKernel(
 	);
 }
 
-/*
- *  Get the compile log, mostly used for error messages
- */
+//Get the compile log, mostly used for error messages
 std::string COCLProgram::getCompileLog()
 {
 	std::string	sLog;
@@ -286,6 +271,7 @@ std::string COCLProgram::getCompileLog()
 
 	if ( iErrorID != CL_SUCCESS )
 	{
+		delete[] cBuildLog;
 		// The model cannot continue in this case
 		model::doError(
 			"Could not obtain a build log for the program on device #" + toStringExact( this->device->getDeviceID() ) + "." +
@@ -306,9 +292,7 @@ std::string COCLProgram::getCompileLog()
 	return sLog;
 }
 
-/*
- *  Add a compiler argument to the list
- */
+//Add a compiler argument to the list
 void COCLProgram::addCompileParameter(
 		std::string sParameter 
 	)
@@ -316,9 +300,7 @@ void COCLProgram::addCompileParameter(
 	sCompileParameters += " " + sParameter;
 }
 
-/*
- *  Add a new constant to the register for inclusion in all OpenCL programs
- */
+//Add a new constant to the register for inclusion in all OpenCL programs
 bool COCLProgram::registerConstant( std::string sName, std::string sValue )
 {
 	this->uomConstants[ sName ] = sValue;
@@ -326,9 +308,7 @@ bool COCLProgram::registerConstant( std::string sName, std::string sValue )
 	return true;
 }
 
-/*
- *  Remove a single named constant
- */
+// Remove a single named constant
 bool COCLProgram::removeConstant( std::string sName )
 {
 	if ( this->uomConstants.find( sName ) == this->uomConstants.end() )
@@ -339,17 +319,13 @@ bool COCLProgram::removeConstant( std::string sName )
 	return true;
 }
 
-/*
- *  Remove all of the registered constants
- */
+//Remove all of the registered constants
 void COCLProgram::clearConstants()
 {
 	this->uomConstants.clear();
 }
 
-/*
- *  Get OpenCL code representing the constants defined
- */
+//Get OpenCL code representing the constants defined
 OCL_RAW_CODE COCLProgram::getConstantsHeader()
 {
 	std::stringstream ssHeader;
@@ -367,13 +343,11 @@ OCL_RAW_CODE COCLProgram::getConstantsHeader()
 
 	char*	cHeader = new char[ ssHeader.str().length() + 1 ];
 	strcpy( cHeader, ssHeader.str().c_str() );
+	//strcpy_s( cHeader, ssHeader.str().length() + 1, ssHeader.str().c_str() );
 	return cHeader;
 }
 
-/*
- *  Create a header for inclusion in all code that handles the support
- *  or lack thereof for double precision, etc.
- */
+//Create a header for inclusion in all code that handles the support or lack thereof for double precision, etc.
 OCL_RAW_CODE	COCLProgram::getExtensionsHeader()
 {
 	std::stringstream	ssHeader;
@@ -422,12 +396,11 @@ OCL_RAW_CODE	COCLProgram::getExtensionsHeader()
 
 	char*	cHeader = new char[ ssHeader.str().length() + 1 ];
 	strcpy( cHeader, ssHeader.str().c_str() );
+	//strcpy_s( cHeader, ssHeader.str().length() + 1, ssHeader.str().c_str() );
 	return cHeader;
 }
 
-/*
- *  Should we force the device to use single precision?
- */
+//Should we force the device to use single precision?
 void	COCLProgram::setForcedSinglePrecision( bool bForce )
 {
 	this->bForceSinglePrecision	= bForce;

@@ -15,9 +15,7 @@
 #include "CSchemePromaides.h"
 #include "CDomainCartesian.h"
 
-/*
- *  Default constructor
- */
+//Default constructor
 CScheme::CScheme()
 {
 	model::log->logInfo("Scheme base-class instantiated.");
@@ -41,20 +39,14 @@ CScheme::CScheme()
 	this->dBatchTimesteps = 0.0;
 }
 
-/*
- *  Destructor
- */
+//Destructor
 CScheme::~CScheme(void)
 {
 	//Nothing to delete
 }
 
-
-/*
- *  Ask the executor to create a type of scheme with the defined
- *  flags.
- */
-void CScheme::createScheme(CModel* cModel, CDomainCartesian* cDomainCartesian, model::SchemeSettings scheme_settings)
+//Ask the executor to create a type of scheme with the defined flags.
+void CScheme::createScheme(CModel* cModel, model::SchemeSettings scheme_settings)
 {
 	CScheme* newScheme = NULL;
 	switch(scheme_settings.scheme_type)
@@ -95,154 +87,115 @@ void CScheme::createScheme(CModel* cModel, CDomainCartesian* cDomainCartesian, m
 
 }
 
-
-/*
- *  Simple check for if the scheme is ready to run
- */
+//Simple check for if the scheme is ready to run
 bool	CScheme::isReady()
 {
 	return this->bReady;
 }
 
-/*
- *  Set the queue mode
- */
+//Set the queue mode
 void	CScheme::setQueueMode( unsigned char ucQueueMode )
 {
 	this->bAutomaticQueue = ( ucQueueMode == model::queueMode::kAuto );
 }
 
-/*
- *  Get the queue mode
- */
-unsigned char	CScheme::getQueueMode()
+//Get the queue mode
+model::queueMode::queueMode	CScheme::getQueueMode()
 {
 	return ( this->bAutomaticQueue ? model::queueMode::kAuto : model::queueMode::kFixed );
 }
 
-/*
- *  Set the queue size (or initial)
- */
+//Set the queue size (or initial)
 void	CScheme::setQueueSize( unsigned int uiQueueSize )
 {
 	this->uiQueueAdditionSize = uiQueueSize;
 }
 
-/*
- *  Get the queue size (or initial)
- */
+//Get the queue size (or initial)
 unsigned int	CScheme::getQueueSize()
 {
 	return this->uiQueueAdditionSize;
 }
 
-/*
- *  Set the Courant number
- */
-void	CScheme::setCourantNumber( double dCourantNumber )
+//Set the Courant number
+void	CScheme::setCourantNumber( double dCourantNumber_input )
 {
-	this->dCourantNumber = dCourantNumber;
+	this->dCourantNumber = dCourantNumber_input;
 }
 
-/*
- *  Get the Courant number
- */
+//Get the Courant number
 double	CScheme::getCourantNumber()
 {
 	return this->dCourantNumber;
 }
 
-/*
- *  Set the timestep mode
- */
+//Set the timestep mode
 void	CScheme::setTimestepMode( unsigned char ucMode )
 {
 	this->bDynamicTimestep = ( ucMode == model::timestepMode::kCFL );
 }
 
-/*
- *  Get the timestep mode
- */
-unsigned char	CScheme::getTimestepMode()
+//Get the timestep mode
+model::timestepMode::timestepMode	CScheme::getTimestepMode()
 {
 	return ( this->bDynamicTimestep ? model::timestepMode::kCFL : model::timestepMode::kFixed );
 }
 
-/*
- *  Set the timestep
- */
-void	CScheme::setTimestep( double dTimestep )
+//Set the timestep
+void	CScheme::setTimestep( double dTimestep_input )
 {
-	this->dTimestep = dTimestep;
+	this->dTimestep = dTimestep_input;
 }
 
-/*
- *  Get the timestep
- */
+//Get the timestep
 double	CScheme::getTimestep()
 {
 	return fabs(this->dTimestep);
 }
 
-/*
- *  Enable/disable friction effects
- */
+//Enable/disable friction effects
 void	CScheme::setFrictionStatus( bool bEnabled )
 {
 	this->bFrictionEffects = bEnabled;
 }
 
-/*
- *  Get enabled/disabled for friction
- */
+//Get enabled/disabled for friction
 bool	CScheme::getFrictionStatus()
 {
 	return this->bFrictionEffects;
 }
 
-/*
- *  Set the target time
- */
+//Set the target time
 void	CScheme::setTargetTime( double dTime )
 {
 	this->dTargetTime = dTime;
 }
 
-/*
- *  Get the target time
- */
+//Get the target time
 double	CScheme::getTargetTime()
 {
 	return this->dTargetTime;
 }
 
-/*
- *	Are we in the middle of a batch?
- */
+//Are we in the middle of a batch?
 bool	CScheme::isRunning()
 {
 	return bRunning;
 }
 
-/*
- *	Sets the Output Frequency
- */
+//Sets the Output Frequency
 void	CScheme::setOutputFreq(double freq)
 {
 	outputFrequency = freq;
 }
 
-/*
- *	Sets the scheme type
- */
+//Sets the scheme type
 void	CScheme::setSchemeType(model::schemeTypes::schemeTypes type)
 {
 	this->schemeType = type;
 }
 
-/*
- *	Gets the scheme type
- */
+//Gets the scheme type
 model::schemeTypes::schemeTypes	CScheme::getSchemeType(void)
 {
 	return this->schemeType;

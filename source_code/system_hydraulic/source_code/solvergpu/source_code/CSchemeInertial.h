@@ -24,7 +24,7 @@ class CSchemeInertial : public CSchemeGodunov
 
 	public:
 
-		CSchemeInertial( void );								// Constructor
+		CSchemeInertial( void );											// Constructor
 		virtual ~CSchemeInertial( void );									// Destructor
 
 		// Public functions
@@ -38,10 +38,10 @@ class CSchemeInertial : public CSchemeGodunov
 	protected:
 
 		// Private functions
-		virtual bool		prepareCode();									// Prepare the code required
+		virtual void		prepareCode();									// Prepare the code required
 		virtual void		releaseResources();								// Release OpenCL resources consumed
-		bool				prepareInertialKernels();						// Prepare the kernels required
-		bool				prepareInertialConstants();						// Assign constants to the executor
+		void				prepareInertialKernels();						// Prepare the kernels required
+		void				prepareInertialConstants();						// Assign constants to the executor
 		void				releaseInertialResources();						// Release OpenCL resources consumed
 
 };

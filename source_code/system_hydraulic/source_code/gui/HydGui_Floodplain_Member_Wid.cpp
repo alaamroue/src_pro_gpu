@@ -65,9 +65,15 @@ HydGui_Floodplain_Member_Wid::HydGui_Floodplain_Member_Wid(DataRole role, QWidge
 	ui.noinfo_value->set_range(-999999999.0, 999999999.0);
 
 	// SCHEME_TYPE
+	scheme_types_mapping.push_back(std::make_pair(0, std::make_pair("Diffusive W. (CPU)", hyd_label::scheme_type_diffusive_cpu)));
+	scheme_types_mapping.push_back(std::make_pair(1, std::make_pair("Diffusive W. (GPU)", hyd_label::scheme_type_diffusive_gpu)));
+	scheme_types_mapping.push_back(std::make_pair(2, std::make_pair("Inertial (GPU)", hyd_label::scheme_type_inertial_gpu)));
+	scheme_types_mapping.push_back(std::make_pair(3, std::make_pair("Godunov (GPU)", hyd_label::scheme_type_godunov_gpu)));
+	scheme_types_mapping.push_back(std::make_pair(4, std::make_pair("MUSCL (GPU)", hyd_label::scheme_type_muscl_gpu)));
+
 	ui.scheme_type->set_label_text("Scheme Type");
 	ui.scheme_type->set_tooltip("Solver Scheme to be used");
-	string pscheme_type[] = { "Diffusive W. (CPU)", "Diffusive W. (GPU)","Inertial (GPU)", "Godunov (GPU)", "MUSCL (GPU)" };
+	string pscheme_type[] = { scheme_types_mapping[0].second.first, scheme_types_mapping[1].second.first,scheme_types_mapping[2].second.first, scheme_types_mapping[3].second.first, scheme_types_mapping[4].second.first };
 	ui.scheme_type->set_items(pscheme_type, 5);
 
 	// SELECTED_DEVICE
@@ -215,6 +221,7 @@ void HydGui_Floodplain_Member_Wid::set_member(_Sys_Abstract_Base_Wid *ptr) {
 	ui.noinfo_value->set_value(other->ui.noinfo_value->get_value());
 	ui.noinfo_value->set_editable(false);
 	//solver settings
+	ui.scheme_type->set_editable(true);
 	ui.scheme_type->set_current_value(other->ui.scheme_type->get_current_index());
 	ui.scheme_type->set_editable(false);
 	ui.selected_device->set_value(other->ui.selected_device->get_value());
@@ -311,7 +318,18 @@ void HydGui_Floodplain_Member_Wid::set_member(QSqlDatabase *ptr_database, const 
 		this->ui.noinfo_value->set_value(results.record(0).value((Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::noinfovalue)).c_str()).toDouble());
 		
 		//solver settings
-		this->ui.scheme_type->set_current_value(buffer.convert_txt2schemetype(results.record(0).value((Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::schemetype)).c_str()).toString().toStdString())-1);
+		string txtFROMDB = results.record(0).value((Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::schemetype)).c_str()).toString().toStdString();
+		int indexSchemeType = 0;
+		for (size_t i = 0; i < scheme_types_mapping.size(); ++i) {
+			if (scheme_types_mapping[i].second.second == txtFROMDB) {
+				indexSchemeType = static_cast<int>(i);
+				break;
+			}
+		}
+		this->ui.scheme_type->set_editable(true);
+		this->ui.scheme_type->set_current_value(indexSchemeType);
+		this->ui.scheme_type->set_editable(false);
+
 		this->ui.selected_device->set_value(results.record(0).value((Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::selecteddevice)).c_str()).toInt());
 		this->ui.courant_number->set_value(results.record(0).value((Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::courantnumber)).c_str()).toDouble());
 		this->ui.reduction_wavefronts->set_value(results.record(0).value((Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::reductionwavefronts)).c_str()).toInt());

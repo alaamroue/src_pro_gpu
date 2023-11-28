@@ -1,3 +1,10 @@
+/*
+ * This code is licensed under GPLv3. See LICENCE for more information.
+ * This file has been created by Alaa Mroue on 04.2023-12.2023.
+ */
+
+//Use this interface to connect your own debugger to the Library
+
 #pragma once
 
 #include <iostream>

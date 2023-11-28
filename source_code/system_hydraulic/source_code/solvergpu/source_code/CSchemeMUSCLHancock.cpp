@@ -16,9 +16,7 @@
 using std::min;
 using std::max;
 
-/*
- *  Constructor
- */
+//Constructor
 CSchemeMUSCLHancock::CSchemeMUSCLHancock()
 {
 	model::log->logInfo("MUSCL-Hancock scheme loaded for execution on OpenCL platform.");
@@ -47,22 +45,18 @@ CSchemeMUSCLHancock::CSchemeMUSCLHancock()
 
 }
 
-/*
- *  Destructor
- */
+//Destructor
 CSchemeMUSCLHancock::~CSchemeMUSCLHancock(void)
 {
 	this->releaseResources();
 }
 
-/*
- *  Run all preparation steps
- */
+//Run all preparation steps
 void CSchemeMUSCLHancock::prepareAll()
 {
 	this->releaseResources();
 
-	oclModel = new COCLProgram(
+	this->oclModel = new COCLProgram(
 		cModel->getExecutor(),
 		this->pDomain->getDevice()
 	);
@@ -73,120 +67,32 @@ void CSchemeMUSCLHancock::prepareAll()
 
 	// Forcing single precision?
 	this->oclModel->setForcedSinglePrecision(cModel->getFloatPrecision() == model::floatPrecision::kSingle);
-	unsigned char ucFloatSize = (cModel->getFloatPrecision() == model::floatPrecision::kDouble ? sizeof(cl_double) : sizeof(cl_float));
 
 	// OpenCL elements
-	if (!this->prepare1OExecDimensions())
-	{
+	try {
+		this->prepare1OExecDimensions();
+		this->prepare2OExecDimensions();
+		this->prepare1OConstants();
+		this->prepare2OConstants();
+		this->prepareCode();
+		this->prepare1OMemory();
+		this->prepare2OMemory();
+		this->prepareGeneralKernels();
+		this->prepare2OKernels();
+	}catch (const std::exception& e) {
 		model::doError(
-			"Failed to dimension 1st-order task elements. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeMUSCLHancock::prepareAll() this->prepare1OExecDimensions()",
-			"Check previous errors"
+			std::string("Caught an exception in void CSchemeGodunov::prepareAll() : ") + e.what(),
+			model::errorCodes::kLevelFatal,
+			"void CSchemeMUSCLHancock::prepareAll()",
+			"Check inputed data."
 		);
-		this->releaseResources();
-		return;
-	}
-	if (!this->prepare2OExecDimensions())
-	{
-		model::doError(
-			"Failed to dimension 2nd-order task elements. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeMUSCLHancock::prepareAll() this->prepare2OExecDimensions()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-
-	if (!this->prepare1OConstants())
-	{
-		model::doError(
-			"Failed to allocate 1st-order constants. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeMUSCLHancock::prepareAll() this->prepare1OConstants()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-	if (!this->prepare2OConstants())
-	{
-		model::doError(
-			"Failed to allocate 2nd-order constants. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeMUSCLHancock::prepareAll() this->prepare2OConstants()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-
-	if (!this->prepareCode())
-	{
-		model::doError(
-			"Failed to prepare model codebase. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeMUSCLHancock::prepareAll() this->prepareCode()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-
-	if (!this->prepare1OMemory())
-	{
-		model::doError(
-			"Failed to create 1st-order memory buffers. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeMUSCLHancock::prepareAll() this->prepare1OMemory()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-	if (!this->prepare2OMemory())
-	{
-		model::doError(
-			"Failed to create 2nd-order memory buffers. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeMUSCLHancock::prepareAll() this->prepare2OMemory()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-
-	if (!this->prepareGeneralKernels())
-	{
-		model::doError(
-			"Failed to prepare general kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeMUSCLHancock::prepareAll() this->prepareGeneralKernels()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-	if (!this->prepare2OKernels())
-	{
-		model::doError(
-			"Failed to prepare 2nd-order kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeMUSCLHancock::prepareAll() this->prepare2OKernels()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
 	}
 
 	this->logDetails();
 	this->bReady = true;
 }
 
-/*
- *  Log the details and properties of this scheme instance.
- */
+//Log the details and properties of this scheme instance.
 void CSchemeMUSCLHancock::logDetails()
 {
 	model::log->writeDivide();
@@ -228,12 +134,9 @@ void CSchemeMUSCLHancock::logDetails()
 	model::log->writeDivide();
 }
 
-/*
- *  Concatenate together the code for the different elements required
- */
-bool CSchemeMUSCLHancock::prepareCode()
+//Concatenate together the code for the different elements required
+void CSchemeMUSCLHancock::prepareCode()
 {
-	bool bReturnState = true;
 
 	oclModel->appendCodeFromResource("CLDomainCartesian_H");
 	oclModel->appendCodeFromResource("CLFriction_H");
@@ -251,20 +154,15 @@ bool CSchemeMUSCLHancock::prepareCode()
 	oclModel->appendCodeFromResource("CLSchemeMUSCLHancock_C");
 	oclModel->appendCodeFromResource("CLBoundaries_C");
 
-	bReturnState = oclModel->compileProgram();
+	oclModel->compileProgram();
 
-	return bReturnState;
 }
 
-/*
- *  Calculate the dimensions for executing the problems (e.g. reduction glob/local sizes)
- */
-bool CSchemeMUSCLHancock::prepare2OExecDimensions()
+//Calculate the dimensions for executing the problems (e.g. reduction glob/local sizes)
+void CSchemeMUSCLHancock::prepare2OExecDimensions()
 {
-	bool						bReturnState = true;
 	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
 	COCLDevice* pDevice = pExecutor->getDevice();
-	CDomainCartesian* pDomain = static_cast<CDomainCartesian*>(this->pDomain);
 
 	// --
 	// Maximum permissible work-group dimensions for this device
@@ -291,15 +189,11 @@ bool CSchemeMUSCLHancock::prepare2OExecDimensions()
 		(this->ucConfiguration == model::schemeConfigurations::musclHancock::kCachePrediction ? static_cast<double>(ulCachedWorkgroupSizeY) / static_cast<double>(ulCachedWorkgroupSizeY - 2) : 1.0) *
 		(this->ucConfiguration == model::schemeConfigurations::musclHancock::kCacheMaximum ? static_cast<double>(ulCachedWorkgroupSizeY) / static_cast<double>(ulCachedWorkgroupSizeY - 4) : 1.0)));
 
-	return bReturnState;
 }
 
-/*
- *  Allocate constants using the settings herein
- */
-bool CSchemeMUSCLHancock::prepare2OConstants()
+//Allocate constants using the settings herein
+void CSchemeMUSCLHancock::prepare2OConstants()
 {
-	CDomainCartesian* pDomain = static_cast<CDomainCartesian*>(this->pDomain);
 
 	// --
 	// Work-group size requirements
@@ -373,16 +267,11 @@ bool CSchemeMUSCLHancock::prepare2OConstants()
 		break;
 	}
 
-	return true;
 }
 
-/*
- *  Allocate memory for everything that isn't direct domain information (i.e. temporary/scheme data)
- */
-bool CSchemeMUSCLHancock::prepare2OMemory()
+//Allocate memory for everything that isn't direct domain information (i.e. temporary/scheme data)
+void CSchemeMUSCLHancock::prepare2OMemory()
 {
-	bool						bReturnState = true;
-	CDomainCartesian* pDomain = this->pDomain;
 
 	unsigned char ucFloatSize = (cModel->getFloatPrecision() == model::floatPrecision::kDouble ? sizeof(cl_double) : sizeof(cl_float));
 
@@ -392,33 +281,25 @@ bool CSchemeMUSCLHancock::prepare2OMemory()
 
 	if (this->bContiguousFaceData)
 	{
-		oclBufferFaceExtrapolations = new COCLBuffer("Face extrapolations", oclModel, false, true, ucFloatSize * 4 * 4 * pDomain->getCellCount(), true);
-		oclBufferFaceExtrapolations->createBuffer();
+		this->oclBufferFaceExtrapolations = new COCLBuffer("Face extrapolations", oclModel, false, true, ucFloatSize * 4 * 4 * pDomain->getCellCount(), true);
+		this->oclBufferFaceExtrapolations->createBuffer();
 	}
 	else {
-		oclBufferFaceExtrapolationN = new COCLBuffer("Face extrapolations N", oclModel, false, true, ucFloatSize * 4 * pDomain->getCellCount(), true);
-		oclBufferFaceExtrapolationE = new COCLBuffer("Face extrapolations E", oclModel, false, true, ucFloatSize * 4 * pDomain->getCellCount(), true);
-		oclBufferFaceExtrapolationS = new COCLBuffer("Face extrapolations S", oclModel, false, true, ucFloatSize * 4 * pDomain->getCellCount(), true);
-		oclBufferFaceExtrapolationW = new COCLBuffer("Face extrapolations W", oclModel, false, true, ucFloatSize * 4 * pDomain->getCellCount(), true);
-		oclBufferFaceExtrapolationN->createBuffer();
-		oclBufferFaceExtrapolationE->createBuffer();
-		oclBufferFaceExtrapolationS->createBuffer();
-		oclBufferFaceExtrapolationW->createBuffer();
+		this->oclBufferFaceExtrapolationN = new COCLBuffer("Face extrapolations N", oclModel, false, true, ucFloatSize * 4 * pDomain->getCellCount(), true);
+		this->oclBufferFaceExtrapolationE = new COCLBuffer("Face extrapolations E", oclModel, false, true, ucFloatSize * 4 * pDomain->getCellCount(), true);
+		this->oclBufferFaceExtrapolationS = new COCLBuffer("Face extrapolations S", oclModel, false, true, ucFloatSize * 4 * pDomain->getCellCount(), true);
+		this->oclBufferFaceExtrapolationW = new COCLBuffer("Face extrapolations W", oclModel, false, true, ucFloatSize * 4 * pDomain->getCellCount(), true);
+		this->oclBufferFaceExtrapolationN->createBuffer();
+		this->oclBufferFaceExtrapolationE->createBuffer();
+		this->oclBufferFaceExtrapolationS->createBuffer();
+		this->oclBufferFaceExtrapolationW->createBuffer();
 	}
 
-	return bReturnState;
 }
 
-/*
- *  Create kernels using the compiled program
- */
-bool CSchemeMUSCLHancock::prepare2OKernels()
+//Create kernels using the compiled program
+void CSchemeMUSCLHancock::prepare2OKernels()
 {
-	bool						bReturnState = true;
-	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomainCartesian* pDomain = this->pDomain;
-	COCLDevice* pDevice = pExecutor->getDevice();
-
 	// --
 	// MUSCL-Hancock main scheme kernels
 	// --
@@ -484,12 +365,9 @@ bool CSchemeMUSCLHancock::prepare2OKernels()
 
 	}
 
-	return bReturnState;
 }
 
-/*
- *  Release all OpenCL resources consumed using the OpenCL methods
- */
+//Release all OpenCL resources consumed using the OpenCL methods
 void CSchemeMUSCLHancock::releaseResources()
 {
 	this->bReady = false;
@@ -498,9 +376,7 @@ void CSchemeMUSCLHancock::releaseResources()
 	this->release1OResources();
 }
 
-/*
- *  Release all OpenCL resources consumed using the OpenCL methods
- */
+//Release all OpenCL resources consumed using the OpenCL methods
 void CSchemeMUSCLHancock::release2OResources()
 {
 	this->bReady = false;
@@ -520,47 +396,35 @@ void CSchemeMUSCLHancock::release2OResources()
 	oclBufferFaceExtrapolationW		= NULL;
 }
 
-/*
- *  Set the cache configuration to use
- */
+//Set the cache configuration to use
 void	CSchemeMUSCLHancock::setCacheMode( unsigned char ucCacheMode )
 {
 	this->ucConfiguration = ucCacheMode;
 }
 
-/*
- *  Get the cache configuration in use
- */
+//Get the cache configuration in use
 unsigned char	CSchemeMUSCLHancock::getCacheMode()
 {
 	return this->ucConfiguration;
 }
 
-/*
- *  Set the cache constraints
- */
-void	CSchemeMUSCLHancock::setCacheConstraints( unsigned char ucCacheConstraints )
+//Set the cache constraints
+void	CSchemeMUSCLHancock::setCacheConstraints( unsigned char ucCacheConstraints_input )
 {
-	this->ucCacheConstraints = ucCacheConstraints;
+	this->ucCacheConstraints = ucCacheConstraints_input;
 }
 
-/*
- *  Get the cache constraints
- */
+//Get the cache constraints
 unsigned char	CSchemeMUSCLHancock::getCacheConstraints()
 {
 	return this->ucCacheConstraints;
 }
 
-/*
- *  Runs the actual simulation until completion or error
- */
-void	CSchemeMUSCLHancock::scheduleIteration(
-					bool						bUseAlternateKernel,
-					COCLDevice*					pDevice,
-					CDomainCartesian*			pDomain
-		)
+//Runs the actual simulation until completion or error
+void	CSchemeMUSCLHancock::scheduleIteration()
 {
+	COCLDevice* pDevice = this->getDomain()->getDevice();
+
 	oclKernelBoundary->scheduleExecution();
 	pDevice->queueBarrier();
 
@@ -594,26 +458,19 @@ void	CSchemeMUSCLHancock::scheduleIteration(
 	pDevice->queueBarrier();
 }
 
-
-/*
- *  Set contiguous face data enabled state
- */
+//Set contiguous face data enabled state
 void	CSchemeMUSCLHancock::setExtrapolatedContiguity( bool bContiguous )
 {
 	this->bContiguousFaceData = bContiguous;
 }
 
-/*
- *  Get contiguous face data enabled state
- */
+//Get contiguous face data enabled state
 bool	CSchemeMUSCLHancock::getExtrapolatedContiguity()
 {
 	return this->bContiguousFaceData;
 }
 
-/*
-*	Fetch the pointer to the next cell source buffer
-*/
+//Fetch the pointer to the next cell source buffer
 COCLBuffer* CSchemeMUSCLHancock::getNextCellSourceBuffer()
 {
 	// TODO: Max caching should return alternating like 
@@ -621,9 +478,7 @@ COCLBuffer* CSchemeMUSCLHancock::getNextCellSourceBuffer()
 	return oclBufferCellStates;
 }
 
-/*
-*  Read back all of the domain data
-*/
+//Read back all of the domain data
 void CSchemeMUSCLHancock::readDomainAll()
 {
 	// There's only one cell state buffer in the MUSCL-Hancock scheme

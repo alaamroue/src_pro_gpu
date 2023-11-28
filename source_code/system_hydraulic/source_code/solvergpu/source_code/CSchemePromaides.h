@@ -23,7 +23,7 @@ class CSchemePromaides : public CSchemeGodunov
 
 	public:
 
-		CSchemePromaides( void );							// Constructor
+		CSchemePromaides( void );											// Constructor
 		virtual ~CSchemePromaides( void );									// Destructor
 
 		// Public functions
@@ -37,9 +37,9 @@ class CSchemePromaides : public CSchemeGodunov
 	protected:
 
 		// Private functions
-		virtual bool		prepareCode();									// Prepare the code required
+		virtual void		prepareCode();									// Prepare the code required
 		virtual void		releaseResources();								// Release OpenCL resources consumed
-		bool				preparePromaidesKernels();						// Prepare the kernels required
-		void				releasePromaidesResources();						// Release OpenCL resources consumed
+		void				preparePromaidesKernels();						// Prepare the kernels required
+		void				releasePromaidesResources();					// Release OpenCL resources consumed
 
 };

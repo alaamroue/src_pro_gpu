@@ -148,14 +148,13 @@ void CExecutorControlOpenCL::logPlatforms(void)
 bool CExecutorControlOpenCL::createDevices(void)
 {
 	cl_int				iErrorID;
-	cl_device_id* clDevice;
+	cl_device_id*		clDevice;
 	unsigned int		uiDeviceCount = 0;
 
 	COCLDevice* pDevice;
-	std::vector<COCLDevice*>	pDevices;
 
-	for (unsigned int iPlatformID = 0; iPlatformID < this->clPlatformCount; iPlatformID++)
-	{
+	for (unsigned int iPlatformID = 0; iPlatformID < this->clPlatformCount; iPlatformID++){
+
 		clDevice = new cl_device_id[this->platformInfo[iPlatformID].uiDeviceCount];
 
 		iErrorID = clGetDeviceIDs(
@@ -168,6 +167,7 @@ bool CExecutorControlOpenCL::createDevices(void)
 
 		if (iErrorID != CL_SUCCESS)
 		{
+			delete[] clDevice;
 			model::doError(
 				"Error obtaining the devices for CL platform '" + std::string(this->platformInfo[iPlatformID].cName) + "'. Got error: ["+
 				Util::get_error_str(iErrorID) + "]."
@@ -211,12 +211,11 @@ bool CExecutorControlOpenCL::createDevices(void)
 				delete pDevice;
 			}
 		}
+
+		delete[] clDevice;
 	}
 
-	this->pDevices = pDevices;
 	this->clDeviceTotal = uiDeviceCount;
-
-	delete[] clDevice;
 
 	model::log->logInfo("The OpenCL executor is now fully loaded.");
 	this->setState(model::executorStates::executorReady);
@@ -238,6 +237,14 @@ char* CExecutorControlOpenCL::getPlatformInfo(unsigned int uiPlatformID, cl_plat
 		&clSize
 	);
 
+	if (iErrorID != CL_SUCCESS) {
+		model::doError("clGetPlatformInfo failed to get size of info result. Got error: " + Util::get_error_str(iErrorID),
+			model::errorCodes::kLevelFatal,
+			"char* CExecutorControlOpenCL::getPlatformInfo(unsigned int uiPlatformID, cl_platform_info clInfo)",
+			"Your device might not be supported"
+		);
+	}
+
 	char* cValue = new char[clSize + 1];
 
 	iErrorID = clGetPlatformInfo(
@@ -247,6 +254,15 @@ char* CExecutorControlOpenCL::getPlatformInfo(unsigned int uiPlatformID, cl_plat
 		cValue,
 		NULL
 	);
+
+	if (iErrorID != CL_SUCCESS) {
+		delete[] cValue;
+		model::doError("clGetPlatformInfo got size successfully but couldn't get the data. Got error: " + Util::get_error_str(iErrorID),
+			model::errorCodes::kLevelFatal,
+			"char* CExecutorControlOpenCL::getPlatformInfo(unsigned int uiPlatformID, cl_platform_info clInfo)",
+			"Your device might not be supported"
+		);
+	}
 
 	return cValue;
 }

@@ -24,15 +24,13 @@ class CSchemeMUSCLHancock : public CSchemeGodunov
 
 	public:
 
-		CSchemeMUSCLHancock( void );							// Constructor
+		CSchemeMUSCLHancock( void );										// Constructor
 		virtual ~CSchemeMUSCLHancock( void );								// Destructor
 
 		// Public functions
 		virtual void		logDetails();									// Write some details about the scheme
 		virtual void		prepareAll();									// Prepare absolutely everything for a model run
-		virtual void		scheduleIteration( bool,						// Schedule an iteration of the scheme
-											   COCLDevice*,
-											   CDomainCartesian* );	
+		virtual void		scheduleIteration();							// Schedule an iteration of the scheme	
 		void				setCacheMode( unsigned char );					// Set the cache configuration
 		unsigned char		getCacheMode();									// Get the cache configuration
 		void				setCacheConstraints( unsigned char );			// Set LDS cache size constraints
@@ -45,12 +43,12 @@ class CSchemeMUSCLHancock : public CSchemeGodunov
 	protected:
 
 		// Private functions
-		virtual bool		prepareCode();									// Prepare the code required
+		virtual void		prepareCode();									// Prepare the code required
 		virtual void		releaseResources();								// Release OpenCL resources consumed
-		bool				prepare2OKernels();								// Prepare the kernels required
-		bool				prepare2OConstants();							// Assign constants to the executor
-		bool				prepare2OMemory();								// Prepare memory buffers required
-		bool				prepare2OExecDimensions();						// Size the problem for execution
+		void				prepare2OKernels();								// Prepare the kernels required
+		void				prepare2OConstants();							// Assign constants to the executor
+		void				prepare2OMemory();								// Prepare memory buffers required
+		void				prepare2OExecDimensions();						// Size the problem for execution
 		void				release2OResources();							// Release 2nd-order OpenCL resources consumed
 
 		// Private variables

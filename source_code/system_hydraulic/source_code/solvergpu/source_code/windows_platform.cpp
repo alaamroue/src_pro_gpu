@@ -58,6 +58,7 @@ char*	Util::getFileResource( const char * sName, const char * sType )
 
 	if ( lpData == NULL )
 	{
+		delete[] cResource;
 		model::doError(
 			"Could not obtain a pointer for a requested resource.",
 			model::errorCodes::kLevelWarning,
@@ -171,9 +172,7 @@ inline std::string getOCLResourceFilename(std::string sID)
 	return "";
 }
 
-/*
- *  Fetch an embedded resource
- */
+//Fetch an embedded resource
 char* Util::getFileResource(const char* sName, const char* sType)
 {
 

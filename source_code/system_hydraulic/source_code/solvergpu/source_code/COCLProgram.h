@@ -26,7 +26,7 @@ public:
 	COCLDevice*					getDevice()								{ return device; }
 	cl_context					getContext()							{ return clContext; }
 	bool						isCompiled()							{ return bCompiled; }
-	bool						compileProgram( bool = true );
+	void						compileProgram( bool = true );
 	void						appendCode( OCL_RAW_CODE );
 	void						prependCode( OCL_RAW_CODE );
 	void						appendCodeFromResource( std::string );
@@ -39,8 +39,6 @@ public:
 	bool						removeConstant( std::string );		
 	void						clearConstants();		
 	void						setForcedSinglePrecision( bool );
-	unsigned char				getFloatForm()						{ return ( bForceSinglePrecision ? model::floatPrecision::kSingle : model::floatPrecision::kDouble ); };
-	unsigned char				getFloatSize()						{ return ( bForceSinglePrecision ? sizeof( cl_float ) : sizeof( cl_double ) ); };
 
 protected:
 	OCL_RAW_CODE				getConstantsHeader( void );		

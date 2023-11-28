@@ -17,9 +17,7 @@
 #include "COCLBuffer.h"
 #include "COCLKernel.h"
 
-/*
- *  Constructor
- */
+//Constructor
 COCLKernel::COCLKernel(
 		COCLProgram*		program,
 		std::string			sKernelName
@@ -43,10 +41,7 @@ COCLKernel::COCLKernel(
 	this->prepareKernel();
 }
 
-
-/*
- *  Destructor
- */
+//Destructor
 COCLKernel::~COCLKernel()
 {
 	if ( this->clKernel != NULL )
@@ -55,9 +50,7 @@ COCLKernel::~COCLKernel()
 	delete [] arguments;
 }
 
-/*
- *  Schedule the kernel for execution on the device
- */
+//Schedule the kernel for execution on the device
 void COCLKernel::scheduleExecution()
 {
 	if ( !this->bReady ) return;
@@ -116,9 +109,7 @@ void COCLKernel::scheduleExecution()
 	}
 }
 
-/*
- *  Schedule the kernel for execution on the device
- */
+//Schedule the kernel for execution on the device
 void COCLKernel::scheduleExecutionAndFlush()
 {
 	cl_int			iErrorID;
@@ -145,9 +136,7 @@ void COCLKernel::scheduleExecutionAndFlush()
 	}
 }
 
-/*
- *  Assign all of the arguments, pass NULL if required
- */
+//Assign all of the arguments, pass NULL if required
 bool COCLKernel::assignArguments(
 		COCLBuffer*	aBuffers[]
 	)
@@ -182,9 +171,7 @@ bool COCLKernel::assignArguments(
 	return true;
 }
 
-/*
- *  Assign a single argument
- */
+//Assign a single argument
 bool COCLKernel::assignArgument(
 	unsigned char	ucArgumentIndex,
 	COCLBuffer* aBuffer
@@ -215,9 +202,7 @@ bool COCLKernel::assignArgument(
 	return true;
 }
 
-/*
- *  Prepare the kernel by finding it in the program etc.
- */
+//Prepare the kernel by finding it in the program etc.
 void COCLKernel::prepareKernel()
 {
 	cl_int		iErrorID;
@@ -339,20 +324,18 @@ void COCLKernel::prepareKernel()
 	this->arguments = new COCLBuffer * [this->uiArgumentCount];
 
 	model::log->logInfo("Kernel '" + sName + "' is defined:");
-	model::log->logInfo("  Private memory:   " + toStringExact(this->ulMemPrivate) + " bytes");
-	model::log->logInfo("  Local memory:     " + toStringExact(this->ulMemLocal) + " bytes");
-	model::log->logInfo("  Arguments:        " + toStringExact(this->uiArgumentCount));
-	model::log->logInfo("  Work-group size:  [ " + toStringExact(szRequiredWGSize[0]) + "," +
-		toStringExact(szRequiredWGSize[1]) + "," +
-		toStringExact(szRequiredWGSize[2]) + " ]");
+	model::log->logInfo("  Private memory:   " + std::to_string(this->ulMemPrivate) + " bytes");
+	model::log->logInfo("  Local memory:     " + std::to_string(this->ulMemLocal) + " bytes");
+	model::log->logInfo("  Arguments:        " + std::to_string(this->uiArgumentCount));
+	model::log->logInfo("  Work-group size:  [ " + std::to_string(szRequiredWGSize[0]) + "," +
+		std::to_string(szRequiredWGSize[1]) + "," +
+		std::to_string(szRequiredWGSize[2]) + " ]");
 
 	if (this->uiArgumentCount == 0)
 		this->bReady = true;
 }
 
-/*
- *  Set the global size of the work
- */
+//Set the global size of the work
 void COCLKernel::setGlobalSize(
 	cl_ulong	X,
 	cl_ulong	Y,
@@ -369,15 +352,13 @@ void COCLKernel::setGlobalSize(
 
 	model::log->logInfo(
 		"Global work size for '" + this->sName + "' set to [" +
-		toStringExact(this->szGlobalSize[0]) + "," +
-		toStringExact(this->szGlobalSize[1]) + "," +
-		toStringExact(this->szGlobalSize[2]) + "]."
+		std::to_string(this->szGlobalSize[0]) + "," +
+		std::to_string(this->szGlobalSize[1]) + "," +
+		std::to_string(this->szGlobalSize[2]) + "]."
 	);
 }
 
-/*
- *  Set the global offset of the work
- */
+//Set the global offset of the work
 void COCLKernel::setGlobalOffset(
 	cl_ulong	X,
 	cl_ulong	Y,
@@ -389,9 +370,7 @@ void COCLKernel::setGlobalOffset(
 	this->szGlobalOffset[2] = static_cast<size_t>(Z);
 }
 
-/*
- *  Set the work group size
- */
+//Set the work group size
 void COCLKernel::setGroupSize(
 	cl_ulong	X,
 	cl_ulong	Y,
@@ -406,8 +385,8 @@ void COCLKernel::setGroupSize(
 
 	model::log->logInfo(
 		"Work-group size for '" + this->sName + "' set to [" +
-		toStringExact( this->szGroupSize[0] ) + "," +
-		toStringExact( this->szGroupSize[1] ) + "," +
-		toStringExact( this->szGroupSize[2] ) + "]."
+		std::to_string( this->szGroupSize[0] ) + "," +
+		std::to_string( this->szGroupSize[1] ) + "," +
+		std::to_string( this->szGroupSize[2] ) + "]."
 	);
 }

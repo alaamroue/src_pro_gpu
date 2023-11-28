@@ -22,6 +22,16 @@ class CLog;
 class CProfiler;
 class CMPIManager;
 
+namespace model {
+
+	// Floating point precision
+	namespace floatPrecision {
+		enum floatPrecision {
+			kSingle = 0,	// Single-precision
+			kDouble = 1		// Double-precision
+		};
+	}
+}
 
 /*
  *  APPLICATION CLASS
@@ -40,8 +50,8 @@ class CModel
 		bool					setExecutor(CExecutorControlOpenCL*);			// Sets the type of executor to use for the model
 		CExecutorControlOpenCL*	getExecutor(void);								// Gets the executor object currently in use
 		CDomainCartesian*		getDomain(void);								// Gets the domain
-		void					setSelectedDevice(unsigned int);
-		unsigned int			getSelectedDevice();
+		void					setSelectedDevice(unsigned int);				// Set the device to execute on
+		unsigned int			getSelectedDevice();							// Get the device to execute on
 
 		bool					ValidateAndPrepareModel(void);					// Execute the model
 		void					runModelUI( CBenchmark::sPerformanceMetrics * );// Update progress data etc.
@@ -52,7 +62,8 @@ class CModel
 		double					getOutputFrequency();							// Get the output frequency
 		void					setOutputFrequency( double );					// Set the output frequency
 		void					setFloatPrecision( unsigned char );				// Set floating point precision
-		unsigned char			getFloatPrecision();							// Get floating point precision
+		model::floatPrecision::floatPrecision
+								getFloatPrecision();							// Get floating point precision
 		void					logProgress( CBenchmark::sPerformanceMetrics* );// Write the progress bar etc.
 		static void CL_CALLBACK	visualiserCallback( cl_event, cl_int, void * );	// Callback event used when memory reads complete, for visualisation updates
 		void					runNext(const double);
@@ -61,8 +72,8 @@ class CModel
 		CLog*					log;											// Handle for the log singular class
 		void					setUIStatus(bool);								// Turns on/off the UI
 
-		void					setProfiler(CProfiler*);						// 
-		CProfiler* profiler;													// 
+		void					setProfiler(CProfiler*);						// Set the profiler 
+		CProfiler* profiler;													// Profiler class
 	private:
 
 		// Private functions
@@ -70,21 +81,17 @@ class CModel
 
 		// Private variables
 		CExecutorControlOpenCL*	execController;									// Handle for the executor controlling class
-		CDomainCartesian*		domain;										// Handle for the domain management class
+		CDomainCartesian*		domain;											// Handle for the domain management class
 		CMPIManager*			mpiManager;										// Handle for the MPI manager class
-		unsigned int			selectedDevice;
+		unsigned int			selectedDevice;									// Device selected as the executer
 		bool					bDoublePrecision;								// Double precision enabled?
 		double					dSimulationTime;								// Total length of simulations
 		double					dCurrentTime;									// Current simulation time
 		double					dVisualisationTime;								// Current visualisation time
 		double					dProcessingTime;								// Total processing time
 		double					dOutputFrequency;								// Frequency of outputs
-		double					dLastProgressUpdate;							//
-		double					dTargetTime;									// 
-		double					dEarliestTime;									//
-		double					dGlobalTimestep;								//
-		unsigned long			ulRealTimeStart;
-		bool					bRollbackRequired;								// 
+		double					dLastProgressUpdate;							// 
+		double					dTargetTime;									// Time to target for before stopping
 		unsigned char			ucFloatSize;									// Size of single/double precision floats used
 		cursorCoords			pProgressCoords;								// Buffer coords of the progress output
 		bool					showProgess;									// Show Progess UI

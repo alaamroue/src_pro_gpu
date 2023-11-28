@@ -287,7 +287,7 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 	schemeSettings.NonCachedWorkgroupSize[0] = scheme_info.workgroup_size_x;
 	schemeSettings.NonCachedWorkgroupSize[1] = scheme_info.workgroup_size_y;
 	schemeSettings.debuggerOn = false;
-	CScheme::createScheme(pManager, ourCartesianDomain, schemeSettings);
+	CScheme::createScheme(pManager, schemeSettings);
 
 
 	pManager->log->logInfo("Setting Data...");

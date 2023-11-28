@@ -62,8 +62,6 @@
 #include "CLog.h"
 #include "CModel.h"
 
-
-
 struct sUsePoleni {
 	bool	usePoliniN;
 	bool	usePoliniE;
@@ -73,14 +71,6 @@ struct sUsePoleni {
 
 // Basic functions and variables used throughout
 namespace model{
-
-	// Floating point precision
-	namespace floatPrecision{
-		enum floatPrecision {
-			kSingle = 0,	// Single-precision
-			kDouble = 1		// Double-precision
-		};
-	}
 
 	// Kernel configurations
 	namespace schemeConfigurations {
@@ -218,9 +208,6 @@ namespace model{
 			kSyncForecast = 1						// Timesteps forecast
 		};
 	}
-
-	void					doPause();
-	int						doClose(int);
 
 	// Data structures used in interop
 	struct DomainData

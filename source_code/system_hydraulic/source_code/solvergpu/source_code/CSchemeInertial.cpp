@@ -15,9 +15,7 @@
 using std::min;
 using std::max;
 
-/*
- *  Constructor
- */
+//Constructor
 CSchemeInertial::CSchemeInertial()
 {
 	// Scheme is loaded
@@ -34,23 +32,19 @@ CSchemeInertial::CSchemeInertial()
 
 }
 
-/*
- *  Destructor
- */
+//Destructor
 CSchemeInertial::~CSchemeInertial(void)
 {
 	this->releaseResources();
 }
 
-/*
- *  Run all preparation steps
- */
+//Run all preparation steps
 void CSchemeInertial::prepareAll()
 {
 	// Clean any pre-existing OpenCL objects
 	this->releaseResources();
 
-	oclModel = new COCLProgram(
+	this->oclModel = new COCLProgram(
 		cModel->getExecutor(),
 		cModel->getExecutor()->getDevice()
 	);
@@ -62,100 +56,30 @@ void CSchemeInertial::prepareAll()
 
 	// Forcing single precision?
 	this->oclModel->setForcedSinglePrecision(cModel->getFloatPrecision() == model::floatPrecision::kSingle);
-	unsigned char ucFloatSize = (cModel->getFloatPrecision() == model::floatPrecision::kSingle ? sizeof(cl_double) : sizeof(cl_float));
 
 	// OpenCL elements
-	if (!this->prepare1OExecDimensions())
-	{
+	try {
+		this->prepare1OExecDimensions();
+		this->prepare1OConstants();
+		this->prepareInertialConstants();
+		this->prepareCode();
+		this->prepare1OMemory();
+		this->prepareGeneralKernels();
+		this->prepareInertialKernels();
+	}catch (const std::exception& e) {
 		model::doError(
-			"Failed to dimension 1st-order task elements. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeInertial::prepareAll() this->prepare1OExecDimensions()",
-			"Check previous errors"
+			std::string("Caught an exception in void CSchemeGodunov::prepareAll() : ") + e.what(),
+			model::errorCodes::kLevelFatal,
+			"void CSchemeInertial::prepareAll()",
+			"Check inputed data."
 		);
-		this->releaseResources();
-		return;
 	}
-
-	if (!this->prepare1OConstants())
-	{
-		model::doError(
-			"Failed to allocate 1st-order constants. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeInertial::prepareAll() this->prepare1OConstants()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-
-	if (!this->prepareInertialConstants())
-	{
-		model::doError(
-			"Failed to allocate inertial constants. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeInertial::prepareAll() this->prepareInertialConstants()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-
-	if (!this->prepareCode())
-	{
-		model::doError(
-			"Failed to prepare model codebase. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeInertial::prepareAll() this->prepareCode()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-
-	if (!this->prepare1OMemory())
-	{
-		model::doError(
-			"Failed to create 1st-order memory buffers. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeInertial::prepareAll() this->prepare1OMemory()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-
-	if (!this->prepareGeneralKernels())
-	{
-		model::doError(
-			"Failed to prepare general kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeInertial::prepareAll() this->prepareGeneralKernels()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-	if (!this->prepareInertialKernels())
-	{
-		model::doError(
-			"Failed to prepare inertial kernels. Cannot continue.",
-			model::errorCodes::kLevelModelStop,
-			"void CSchemeInertial::prepareAll() this->prepareInertialKernels()",
-			"Check previous errors"
-		);
-		this->releaseResources();
-		return;
-	}
-
 
 	this->logDetails();
 	this->bReady = true;
 }
 
-/*
- *  Log the details and properties of this scheme instance.
- */
+//Log the details and properties of this scheme instance.
 void CSchemeInertial::logDetails()
 {
 	model::log->writeDivide();
@@ -185,13 +109,9 @@ void CSchemeInertial::logDetails()
 	model::log->writeDivide();
 }
 
-/*
- *  Concatenate together the code for the different elements required
- */
-bool CSchemeInertial::prepareCode()
+//Concatenate together the code for the different elements required
+void CSchemeInertial::prepareCode()
 {
-	bool bReturnState = true;
-
 	oclModel->appendCodeFromResource("CLDomainCartesian_H");
 	oclModel->appendCodeFromResource("CLFriction_H");
 	oclModel->appendCodeFromResource("CLDynamicTimestep_H");
@@ -204,15 +124,12 @@ bool CSchemeInertial::prepareCode()
 	oclModel->appendCodeFromResource("CLSchemeInertial_C");
 	oclModel->appendCodeFromResource("CLBoundaries_C");
 
-	bReturnState = oclModel->compileProgram();
+	oclModel->compileProgram();
 
-	return bReturnState;
 }
 
-/*
- *  Allocate constants using the settings herein
- */
-bool CSchemeInertial::prepareInertialConstants()
+//Allocate constants using the settings herein
+void CSchemeInertial::prepareInertialConstants()
 {
 	//CDomainCartesian*	pDomain	= static_cast<CDomainCartesian*>( this->pDomain );
 
@@ -236,19 +153,11 @@ bool CSchemeInertial::prepareInertialConstants()
 		break;
 	}
 
-	return true;
 }
 
-/*
- *  Create kernels using the compiled program
- */
-bool CSchemeInertial::prepareInertialKernels()
+//Create kernels using the compiled program
+void CSchemeInertial::prepareInertialKernels()
 {
-	bool						bReturnState = true;
-	CExecutorControlOpenCL* pExecutor = cModel->getExecutor();
-	CDomainCartesian* pDomain = this->pDomain;
-	COCLDevice* pDevice = pExecutor->getDevice();
-
 	// --
 	// Inertial scheme kernels
 	// --
@@ -270,12 +179,9 @@ bool CSchemeInertial::prepareInertialKernels()
 		oclKernelFullTimestep->assignArguments(aryArgsFullTimestep);
 	}
 
-	return bReturnState;
 }
 
-/*
- *  Release all OpenCL resources consumed using the OpenCL methods
- */
+//Release all OpenCL resources consumed using the OpenCL methods
 void CSchemeInertial::releaseResources()
 {
 	this->bReady = false;
@@ -284,9 +190,7 @@ void CSchemeInertial::releaseResources()
 	this->release1OResources();
 }
 
-/*
- *  Release all OpenCL resources consumed using the OpenCL methods
- */
+//Release all OpenCL resources consumed using the OpenCL methods
 void CSchemeInertial::releaseInertialResources()
 {
 	this->bReady = false;
@@ -294,33 +198,25 @@ void CSchemeInertial::releaseInertialResources()
 	// Nothing to do?
 }
 
-/*
- *  Set the cache configuration to use
- */
+//Set the cache configuration to use
 void	CSchemeInertial::setCacheMode( unsigned char ucCacheMode )
 {
 	this->ucConfiguration = ucCacheMode;
 }
 
-/*
- *  Get the cache configuration in use
- */
+//Get the cache configuration in use
 unsigned char	CSchemeInertial::getCacheMode()
 {
 	return this->ucConfiguration;
 }
 
-/*
- *  Set the cache constraints
- */
-void	CSchemeInertial::setCacheConstraints( unsigned char ucCacheConstraints )
+//Set the cache constraints
+void	CSchemeInertial::setCacheConstraints( unsigned char ucCacheConstraints_input )
 {
-	this->ucCacheConstraints = ucCacheConstraints;
+	this->ucCacheConstraints = ucCacheConstraints_input;
 }
 
-/*
- *  Get the cache constraints
- */
+//Get the cache constraints
 unsigned char	CSchemeInertial::getCacheConstraints()
 {
 	return this->ucCacheConstraints;

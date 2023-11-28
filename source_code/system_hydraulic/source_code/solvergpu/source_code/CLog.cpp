@@ -114,16 +114,24 @@ void CLog::logError(std::string error_reason, unsigned char error_type, std::str
 void CLog::writeCharToFile(char* code, const char* filename, bool addTime) {
 
 	std::string fullFilename = filename;
+	char timeBuffer[80];
 
 	if (addTime) {
 		time_t t = time(0);   // get time now
-		struct tm* now = localtime(&t);
+		struct tm nowStruct;
 
-		char timeBuffer[80];
-		strftime(timeBuffer, 80, "%Y-%m-%d-%H-%M-%S-", now);
+		#ifdef _WIN32
+			if (localtime_s(&nowStruct, &t) != 0) {
+		#elif defined(__unix__) || defined(__unix)
+			if (localtime_r(&t, &nowStruct) != 0) {
+		#endif 
 
+			logInfo("Failed to get time in CLog::writeCharToFile.");
+		}
 
-		std::string fullFilename = std::string(timeBuffer) + filename;
+		strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d-%H-%M-%S-", &nowStruct);
+
+		fullFilename = std::string(timeBuffer) + filename;
 	}
 
 	std::ofstream outputFile(fullFilename.c_str());

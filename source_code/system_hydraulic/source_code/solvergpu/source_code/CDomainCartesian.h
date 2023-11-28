@@ -72,32 +72,30 @@ class CDomainCartesian
 
 		// - Specific to Cartesian grids
 		void			setCellResolution( double, double);						// Set cell resolution
-		void			setRows(unsigned long);									// Fetch cell resolution
-		void			setCols(unsigned long);									// Fetch cell resolution
-		void			setRollbackLimit(unsigned int);									// Set the number of iterations before a rollback is required
-		void			getCellResolution( double* , double*);					// Fetch cell resolution
-		double			getCellResolutionX();									
-		double			getCellResolutionY();									
+		void			setRows(unsigned long);									// Set number of rows in the domain
+		void			setCols(unsigned long);									// Set number of cols in the domain
+		void			getCellResolution( double* , double*);					// Returns resolution of cell to two double*
+		double			getCellResolutionX();									// Returns cell resolution in X
+		double			getCellResolutionY();									// Returns cell resolution in Y
 		unsigned long	getRows();												// Get the number of rows in the domain
 		unsigned long	getCols();												// Get the number of columns in the domain
-		unsigned int	getRollbackLimit();										// How many iterations before a rollback is required?
 		unsigned long	getCellCount();											// X Return the total number of cells
-		void			setName(std::string);
-		std::string		getName(void);
+		void			setName(std::string);									// Set the name of the domain
+		std::string		getName(void);											// Get the name of the domain
 
-		void			setUseOptimizedCoupling(bool);
-		void			setOptimizedCouplingSize(unsigned long);
-		bool			getUseOptimizedCoupling();
-		unsigned long	getOptimizedCouplingSize();
+		void			setUseOptimizedCoupling(bool);							// Set the flag for using the optimized coupling (smaller array for boundary conditions)
+		void			setOptimizedCouplingSize(unsigned long);				// Set the size of the optimized coupling array
+		bool			getUseOptimizedCoupling();								// Get the flag for using the optimized coupling (smaller array for boundary conditions)
+		unsigned long	getOptimizedCouplingSize();								// Get the size of the optimized coupling array
 		
 		//Progress Monitoring
-		dataProgress getDataProgress();				// Fetch some data on this domain's progress
-		void 		setDataProgress(dataProgress);	// Set some data on this domain's progress
+		dataProgress getDataProgress();											// Fetch some data on this domain's progress
+		void 		setDataProgress(dataProgress);								// Set some data on this domain's progress
 
 
 		double			getVolume();											// Calculate the amount of volume in all the cells
-		double			getBoundaryVolume();									// 
-		void			readBuffers_h_vx_vy(double*, double*,double*);							// Read GPU Buffers (All three Values)
+		double			getBoundaryVolume();									// Calculate the amount of volume in the boudnary array
+		void			readBuffers_h_vx_vy(double*, double*,double*);			// Read GPU Buffers (All three Values)
 		void			readBuffers_opt_h(double*);								// Read GPU Buffers (Water Depth: Surface Level - Bed Elevation)
 		void			readBuffers_v_x(double*);								// Read GPU Buffers (Velocity in X)
 		void			readBuffers_v_y(double*);								// Read GPU Buffers (Velocity in Y)
@@ -106,41 +104,42 @@ class CDomainCartesian
 
 		void				createStoreBuffers(void**, void**, void**, void**, void**,
 			void**, void**, void**, void**, void**,
-			void**, unsigned char);							// Allocates memory and returns pointers to the three arrays
-		void				resetAllValues();
-		void				setScheme(CScheme*);													// Set the scheme running for this domain
-		CScheme*			getScheme();															// Get the scheme running for this domain
-		void				setDevice(COCLDevice*);												// Set the device responsible for running this domain
-		COCLDevice*			getDevice();															// Get the device responsible for running this domain
+			void**, unsigned char);												// Allocates memory and returns pointers to the three arrays
+		void				resetAllValues();									// Resets all buffer values
+		void				setScheme(CScheme*);								// Set the scheme running for this domain
+		CScheme*			getScheme();										// Get the scheme running for this domain
+		void				setDevice(COCLDevice*);								// Set the device responsible for running this domain
+		COCLDevice*			getDevice();										// Get the device responsible for running this domain
+
 		//Setting Domain Data
 		void			setBedElevation(unsigned long, double);					// Sets the bed elevation for a cell
 		void			setManningCoefficient(unsigned long, double);			// Sets the manning coefficient for a cell
 		void			setBoundaryCondition(unsigned long, double);			// Sets the boundary coefficient for a cell
 		void			setOptimizedCouplingCondition(unsigned long, double);	// Sets the optimized coupling boundary coefficient for a cell
-		void			setZxmax(unsigned long, double);						// Sets the 
-		void			setcx(unsigned long, double);							// Sets the 
-		void			setZymax(unsigned long, double);						// Sets the 
-		void			setcy(unsigned long, double);							// Sets the 
-		void			setFSL(unsigned long, double);							// Sets the 
-		void			setMaxFSL(unsigned long, double);						// Sets the 
-		void			setDischargeX(unsigned long, double);					// Sets the 
-		void			setDischargeY(unsigned long, double);					// Sets the 
-		void			setOptimizedCouplingID(unsigned long, unsigned long);	// Sets the 
+		void			setZxmax(unsigned long, double);						// Sets the Zx value for a cell
+		void			setcx(unsigned long, double);							// Sets the Cx value for a cell 
+		void			setZymax(unsigned long, double);						// Sets the Zy value for a cell
+		void			setcy(unsigned long, double);							// Sets the Cx value for a cell 
+		void			setFSL(unsigned long, double);							// Sets the water surface level (water height + bed elevation) for a cell 
+		void			setMaxFSL(unsigned long, double);						// Sets the max water surface level (across time) for a cell 
+		void			setDischargeX(unsigned long, double);					// Sets the discharge value in X for a cell 
+		void			setDischargeY(unsigned long, double);					// Sets the discharge value in Y for a cell 
+		void			setOptimizedCouplingID(unsigned long, unsigned long);	// Sets the cell id of a cell in order to map the coupling array to cell values
 		void			setPoleniConditionX(unsigned long, bool);				// Sets the poleni condition in x for a cell
 		void			setPoleniConditionY(unsigned long, bool);				// Sets the poleni condition in y for a cell
 		double			getStateValue(unsigned long , unsigned char);			// Gets a state variable for a given cell
 		double			getBedElevation(unsigned long);							// Gets the bed elevation for a given cell
-		double			getZxmax(unsigned long);							// Gets the bed elevation for a given cell
-		double			getZymax(unsigned long);							// Gets the bed elevation for a given cell
-		double			getBoundaryCondition(unsigned long ulCellID);
+		double			getZxmax(unsigned long);								// Gets the Zx value for a given cell
+		double			getZymax(unsigned long);								// Gets the Zy value for a given cell
+		double			getBoundaryCondition(unsigned long ulCellID);			// Gets the boundary condition for a given cell
 		bool			isDoublePrecision() { return (ucFloatSize == 8); };		// Are we using double-precision?
 
 		//HelperFunctions
 		unsigned long		getCellID(unsigned long, unsigned long);										// Get the cell ID using an X and Y index
-		void				getCellIndices(unsigned long ulID, unsigned long* lIdxX, unsigned long* lIdxY); //	Fetch the X and Y indices for a cell using its ID
-		unsigned long		getNeighbourID(unsigned long ulCellID, unsigned char  ucDirection);				//	Fetch the ID for a neighboring cell in the domain
-		void				memoryDump();																	//	Dumps memory for debugging
-		void				output_to_vtk_file(std::string path, double time, std::string rasterName,
+		void				getCellIndices(unsigned long ulID, unsigned long* lIdxX, unsigned long* lIdxY); // Fetch the X and Y indices for a cell using its ID
+		unsigned long		getNeighbourID(unsigned long ulCellID, unsigned char  ucDirection);				// Fetch the ID for a neighboring cell in the domain
+		void				memoryDump();																	// Dumps memory for debugging
+		void				output_to_vtk_file(std::string path, double time, std::string rasterName,		// Output various data into a ParaView file (useful for debugging)
 									int sizeX, int sizeY, double* opt_z, double* opt_zx_max, double* opt_zy_max,
 										double* opt_h, double* opt_s, double* opt_v_x, double* opt_v_y);
 
@@ -153,14 +152,13 @@ class CDomainCartesian
 		double			dCellResolutionY;			// Size of cell in the y-direction
 		bool			bUseOptimizedBoundary;		// Show boundary condition be optimized
 		unsigned long	ulCouplingArraySize;		// If boundary condition is optimized, what is then the size of the boundary condition array
-		unsigned int	uiRollbackLimit;			// Iteration Limit before declaring failure
 		dataProgress	sDataProgress;				// Data on this domain's progress
 		CScheme* pScheme;							// Scheme we are running for this particular domain
-		std::string		domainName;
+		std::string		domainName;					// Custom name of the domain (For outputting)
 		COCLDevice* pDevice;						// Device responsible for running this domain
 
 		// Private Domain GPU heaps
-		unsigned int uiRounding;
+		unsigned int uiRounding;			// Significant value to round to
 		unsigned char		ucFloatSize;	// Size of floats used for cell data (bytes)
 
 		cl_double4* dCellStates;			// Heap for cell state data
