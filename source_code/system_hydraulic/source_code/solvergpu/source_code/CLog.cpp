@@ -11,7 +11,10 @@
 #include <sstream>
 
 // Constructor
-CLog::CLog(CLoggingInterface* externalLogger_input){
+CLog::CLog(CLoggingInterface* externalLogger_input, bool bLoggingActive_input){
+
+	this->bLoggingActive = bLoggingActive_input;
+
 	externalLogger = nullptr;
 	MAIN_THREAD_ID = std::this_thread::get_id();
 
@@ -37,76 +40,86 @@ CLog::~CLog(void){
 //Write a line to divide up the output, purely superficial
 void CLog::writeDivide()
 {
-	this->logInfo( "---------------------------------------------                           " );
+	if (bLoggingActive) {
+		this->logInfo( "---------------------------------------------                           " );
+	}
 }
 
 //Actual outputting of debug message to user
 void CLog::logDebug(const std::string& message) {
-	if (useDefaultLogger) {
-		std::cout << "[DEBUG]: " << message << std::endl;
-	}
-	else {
-		externalLogger->logDebug(message);
+	if (bLoggingActive) {
+		if (useDefaultLogger) {
+			std::cout << "[DEBUG]: " << message << std::endl;
+		}
+		else {
+			externalLogger->logDebug(message);
+		}
 	}
 }
 
 //Actual outputting of info message to user
 void CLog::logInfo(const std::string& message) {
-	if (useDefaultLogger) {
-		std::cout << "[INFO]: " << message << std::endl;
-	}
-	else {
-		externalLogger->logInfo(message);
+	if (bLoggingActive) {
+		if (useDefaultLogger) {
+			std::cout << "[INFO]: " << message << std::endl;
+		}
+		else {
+			externalLogger->logInfo(message);
+		}
 	}
 }
 
 //Actual outputting of warning message to user
 void CLog::logWarning(const std::string& message) {
-	if (useDefaultLogger) {
-		std::cout << "[WARN]: " << message << std::endl;
-	}
-	else {
-		externalLogger->logWarning(message);
+	if (bLoggingActive) {
+		if (useDefaultLogger) {
+			std::cout << "[WARN]: " << message << std::endl;
+		}
+		else {
+			externalLogger->logWarning(message);
+		}
 	}
 }
 
 //Actual outputting of error message to user
 void CLog::logError(std::string error_reason, unsigned char error_type, std::string error_place, std::string error_help) {
+	if (bLoggingActive) {
 
-	bool onNonMainThread = std::this_thread::get_id() != MAIN_THREAD_ID;
+		bool onNonMainThread = std::this_thread::get_id() != MAIN_THREAD_ID;
 
-	if (useDefaultLogger || onNonMainThread) {
-		std::string sErrorPrefix;
+		if (useDefaultLogger || onNonMainThread) {
+			std::string sErrorPrefix;
 
-		switch (error_type) {
-		case model::errorCodes::kLevelFatal:
-			sErrorPrefix = "FATAL ERROR";
-			break;
-		case model::errorCodes::kLevelModelStop:
-			sErrorPrefix = "MODEL FAILURE";
-			break;
-		case model::errorCodes::kLevelModelContinue:
-			sErrorPrefix = "MODEL WARNING";
-			break;
-		case model::errorCodes::kLevelWarning:
-			sErrorPrefix = "WARNING";
-			break;
-		case model::errorCodes::kLevelInformation:
-			sErrorPrefix = "INFO";
-			break;
-		default:
-			sErrorPrefix = "UNKNOWN";
-			break;
+			switch (error_type) {
+			case model::errorCodes::kLevelFatal:
+				sErrorPrefix = "FATAL ERROR";
+				break;
+			case model::errorCodes::kLevelModelStop:
+				sErrorPrefix = "MODEL FAILURE";
+				break;
+			case model::errorCodes::kLevelModelContinue:
+				sErrorPrefix = "MODEL WARNING";
+				break;
+			case model::errorCodes::kLevelWarning:
+				sErrorPrefix = "WARNING";
+				break;
+			case model::errorCodes::kLevelInformation:
+				sErrorPrefix = "INFO";
+				break;
+			default:
+				sErrorPrefix = "UNKNOWN";
+				break;
+			}
+
+			std::cout << "---------------------------------------------" << std::endl;
+			std::cout << "[ERR]: " << "[" << sErrorPrefix << "] " << error_reason << std::endl;
+			std::cout << "[ERR]: " << "Place: " << error_place << std::endl;
+			std::cout << "[ERR]: " << "Recommendation: " << error_help << std::endl;
+			std::cout << "---------------------------------------------" << std::endl;
 		}
-
-		std::cout << "---------------------------------------------" << std::endl;
-		std::cout << "[ERR]: " << "[" << sErrorPrefix << "] " << error_reason << std::endl;
-		std::cout << "[ERR]: " << "Place: " << error_place << std::endl;
-		std::cout << "[ERR]: " << "Recommendation: " << error_help << std::endl;
-		std::cout << "---------------------------------------------" << std::endl;
-	}
-	else {
-		externalLogger->logError(error_reason, error_type, error_place, error_help);
+		else {
+			externalLogger->logError(error_reason, error_type, error_place, error_help);
+		}
 	}
 }
 
