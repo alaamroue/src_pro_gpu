@@ -16,7 +16,7 @@ set(H_FILES
     source_code/CLog.h
     source_code/CLoggingInterface.h
     source_code/CModel.h
-    source_code/CMultiGpuManager.h
+    source_code/COpenCLSimpleManager.h
     source_code/COCLBuffer.h
     source_code/COCLDevice.h
     source_code/COCLKernel.h
@@ -42,7 +42,7 @@ set(CPP_FILES
     source_code/CExecutorControlOpenCL.cpp
     source_code/CLog.cpp
     source_code/CModel.cpp
-    source_code/CMultiGpuManager.cpp
+    source_code/COpenCLSimpleManager.cpp
     source_code/COCLBuffer.cpp
     source_code/COCLDevice.cpp
     source_code/COCLKernel.cpp

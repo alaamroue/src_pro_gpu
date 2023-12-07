@@ -4004,45 +4004,22 @@ void Hyd_Hydraulic_System::waitloop_output_calculation2display(void){
 //Check if OpenCl is available on the system
 void Hyd_Hydraulic_System::check_opencl_available() {
 
-	#ifdef _WIN32
-		// TODO: Alaa what is the Linux equivalent.
-		// Attempt to dynamically load the OpenCL library
-		HMODULE libHandle = LoadLibrary("OpenCL.dll");
+	COpenCLSimpleManager simpleManager;
 
-		// If Library not Found
-		if (!libHandle) {
-			ostringstream info;
-			Warning msg = this->set_warning(2);
-			info << "OpenCL Runtime was not found" << endl;
-			msg.make_second_info(info.str());
-			msg.output_msg(2);
-
-			return;
-		}
-
-		FreeLibrary(libHandle);
-	#endif
-
-	CLog* logger = new CLog(nullptr, false);
-	model::log = logger;
-
-	CExecutorControlOpenCL* cc = new CExecutorControlOpenCL(model::filters::devices::devicesGPU);
-	if (!cc->getOpenCLAvailable()) {
-		delete cc;
-		delete logger;
-		return;
-	}
-	cc->getDevice();
-	if (!cc->getOpenCLAvailable()) {
-		delete cc;
-		delete logger;
-		return;
+	// If Library not Found
+	if (simpleManager.getOpenCLRuntimeAvailable() == false) {
+		ostringstream info;
+		Warning msg = this->set_warning(2);
+		info << "OpenCL Runtime was not found" << endl;
+		msg.make_second_info(info.str());
+		msg.output_msg(2);
 	}
 
-	delete cc;
-	delete logger;
+	// If Library not Found
+	if (simpleManager.getOpenCLDevicesAvailable() == true) {
+		this->global_parameters.set_opencl_available(true);
+	}
 
-	this->global_parameters.set_opencl_available(true);
 }
 //Check the internal time steps
 double Hyd_Hydraulic_System::check_internal_timestep(void){

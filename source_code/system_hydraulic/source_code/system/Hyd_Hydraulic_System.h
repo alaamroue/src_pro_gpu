@@ -40,6 +40,7 @@
 
 //Includes for OpenCl GPU:
 #include "common.h"
+#include "COpenCLSimpleManager.h"
 #include "CDomainCartesian.h"
 #include "COCLDevice.h"
 #include "Profiler.h"

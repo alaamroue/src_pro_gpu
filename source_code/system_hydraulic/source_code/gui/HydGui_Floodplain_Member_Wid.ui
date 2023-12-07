@@ -359,7 +359,7 @@
            </widget>
           </item>
           <item>
-            <widget class="Sys_Member_Int_BaseWid" name="selected_device" native="true">
+            <widget class="Sys_Member_Enum_BaseWid" name="selected_device" native="true">
               <property name="minimumSize">
                 <size>
                   <width>200</width>
