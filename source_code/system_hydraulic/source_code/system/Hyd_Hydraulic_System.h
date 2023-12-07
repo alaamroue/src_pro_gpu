@@ -525,6 +525,8 @@ private:
 	///Wait loop for the output of the calculation to display/console (for multi threading)
 	void waitloop_output_calculation2display(void);	
 
+	///Check if OpenCl is available on the system
+	void check_opencl_available();
 
 	///Check the internal time steps
 	double check_internal_timestep(void);

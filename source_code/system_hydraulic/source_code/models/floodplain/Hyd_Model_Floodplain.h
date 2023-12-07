@@ -252,7 +252,6 @@ private:
     ///Index in y-direction reduced to the equation to solve
     int *id_y;
 
-
 	///Number of applied boundary condition
 	int number_bound_cond;
 	///Number of applied coupling condition

@@ -29,7 +29,7 @@ class CLog : public CLoggingInterface
 
 	public:
 
-		CLog( CLoggingInterface* externalLogger_input = nullptr);									// Constructor
+		CLog( CLoggingInterface* externalLogger_input = nullptr, bool bLoggingActive_input = true);									// Constructor
 		~CLog( void );									// Destructor
 
 		// Public functions
@@ -45,6 +45,7 @@ class CLog : public CLoggingInterface
 		std::thread::id MAIN_THREAD_ID;																		// Id of main thread for debugging in thread
 		CLoggingInterface* externalLogger;																	// External logger to attach to
 		bool useDefaultLogger;																				// flag to use default debugger
+		bool bLoggingActive;
 };
 
 #endif

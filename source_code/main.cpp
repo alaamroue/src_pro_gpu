@@ -750,7 +750,7 @@ int main(int argc, char* argv[]) {
     schemeSettings.NonCachedWorkgroupSize[0] = 27;
     schemeSettings.NonCachedWorkgroupSize[1] = 27;
     schemeSettings.debuggerOn = false;
-    CScheme::createScheme(pManager, ourCartesianDomain, schemeSettings);
+    CScheme::createScheme(pManager, schemeSettings);
 
 
     pManager->log->logInfo("Setting Data...");

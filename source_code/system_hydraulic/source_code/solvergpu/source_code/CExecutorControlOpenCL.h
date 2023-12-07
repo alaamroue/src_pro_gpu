@@ -50,6 +50,7 @@ class CExecutorControlOpenCL{
 		unsigned int			getDeviceCurrent( void )	{ return uiSelectedDeviceID; }	// Returns the active device
 		void					setState( unsigned int );									// Set the ready state
 		unsigned int			getDeviceFilter();											// Fetch back the current device filter
+		bool					getOpenCLAvailable(void) { return openCLAvailable; }	// Returns the active device
 		
 
 	private:
@@ -57,11 +58,12 @@ class CExecutorControlOpenCL{
 		// Private structs
 		struct		sPlatformInfo
 		{
-			char*				cProfile;
-			char*				cVersion;
-			char*				cName;
-			char*				cVendor;
-			char*				cExtensions;
+			std::string			cProfile;
+			std::string			cVersion;
+			std::string			cDeviceName;
+			std::string			cName;
+			std::string			cVendor;
+			std::string			cExtensions;
 			cl_uint				uiDeviceCount;
 		};
 
@@ -76,11 +78,13 @@ class CExecutorControlOpenCL{
 
 		unsigned int			deviceFilter;				// Device filter active for this executor
 		unsigned int			state;						// Ready state value
+		bool					openCLAvailable;			// Flag for opencl available on the system
+		bool					quietLog;					// Flag for logging (On/Off)
 
 		// Private functions
-		char*					getPlatformInfo( unsigned int, cl_platform_info );			// Fetches information about the platform
-		bool					getPlatforms( void );										// Discovers the platforms available
-		void					logPlatforms( void );										// Write platform details to the log
+		void					getPlatformInfo( unsigned int, std::string*, cl_platform_info );		// Fetches information about the platform and sets it to a string
+		bool					getPlatforms( void );													// Discovers the platforms available
+		void					logPlatforms( void );													// Write platform details to the log
 };
 
 #endif

@@ -85,6 +85,7 @@ class COCLDevice
 		void						getSummary( sDeviceSummary & );											// Get device summary info
 		bool						isBusy(void);															// Is the device busy?
 		std::string					getDeviceShortName( void );												// Fetch a short identifier for the device
+		std::string					getDeviceRealName( void );												// Return device name as a string
 		void						logDevice( void );														// Write details to the log
 		bool						isSuitable( void );														// Is this device suitable?
 		bool						isReady( void );														// Is this device ready?	

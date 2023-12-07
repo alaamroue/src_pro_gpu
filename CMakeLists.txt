@@ -232,6 +232,15 @@ target_link_libraries(ProMaIDeS
     system_sys
 )
 
+# - target_link_options adds options to the linker
+# - We want to delay loading the OpenCL.dll on runtime
+# - This allows users who don't have an OpenCL runtime to still use the program in CPU mode
+# - The programmer is required to check if OpenCL.dll exists, and to only use OpenCL functions if it exists
+# TODO: Alaa Not sure what the Linux equivalent is?
+if(MSVC)
+  target_link_options(ProMaIDeS PRIVATE "/DELAYLOAD:OpenCL.dll")
+endif()
+
 # - qt_wrap_ui (or qt5_wrap_ui) wraps ui files, in other words generating .h files from them
 # - AUTOMOC can also be used which does this automatically. This, however, is not recommended, it brings more troubles than solutions  
 qt_wrap_ui(UI_FILES ${UI_FILES})
