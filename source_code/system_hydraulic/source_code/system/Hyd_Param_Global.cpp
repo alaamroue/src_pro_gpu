@@ -54,6 +54,8 @@ Hyd_Param_Global::Hyd_Param_Global(void):default_max_steps(40000), default_init_
 	this->output_flags.database_instat_required = true;
 	this->output_flags.output_folder = label::not_set;
 
+	//System settings
+	this->opencl_available = false;
 	
 	//count the memory
 	Sys_Memory_Count::self()->add_mem(sizeof(Hyd_Param_Global), _sys_system_modules::HYD_SYS);
@@ -772,6 +774,14 @@ bool Hyd_Param_Global::get_coast_model_applied(void){
 //Get the output flags which output is required
 _hyd_output_flags Hyd_Param_Global::get_output_flags(void) {
 	return this->output_flags;
+}
+//Set the output flags which output is required
+void Hyd_Param_Global::set_opencl_available(bool boolean_flag) {
+	this->opencl_available = boolean_flag;
+}
+//Get the output flags which output is required
+bool Hyd_Param_Global::get_opencl_available(void) {
+	return this->opencl_available;
 }
 //Set the number of river-models
 void Hyd_Param_Global::set_number_river_models(const int number){

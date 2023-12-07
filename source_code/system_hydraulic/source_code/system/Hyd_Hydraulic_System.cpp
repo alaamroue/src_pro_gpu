@@ -63,6 +63,7 @@ Hyd_Hydraulic_System::Hyd_Hydraulic_System(void){
 
 
 	this->coupling_managment.set_ptr2outputflags(&this->global_parameters.output_flags);
+	this->check_opencl_available();
 
 	//count the memory
 	Sys_Memory_Count::self()->add_mem(sizeof(Hyd_Hydraulic_System)-sizeof(Hyd_Param_Global)-sizeof(Hyd_Param_Material)-sizeof(Hyd_Coupling_Management), _sys_system_modules::HYD_SYS);
@@ -3688,7 +3689,7 @@ void Hyd_Hydraulic_System::make_calculation_floodplainmodel(void){
 	for(int i=0; i< this->global_parameters.GlobNofFP;i++){
 		Hyd_Multiple_Hydraulic_Systems::check_stop_thread_flag();
 		//if (constant::gpu2d_applied == false) {
-		if(my_fpmodels[i].Param_FP.get_scheme_info().scheme_type != model::schemeTypes::kDiffusiveCPU){
+		if(my_fpmodels[i].Param_FP.get_scheme_info().scheme_type != model::schemeTypes::kDiffusiveCPU && this->global_parameters.get_opencl_available()){
 			this->my_fpmodels[i].solve_model_gpu(this->next_internal_time - this->global_parameters.get_startime(), this->get_identifier_prefix(false));
 		}else{
 			this->my_fpmodels[i].solve_model(this->next_internal_time-this->global_parameters.get_startime(), this->get_identifier_prefix(false));
@@ -4000,6 +4001,49 @@ void Hyd_Hydraulic_System::waitloop_output_calculation2display(void){
 	}
 	this->output_is_running=true;
 }
+//Check if OpenCl is available on the system
+void Hyd_Hydraulic_System::check_opencl_available() {
+
+	#ifdef _WIN32
+		// TODO: Alaa what is the Linux equivalent.
+		// Attempt to dynamically load the OpenCL library
+		HMODULE libHandle = LoadLibrary("OpenCL.dll");
+
+		// If Library not Found
+		if (!libHandle) {
+			ostringstream info;
+			Warning msg = this->set_warning(2);
+			info << "OpenCL Runtime was not found" << endl;
+			msg.make_second_info(info.str());
+			msg.output_msg(2);
+
+			return;
+		}
+
+		FreeLibrary(libHandle);
+	#endif
+
+	CLog* logger = new CLog(nullptr, false);
+	model::log = logger;
+
+	CExecutorControlOpenCL* cc = new CExecutorControlOpenCL(model::filters::devices::devicesGPU);
+	if (!cc->getOpenCLAvailable()) {
+		delete cc;
+		delete logger;
+		return;
+	}
+	cc->getDevice();
+	if (!cc->getOpenCLAvailable()) {
+		delete cc;
+		delete logger;
+		return;
+	}
+
+	delete cc;
+	delete logger;
+
+	this->global_parameters.set_opencl_available(true);
+}
 //Check the internal time steps
 double Hyd_Hydraulic_System::check_internal_timestep(void){
 	double new_timestep=this->internal_timestep_current;
@@ -4144,6 +4188,13 @@ Warning Hyd_Hydraulic_System::set_warning(const int warn_type){
 			reaction = "The applied for the temperature model is set to false";
 			help = "Check the model parameter setting in file";
 			type = 1;
+			break;
+		case 2://approximate worksape requirement > 1gb
+			place.append("check_opencl_available(void)");
+			reason = "An OpenCl Runtime in not installed on this System";
+			reaction = "GPU schemes will run on the CPU";
+			help = "Install an OpenCL runtime based on your GPU Vendor.";
+			type = 11;
 			break;
 		default:
 			place.append("set_warning(const int warn_type)");

@@ -67,9 +67,6 @@ Hyd_Model_Floodplain::Hyd_Model_Floodplain(void){
     //default 4
     this->ilu_number=4;
 
-	this->opencl_is_checked = false;
-	this->opencl_is_available = false;
-
 	//count the memory
 	Sys_Memory_Count::self()->add_mem(sizeof(Hyd_Model_Floodplain)-sizeof(Hyd_Floodplain_Raster)-sizeof(Hyd_Param_FP), _sys_system_modules::HYD_SYS);
 }
@@ -1030,14 +1027,21 @@ void Hyd_Model_Floodplain::init_solver(Hyd_Param_Global *global_params){
     this->init_reduced_id();
 
 	if (this->Param_FP.get_scheme_info().scheme_type != model::schemeTypes::kDiffusiveCPU) {
-		if (this->get_is_opencl_available()) {
-			_Hyd_Model::init_solver_gpu(global_params);
+
+		if (!global_params->get_opencl_available()) {
+			ostringstream info;
+			Warning msg = this->set_warning(6);
+			info << "The CPU Scheme will run instead. This may be slower." << endl;
+			msg.make_second_info(info.str());
+			msg.output_msg(2);
+
+			//Run Cpu scheme
+			_Hyd_Model::init_solver(global_params);
 		}
 		else {
-			cout << "OpenCl is not available on this device" << endl;
+			_Hyd_Model::init_solver_gpu(global_params);
 		}
-	}
-	else {
+	}else {
 		_Hyd_Model::init_solver(global_params);
 	}
 }
@@ -1258,35 +1262,6 @@ int Hyd_Model_Floodplain::get_number_coupling_conditions() {
 //Fetches the optimized coupling ids
 unsigned long Hyd_Model_Floodplain::get_optimized_coupling_id(unsigned long index) {
 	return this->coup_cond_id[index];
-}
-
-///Check if OpenCl is available on the system
-bool Hyd_Model_Floodplain::get_is_opencl_available() {
-
-	if (this->opencl_is_checked) {
-		return this->opencl_is_available;
-	}
-
-	CLog* logger = new CLog(nullptr, false);
-	model::log = logger;
-
-	CExecutorControlOpenCL* cc = new CExecutorControlOpenCL(model::filters::devices::devicesGPU, true);
-	if (!cc->getOpenCLAvailable()) {
-		delete cc;
-		delete logger;
-		return false;
-	}
-	cc->getDevice();
-	if (!cc->getOpenCLAvailable()) {
-		delete cc;
-		delete logger;
-		return false;
-	}
-
-	delete cc;
-	delete logger;
-	this->opencl_is_available = true;
-	return true;
 }
 
 //solve_model
@@ -5288,6 +5263,13 @@ Warning Hyd_Model_Floodplain::set_warning(const int warn_type){
 			place.append("transfer_hydraulic_boundary_sz2database_per_elem(QSqlDatabase *ptr_database)");
 			reason = "Can not submit the boundary element data of the HYD raster to the database";
 			help = "Check the database";
+			type = 2;
+			break;
+		case 6://OpenCL was not found
+			place.append("init_solver(Hyd_Param_Global *global_params)");
+			reason = "GPU Scheme requested. Your current system doesn't include an OpenCL Runtime";
+			help = "Please search for and install an OpenCL runtime for your device to allow GPU calculations";
+			reaction = "The CPU scheme will be used";
 			type = 2;
 			break;
 

@@ -218,9 +218,6 @@ public:
 	///Fetches the optimized coupling ids
 	unsigned long get_optimized_coupling_id(unsigned long);
 
-	///Check if OpenCl is available on the system
-	bool get_is_opencl_available();
-
 private:
 	//members
 
@@ -254,12 +251,6 @@ private:
 
     ///Index in y-direction reduced to the equation to solve
     int *id_y;
-
-	///flag for OpenCL available checked
-	bool opencl_is_checked;
-
-	///flag for OpenCL available 
-	bool opencl_is_available;
 
 	///Number of applied boundary condition
 	int number_bound_cond;
