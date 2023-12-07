@@ -145,7 +145,7 @@ void CProfiler::logValues() {
 	}
 
 	for (size_t i = 0; i < numberOfElements; ++i) {
-		std::cout << names[i] << " : " << times[i] << " s (" << times[i] / TotalTime * 100.0 << "%)" << std::endl;
+		std::cout << names[i] << " : " << times[i] << " s" << std::endl;
 	}
 	std::cout << "----" << std::endl;
 	std::cout << "Total Time: " << TotalTime << " s" << std::endl;

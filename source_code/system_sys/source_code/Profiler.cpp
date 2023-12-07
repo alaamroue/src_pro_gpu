@@ -101,7 +101,6 @@ void Profiler::logValues() {
 
 	std::string* names = new std::string[numberOfElements];
 	double* times = new double[numberOfElements];
-	double TotalTime = 0.0;
 
 	for (int i = 0; i < numberOfElements; ++i) {
 		names[i] = this->profiledElements[i]->name;
@@ -112,12 +111,11 @@ void Profiler::logValues() {
 		double dEnd = static_cast<double>(this->profiledElements[i]->end.tv_sec) + static_cast<double>(this->profiledElements[i]->end.tv_nsec / 1000000000);
 		times[i] = dEnd - dStart;
 		#endif
-		TotalTime += times[i];
 	}
 
 	std::cout << "----" << std::endl;
 	for (int i = 0; i < numberOfElements; ++i) {
-		std::cout << names[i] << " : " << times[i] << " s (" << times[i] / TotalTime * 100.0 << "%)" << std::endl;
+		std::cout << names[i] << " : " << times[i] << " s" << std::endl;
 	}
 	std::cout << "----" << std::endl;
 
