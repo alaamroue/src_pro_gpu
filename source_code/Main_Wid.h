@@ -304,8 +304,20 @@ private:
 	///Stop the postgresql database from the system tray context
 	void systemtray_stopdb(void);
 
+	///Opens the database config of the system tray
+	void systemtray_configdb(void);
+
 	///Delete system tray context
 	void delete_system_tray(void);
+
+	///private enum just for perform_action_on_database function
+	enum database_command_action {
+		database_start = 1,
+		database_stop = 2
+	};
+
+	//Run the Postgres control command on the database path. (Command can be to start or stop the database)
+	int perform_action_on_database(database_command_action action);
 
 	///Enable/disable menu and show/hide the data tabs in the dataview corresponding the project type, when a project is open
 	void enable_menu_project_open(const bool new_project);
@@ -1035,6 +1047,9 @@ private:
 
 	///System tray stop database action
 	QAction* stopDbAction;
+
+	///System tray stop database action
+	QAction* configDbAction;
 
 	///System tray exit program action
 	QAction* exitAction;

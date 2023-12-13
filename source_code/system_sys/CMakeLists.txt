@@ -34,6 +34,7 @@ set(UI_FILES
 	source_code/gui/Sys_Base_Edit_Dia.ui 
 	source_code/gui/Sys_Base_Expand_Wid.ui 
 	source_code/gui/Sys_FallTree_BaseWid.ui 
+    source_code/gui/Sys_Postgres_Config_Dia.ui
 	source_code/gui/Sys_Plot_Frame.ui
 	source_code/gui/Sys_PlotSettings_Dia.ui
 	source_code/gui/Sys_CurveSettings_Wid.ui
@@ -108,6 +109,7 @@ set(H_FILES
 	source_code/gui/Sys_Member_ScientificDbl_BaseWid.h
 	source_code/gui/Sys_Member_ScientificInt_BaseWid.h
 	source_code/gui/Sys_Member_Dbl_Prec_BaseWid.h
+    source_code/gui/Sys_Postgres_Config_Dia.h
 	source_code/gui/Sys_Plot_Wid.h
 	source_code/gui/Sys_Plot_Frame.h
 	source_code/gui/Sys_PlotSettings_Dia.h
@@ -200,6 +202,7 @@ set(CPP_FILES
 	source_code/gui/Sys_Member_ScientificDbl_BaseWid.cpp
 	source_code/gui/Sys_Member_ScientificInt_BaseWid.cpp
 	source_code/gui/Sys_Member_Dbl_Prec_BaseWid.cpp
+    source_code/gui/Sys_Postgres_Config_Dia.cpp
 	source_code/gui/Sys_Plot_Wid.cpp
 	source_code/gui/Sys_Plot_Frame.cpp
 	source_code/gui/Sys_PlotSettings_Dia.cpp

@@ -840,12 +840,14 @@ void Main_Wid::delete_output_classes(void){
 }
 //Delete the system tray context
 void Main_Wid::delete_system_tray(void) {
-	if (startDbAction != NULL)		{delete startDbAction;		startDbAction = NULL;}
-	if (stopDbAction != NULL)		{delete stopDbAction;		stopDbAction = NULL;}
-	if (exitAction != NULL)			{delete exitAction;			exitAction = NULL;}
-	if (trayContextMenu != NULL)	{delete trayContextMenu;	trayContextMenu = NULL;}
-	if (trayIcon != NULL)			{delete trayIcon;			trayIcon = NULL;}
+	if (startDbAction != NULL)		{ delete startDbAction;		startDbAction = NULL; }
+	if (stopDbAction != NULL)		{ delete stopDbAction;		stopDbAction = NULL; }
+	if (configDbAction != NULL)		{ delete configDbAction;	configDbAction = NULL; }
+	if (exitAction != NULL)			{ delete exitAction;		exitAction = NULL; }
+	if (trayContextMenu != NULL)	{ delete trayContextMenu;	trayContextMenu = NULL; }
+	if (trayIcon != NULL)			{ delete trayIcon;			trayIcon = NULL; }
 }
+
 //Allocate and connect the system tray icon
 void Main_Wid::systemtray_connect(void) {
 
@@ -857,6 +859,7 @@ void Main_Wid::systemtray_connect(void) {
 	trayContextMenu = new QMenu(this);
 	startDbAction = new QAction("Start Database", this);
 	stopDbAction = new QAction("Stop Database", this);
+	configDbAction = new QAction("Config Database", this);
 	startDbAction->setCheckable(true);
 	stopDbAction->setCheckable(true);
 	exitAction = new QAction("Exit", this);
@@ -864,10 +867,13 @@ void Main_Wid::systemtray_connect(void) {
 	// Connect actions to slots or functions
 	connect(startDbAction, &QAction::triggered, this, &Main_Wid::systemtray_startdb);
 	connect(stopDbAction, &QAction::triggered, this, &Main_Wid::systemtray_stopdb);
+	connect(configDbAction, &QAction::triggered, this, &Main_Wid::systemtray_configdb);
 	connect(exitAction, &QAction::triggered, this, &Main_Wid::terminate_threads_close_app);
 
 	trayContextMenu->addAction(startDbAction);
 	trayContextMenu->addAction(stopDbAction);
+	trayContextMenu->addSeparator();
+	trayContextMenu->addAction(configDbAction);
 	trayContextMenu->addSeparator();
 	trayContextMenu->addAction(exitAction);
 
@@ -879,8 +885,8 @@ void Main_Wid::systemtray_connect(void) {
 
 //Start the postgresql database from the system tray context
 void Main_Wid::systemtray_startdb(void) {
-	const char* command = "C:/Progra~1/PostgreSQL/16/bin/pg_ctl.exe start -D C:/Progra~1/PostgreSQL/16/data";
-	int status = system(command);
+
+	int status = this->perform_action_on_database(database_command_action::database_start);
 
 	if (status == 0) {
 		startDbAction->setChecked(true);
@@ -894,9 +900,9 @@ void Main_Wid::systemtray_startdb(void) {
 
 //Stop the postgresql database from the system tray context
 void Main_Wid::systemtray_stopdb(void) {
-	const char* command = "C:/Progra~1/PostgreSQL/16/bin/pg_ctl.exe stop -D C:/Progra~1/PostgreSQL/16/data";
-	int status = system(command);
-	
+
+	int status = this->perform_action_on_database(database_command_action::database_stop);
+
 	if (status == 0) {
 		startDbAction->setChecked(false);
 		stopDbAction->setChecked(true);
@@ -906,6 +912,50 @@ void Main_Wid::systemtray_stopdb(void) {
 		std::cerr << "Failed to stop PostgreSQL." << std::endl;
 	}
 
+}
+
+//Run the Postgres control command on the database path. (Command can be to start or stop the database)
+int Main_Wid::perform_action_on_database(database_command_action action) {
+
+	std::string action_start_or_stop = "";
+	switch (action)
+	{
+	case database_command_action::database_start:
+		action_start_or_stop = "start";
+		break;
+	case database_command_action::database_stop:
+		action_start_or_stop = "stop";
+		break;
+	default:
+		action_start_or_stop = "start";
+		break;
+	}
+
+	QSettings settings("AG_FRM", "MyProMaIDes");
+	std::string controller_path = "";
+	std::string database_path = "";
+
+	if (settings.contains("systray_controller_path")) {
+		controller_path = settings.value("systray_controller_path", "").toString().toStdString();
+	}	if (settings.contains("systray_controller_path")) {
+		database_path = settings.value("systray_database_path", "").toString().toStdString();
+	}
+
+	//const char* command = "C:/Progra~1/PostgreSQL/16/bin/pg_ctl.exe start -D C:/Progra~1/PostgreSQL/16/data";
+	std::string postgres_start_command = "\"\"" + controller_path + "\"" + " " + action_start_or_stop + " -D " + "\"" + database_path + "\"\"";
+	int status = system(postgres_start_command.c_str());
+
+	return status;
+}
+
+//Stop the postgresql database from the system tray context
+void Main_Wid::systemtray_configdb(void) {
+	Sys_Postgres_Config_Dia postgres_config_dialog(this);
+
+	//execute the dia
+	if (postgres_config_dialog.exec() != 0) {//if ok set the parameter	
+		std::cout << postgres_config_dialog.postgres_path().toStdString();
+	}
 }
 
 //Allocate and connect the status bar widget
