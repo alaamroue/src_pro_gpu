@@ -16,12 +16,12 @@ Sys_Postgres_Config_Dia::Sys_Postgres_Config_Dia(QWidget* parent) : QDialog(pare
 
 	//QObject::connect(ui.button_controller, SIGNAL(clicked()), this, SLOT(on_button_controller_clicked()));
 
-	//Sys_Memory_Count::self()->add_mem(sizeof(Sys_Postgres_Config_Dia), _sys_system_modules::SYS_SYS);
+	Sys_Memory_Count::self()->add_mem(sizeof(Sys_Postgres_Config_Dia), _sys_system_modules::SYS_SYS);
 
 }
 //Default destructor
 Sys_Postgres_Config_Dia::~Sys_Postgres_Config_Dia(void) {
-	//Sys_Memory_Count::self()->minus_mem(sizeof(Sys_Postgres_Config_Dia), _sys_system_modules::SYS_SYS);
+	Sys_Memory_Count::self()->minus_mem(sizeof(Sys_Postgres_Config_Dia), _sys_system_modules::SYS_SYS);
 }
 
 //Get postgres path
