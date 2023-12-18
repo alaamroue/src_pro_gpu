@@ -57,6 +57,8 @@ COpenCLSimpleManager::COpenCLSimpleManager(void)
 		this->sDevicesStringList.push_back(cc->getDevice(i + 1)->getDeviceRealName());
 	}
 
+	this->openCLDevicesAvailable = true;
+
 	delete cc;
 	delete logger;
 
