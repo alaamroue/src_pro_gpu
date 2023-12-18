@@ -7,14 +7,14 @@
 
 //decide here the main program
 #define all1
-//#define hydraulic
-//#define geometry
-//#define damage
-//#define test_sc_break
-//#define sizes1
-//#define solver
-//#define solvergpu
-
+//#define hydraulic     // If uncommented then remove WIN32 from CMakeLists.txt in line add_executable(ProMaIDeS WIN32... | Otherwise the executable will open in the background without output
+//#define geometry      // If uncommented then remove WIN32 from CMakeLists.txt in line add_executable(ProMaIDeS WIN32... | Otherwise the executable will open in the background without output
+//#define damage        // If uncommented then remove WIN32 from CMakeLists.txt in line add_executable(ProMaIDeS WIN32... | Otherwise the executable will open in the background without output
+//#define test_sc_break // If uncommented then remove WIN32 from CMakeLists.txt in line add_executable(ProMaIDeS WIN32... | Otherwise the executable will open in the background without output
+//#define sizes1        // If uncommented then remove WIN32 from CMakeLists.txt in line add_executable(ProMaIDeS WIN32... | Otherwise the executable will open in the background without output
+//#define solver        // If uncommented then remove WIN32 from CMakeLists.txt in line add_executable(ProMaIDeS WIN32... | Otherwise the executable will open in the background without output
+//#define solvergpu     // If uncommented then remove WIN32 from CMakeLists.txt in line add_executable(ProMaIDeS WIN32... | Otherwise the executable will open in the background without output
+    
 //#define my
 
 //

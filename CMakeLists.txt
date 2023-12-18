@@ -156,8 +156,9 @@ endif()
 # - add_executable create the executable
 # - The add_executable is the engine here and is defined as add_executable(<name> [WIN32] [MACOSX_BUNDLE] [EXCLUDE_FROM_ALL] [source1] [source2 ...])
 # - ProMaIDeS is the name given to the target
+# - WIN32 is used to selected Windows Subsystem in the linker settings, this is make the application a full GUI application without a console attached
 # - What follows are the source codes
-add_executable(ProMaIDeS
+add_executable(ProMaIDeS WIN32
     ${UI_FILES}
     ${H_FILES}
     ${CPP_FILES}
