@@ -500,7 +500,7 @@ void Hyd_Model_Floodplain::create_table(QSqlDatabase *ptr_database){
 	}
 }
 //Set the database table for the general parameters of the floodplain model: it sets the table name and the name of the columns and allocate them (static)
-void Hyd_Model_Floodplain::set_table(QSqlDatabase *ptr_database){
+void Hyd_Model_Floodplain::set_table(QSqlDatabase *ptr_database, const bool not_close){
 	if(Hyd_Model_Floodplain::general_param_table==NULL){
 		//make specific input for this class
 		const string tab_id_name=hyd_label::tab_fp_gen;
@@ -542,7 +542,9 @@ void Hyd_Model_Floodplain::set_table(QSqlDatabase *ptr_database){
 			throw msg;
 		}
 		catch(Error msg){
-			Hyd_Model_Floodplain::close_table();
+			if (not_close == false) {
+				Hyd_Model_Floodplain::close_table();
+			}
 			throw msg;
 		}
 	}

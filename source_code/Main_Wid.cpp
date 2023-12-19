@@ -3405,6 +3405,7 @@ void Main_Wid::read_existing_project(void){
 				this->version_update.check_update_connect_results_dam_ci(this->system_database->get_database(), this->project_manager.get_project_file_name());
 				this->version_update.check_update_dam_ci_elements(this->system_database->get_database(), this->project_manager.get_project_file_name());
 				this->version_update.check_update_ci_reults(this->system_database->get_database(), this->project_manager.get_project_file_name());
+				this->version_update.check_update_hyd_table_general_param_gpu(this->system_database->get_database(), this->project_manager.get_project_file_name());
 			}
 			
 		}

@@ -84,7 +84,7 @@ public:
 	///Create the database table for the general parameters of the floodplain model
 	static void create_table(QSqlDatabase *ptr_database);
 	///Set the database table for the general parameters of the floodplain model: it sets the table name and the name of the columns and allocate them
-	static void set_table(QSqlDatabase *ptr_database);
+	static void set_table(QSqlDatabase *ptr_database, const bool not_close = false);
 	///Delete all data in the database table for the floodplain model parameters as well as the floodplain elements data
 	static void delete_data_in_table(QSqlDatabase *ptr_database);
 	///Close and delete the database table for the general parameters of the floodplain model
