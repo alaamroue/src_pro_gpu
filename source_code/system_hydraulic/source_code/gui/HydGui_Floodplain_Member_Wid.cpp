@@ -96,6 +96,7 @@ HydGui_Floodplain_Member_Wid::HydGui_Floodplain_Member_Wid(DataRole role, QWidge
 	ui.courant_number->set_tooltip("CFL convergence condition");
 	ui.courant_number->set_value(0.5);
 	ui.courant_number->set_range(0, 1);
+	ui.courant_number->set_increment(0.1);
 
 	// REDUCTION_WAVEFRONTS
 	ui.reduction_wavefronts->set_label_text("Reduction Wavefronts");
@@ -103,6 +104,7 @@ HydGui_Floodplain_Member_Wid::HydGui_Floodplain_Member_Wid(DataRole role, QWidge
 	ui.reduction_wavefronts->set_tooltip("Number of wavefronts to divide the reduction operation into for parallel processing. Higher values can increase parallelism but may introduce more synchronization overhead.");
 	ui.reduction_wavefronts->set_value(200);
 	ui.reduction_wavefronts->set_range(1, 100000);
+	ui.reduction_wavefronts->set_increment(10);
 
 	// FRICTION_STATUS
 	ui.friction_status->set_label_text("Friction Effects");
@@ -114,6 +116,7 @@ HydGui_Floodplain_Member_Wid::HydGui_Floodplain_Member_Wid(DataRole role, QWidge
 	ui.workgroup_size_x->set_tooltip("Workgroup size in X to use in the scheme kernel");
 	ui.workgroup_size_x->set_value(8);
 	ui.workgroup_size_x->set_range(1, 512);
+	ui.workgroup_size_x->set_increment(1);
 
 	// WORKGROUP_SIZE_Y
 	ui.workgroup_size_y->set_label_text("Workgroup Size Y");
@@ -121,6 +124,7 @@ HydGui_Floodplain_Member_Wid::HydGui_Floodplain_Member_Wid(DataRole role, QWidge
 	ui.workgroup_size_y->set_tooltip("Workgroup size in Y to use in the scheme kernel");
 	ui.workgroup_size_y->set_value(8);
 	ui.workgroup_size_y->set_range(1, 512);
+	ui.workgroup_size_y->set_increment(1);
 
 	// TWOD_OUTPUT
 	ui.twod_output->set_label_text("Full path to 2D Output File");
@@ -240,15 +244,10 @@ void HydGui_Floodplain_Member_Wid::set_member(_Sys_Abstract_Base_Wid *ptr) {
 	ui.selected_device->set_current_value(other->ui.selected_device->get_current_index());
 	ui.selected_device->set_editable(false);
 	ui.courant_number->set_value(other->ui.courant_number->get_value());
-	ui.courant_number->set_editable(false);
 	ui.reduction_wavefronts->set_value(other->ui.reduction_wavefronts->get_value());
-	ui.reduction_wavefronts->set_editable(false);
 	ui.friction_status->set_value(other->ui.friction_status->get_value());
-	ui.friction_status->set_editable(false);
 	ui.workgroup_size_x->set_value(other->ui.workgroup_size_x->get_value());
-	ui.workgroup_size_x->set_editable(false);
 	ui.workgroup_size_y->set_value(other->ui.workgroup_size_y->get_value());
-	ui.workgroup_size_y->set_editable(false);
 	//file settings
 	ui.twod_output->set_text(other->ui.twod_output->get_text());
 	ui.twod_output->set_editable(false);
@@ -367,6 +366,7 @@ void HydGui_Floodplain_Member_Wid::show_as_dialog(void) {
 	Sys_Base_Edit_Dia dialog(NULL, this);
 	HydGui_Floodplain_Member_Wid inDiaWid(DataRole::EditRole, &dialog);
 	inDiaWid.set_member(this);
+	inDiaWid.set_editable(true);
 	dialog.add_child(&inDiaWid);
 	dialog.setWindowTitle(this->head_label->text());
 	QIcon icon;
@@ -403,7 +403,25 @@ void HydGui_Floodplain_Member_Wid::transfer_members2database(HydGui_Floodplain_M
 	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::atol) << " = "<< dialog->ui.abs_tol->get_value()<< " , ";
 	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::rtol) << " = "<< dialog->ui.rel_tol->get_value()<< " , ";
 	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::genmod_name) << " = '"<< dialog->ui.floodplain_name->get_text()<< "' , ";
-	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::wet) << " = "<< dialog->ui.wet_tol->get_value()<< "  ";
+	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::wet) << " = "<< dialog->ui.wet_tol->get_value() << " , ";
+
+	string scheme_type_text_from_box = dialog->ui.scheme_type->get_current_value();
+	string scheme_type_text_from_box_to_db = "";
+	for (size_t i = 0; i < scheme_types_mapping.size(); ++i) {
+		if (scheme_types_mapping[i].second.first == scheme_type_text_from_box) {
+			scheme_type_text_from_box_to_db = scheme_types_mapping[i].second.second;
+			break;
+		}
+	}
+
+	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::schemetype) << " = '"<< scheme_type_text_from_box_to_db << "' , ";
+	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::selecteddevice) << " = "<< dialog->ui.selected_device->get_current_index() << " , ";
+	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::courantnumber) << " = "<< dialog->ui.courant_number->get_value() << " , ";
+	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::reductionwavefronts) << " = "<< dialog->ui.reduction_wavefronts->get_value() << " , ";
+	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::frictionstatus) << " = '"<< functions::convert_boolean2string(dialog->ui.friction_status->get_value()) << "' , ";
+	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::workgroupsizex) << " = "<< dialog->ui.workgroup_size_x->get_value() << " , ";
+	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::workgroupsizey) << " = "<< dialog->ui.workgroup_size_y->get_value() << " ";
+	
 	query_string  << " WHERE ";
 	query_string  << Hyd_Model_Floodplain::general_param_table->get_column_name(hyd_label::genmod_id) << " = "  << dialog->ui.floodplain_number->get_value();
 	
