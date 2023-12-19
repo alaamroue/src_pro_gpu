@@ -5270,7 +5270,7 @@ Warning Hyd_Model_Floodplain::set_warning(const int warn_type){
 			reason = "GPU Scheme requested. Your current system doesn't include an OpenCL Runtime";
 			help = "Please search for and install an OpenCL runtime for your device to allow GPU calculations";
 			reaction = "The CPU scheme will be used";
-			type = 2;
+			type = 11;
 			break;
 
 		default:
