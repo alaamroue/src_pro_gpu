@@ -298,10 +298,11 @@ void _Hyd_Model::init_solver_gpu(Hyd_Param_Global* global_params) {
 			ulCellID = ourCartesianDomain->getCellID(iCol, ourCartesianDomain->getRows() - iRow - 1);
 			//Elevations
 			if (myFloodplain->floodplain_elems[ulCellID].get_elem_type() == _hyd_elem_type::STANDARD_ELEM || myFloodplain->floodplain_elems[ulCellID].get_elem_type() == _hyd_elem_type::DIKELINE_ELEM) {
+				//Bed Elevation
 				ourCartesianDomain->setBedElevation(ulCellID, myFloodplain->floodplain_elems[ulCellID].get_z_value());
 			}else {
+				//Bed Elevation
 				ourCartesianDomain->setBedElevation(ulCellID, -9999.0);
-				ourCartesianDomain->setFSL(ulCellID, -9999.0); //Todo: Alaa, remove this. it is redundant
 			}
 			//Manning Coefficient
 			ourCartesianDomain->setManningCoefficient(ulCellID, myFloodplain->floodplain_elems[ulCellID].element_type->get_flow_data().n_value);

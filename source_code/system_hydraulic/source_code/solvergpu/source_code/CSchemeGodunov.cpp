@@ -828,7 +828,7 @@ void	CSchemeGodunov::prepareSimulation()
 {
 
 	// Initial volume in the domain
-	model::log->logInfo("Initial domain volume: " + toStringExact(abs((int)(this->pDomain->getVolume()))) + "m3");
+	model::log->logInfo("Initial domain volume: " + std::to_string(this->pDomain->getVolume()) + " m3");
 
 	// Copy the initial conditions
 	model::log->logInfo("Copying domain data to device...");

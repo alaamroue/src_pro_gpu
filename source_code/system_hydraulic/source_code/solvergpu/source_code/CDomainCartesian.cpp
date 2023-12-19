@@ -29,7 +29,7 @@ CDomainCartesian::CDomainCartesian(void)
 	this->bUseOptimizedBoundary		= false;
 	this->ulCouplingArraySize		= 0;
 
-	this->uiRounding = 10;
+	this->uiRounding = 6;
 	this->sDataProgress.dBatchTimesteps = 0;
 	this->sDataProgress.dCurrentTime = 0.0;
 	this->sDataProgress.dCurrentTimestep = 0.0;
