@@ -39,11 +39,7 @@
 #include "Sys_Project.h"
 
 //Includes for OpenCl GPU:
-#include "common.h"
 #include "COpenCLSimpleManager.h"
-#include "CDomainCartesian.h"
-#include "COCLDevice.h"
-#include "Profiler.h"
 
 
 
@@ -77,9 +73,6 @@ public:
 	HydTemp_Model *my_temp_model; 
 	///Container of global parameters of the system
 	Hyd_Param_Global global_parameters;
-
-	///Pointer to GPU Model Solver containing all gpu related data
-	CModel* pManager;
 
 	///Container of material parameters 
 	Hyd_Param_Material material_params;
