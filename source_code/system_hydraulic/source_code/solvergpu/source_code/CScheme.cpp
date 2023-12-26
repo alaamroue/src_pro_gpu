@@ -25,6 +25,7 @@ CScheme::CScheme()
 	this->bRunning = false;
 	this->bThreadRunning = false;
 	this->bThreadTerminated = false;
+	this->bSimulationSlow = false;
 
 	this->bAutomaticQueue = true;
 	this->uiQueueAdditionSize = 1;
@@ -199,4 +200,10 @@ void	CScheme::setSchemeType(model::schemeTypes::schemeTypes type)
 model::schemeTypes::schemeTypes	CScheme::getSchemeType(void)
 {
 	return this->schemeType;
+}
+
+//Check if the simulation is too slow (timestep very low)
+bool	CScheme::isSimulationSlow(void)
+{
+	return this->bSimulationSlow;
 }

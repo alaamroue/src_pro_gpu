@@ -69,6 +69,7 @@ public:
 		virtual void		runSimulation( double );								// Run this simulation until the specified time
 		virtual void		cleanupSimulation();									// Dispose of transient data and clean-up this domain
 		virtual void		dumpMemory( void );										// Read all buffers so that memory can be dumped
+		virtual void		outputAllFloodplainDataToVtk( void );										// Read all buffers so that memory can be dumped
 
 
 protected:
@@ -129,6 +130,7 @@ protected:
 		COCLBuffer*			oclBufferTimestep;
 		COCLBuffer*			oclBufferTime;
 		COCLBuffer*			oclBufferTimeTarget;
+		COCLBuffer*			oclBufferTimestepMovAvg;
 		COCLBuffer*			oclBufferTimeHydrological;
 		COCLBuffer*			oclBufferTimestepReduction;
 		COCLBuffer*			oclBufferBatchTimesteps;

@@ -336,6 +336,10 @@ void	CModel::runNext(const double next_time_point)
 			domain->getScheme()->runSimulation(dTargetTime);
 		}
 
+		if (domain->getScheme()->isSimulationSlow()) {
+			break;
+		}
+
 		if (this->dCurrentTime > next_time_point) {
 			std::cout << "We are off, next point should " << next_time_point << " but we are at " << this->dCurrentTime << std::endl;
 		}

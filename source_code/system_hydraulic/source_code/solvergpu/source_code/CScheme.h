@@ -66,6 +66,7 @@ class CScheme
 		CDomainCartesian*					getDomain()						{ return pDomain; }						// Fetch the domain we're working on
 		unsigned long long					getCellsCalculated()			{ return ulCurrentCellsCalculated; }	// Number of cells calculated so far
 		double								getCurrentTimestep()			{ return dCurrentTimestep; }			// Current timestep
+		double								getCurrentTimestepMovAvg()		{ return dCurrentTimestepMovAvg; }		// Current timestep Mov Average
 		bool								getCurrentSuspendedState()		{ return ( dCurrentTimestep < 0.0 ); }	// Is the simulation suspended?
 		double								getCurrentTime()				{ return dCurrentTime; }				// Current progress
 		unsigned int						getBatchSize()					{ return uiQueueAdditionSize; }			// Get the batch size
@@ -80,6 +81,7 @@ class CScheme
 		virtual COCLBuffer*					getNextCellSourceBuffer() = 0;											// Get the next source cell state buffer
 		virtual void						dumpMemory() = 0;														// Read back all domain data
 		void								setOutputFreq(double);
+		bool								isSimulationSlow(void);													// Check if the simulation is too slow (timestep very low)
 
 	protected:
 
@@ -87,6 +89,7 @@ class CScheme
 		// ...
 
 		// Private variables
+		bool							bSimulationSlow;														// Is the simulation too slow (timestep very low)?
 		bool							bRunning;																// Is this simulation currently running?
 		bool							bThreadRunning;															// Is the worker thread running?
 		bool							bThreadTerminated;														// Has the worker thread been terminated?
@@ -98,6 +101,7 @@ class CScheme
 		unsigned long long				ulCurrentCellsCalculated;												// Total number of cells calculated
 		double							dCurrentTime;															// Current simulation time
 		double							dCurrentTimestep;														// Current simulation timestep
+		double							dCurrentTimestepMovAvg;													// Current simulation timestep Moving Average
 		double							dTargetTime;															// Target time for synchronization
 		bool							bAutomaticQueue;														// Automatic queue size detection?
 		double							dTimestep;																// Constant/initial timestep

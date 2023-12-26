@@ -13,6 +13,7 @@ __kernel  __attribute__((reqd_work_group_size(1, 1, 1)))
 void tst_Advance_Normal( 
 		__global cl_double *  	dTime,
 		__global cl_double *  	dTimestep,
+		__global cl_double *  	dTimestepMovAvg,
 		__global cl_double *  	dTimeHydrological,
 		__global cl_double *  	pReductionData,
 		__global cl_double4 *  	pCellData,
@@ -25,6 +26,7 @@ void tst_Advance_Normal(
 {
 	__private cl_double	dLclTime			 = *dTime;
 	__private cl_double	dLclTimestep		 = fmax( 0.0, *dTimestep );
+	__private cl_double	dLclTimestepMovAvg	 = *dTimestepMovAvg;
 	__private cl_double	dLclTimeHydrological = *dTimeHydrological;
 	__private cl_double	dLclSyncTime		 = *dTimeSync;
 	__private cl_double dLclBatchTimesteps	 = *dBatchTimesteps;
@@ -144,7 +146,9 @@ void tst_Advance_Normal(
 	// boundary conditions may only just be kicking in (i.e. dry domain)
 	if (dLclTime < TIMESTEP_EARLY_LIMIT_DURATION && dLclTimestep > TIMESTEP_EARLY_LIMIT)
 		dLclTimestep = TIMESTEP_EARLY_LIMIT;
-		
+	
+	dLclTimestepMovAvg = dLclTimestep*TIMESTEP_MOVING_AVG_ALPHA + dLclTimestepMovAvg*(1-TIMESTEP_MOVING_AVG_ALPHA);
+
 	// Don't exceed the target (DECREASE)
 	if ( ( dLclTime + dLclTimestep ) > dLclSyncTime  - 1e-5 ){
 		dLclTimestep = dLclSyncTime - dLclTime;
@@ -167,12 +171,13 @@ void tst_Advance_Normal(
 	//printf("7. Because of limitions, dLclTimestep is now: %f\n", dLclTimestep );
 
 	// Commit to global memory
-	*dTime			   = dLclTime;
-	*dTimestep		   = dLclTimestep;
-	*dTimeHydrological = dLclTimeHydrological;
-	*dBatchTimesteps   = dLclBatchTimesteps;
-	*uiBatchSuccessful = uiLclBatchSuccessful;
-	*uiBatchSkipped    = uiLclBatchSkipped;
+	*dTime				= dLclTime;
+	*dTimestep			= dLclTimestep;
+	*dTimestepMovAvg	= dLclTimestepMovAvg;
+	*dTimeHydrological	= dLclTimeHydrological;
+	*dBatchTimesteps	= dLclBatchTimesteps;
+	*uiBatchSuccessful	= uiLclBatchSuccessful;
+	*uiBatchSkipped		= uiLclBatchSkipped;
 }
 
 /*

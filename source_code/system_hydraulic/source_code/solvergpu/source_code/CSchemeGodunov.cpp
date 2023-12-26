@@ -61,6 +61,7 @@ CSchemeGodunov::CSchemeGodunov(void)
 	this->dAvgTimestep = 0.0;
 
 	this->dCurrentTime = 0.0;
+	this->dCurrentTimestepMovAvg = 0.0;
 	this->dThresholdVerySmall = 1E-10;
 	this->dThresholdQuiteSmall = this->dThresholdVerySmall * 10;
 	this->bFrictionInFluxKernel = false;
@@ -97,6 +98,7 @@ CSchemeGodunov::CSchemeGodunov(void)
 	oclBufferTimestepReduction = NULL;
 	oclBufferTime = NULL;
 	oclBufferTimeTarget = NULL;
+	oclBufferTimestepMovAvg = NULL;
 	oclBufferTimeHydrological = NULL;
 	oclBufferCouplingIDs = NULL;
 	oclBufferCouplingValues = NULL;
@@ -620,6 +622,7 @@ void CSchemeGodunov::prepare1OMemory(){
 	this->oclBufferTimestep = new COCLBuffer("Timestep", oclModel, false, true, ucFloatSize, true);
 	this->oclBufferTime = new COCLBuffer("Time", oclModel, false, true, ucFloatSize, true);
 	this->oclBufferTimeTarget = new COCLBuffer("Target time (sync)", oclModel, false, true, ucFloatSize, true);
+	this->oclBufferTimestepMovAvg = new COCLBuffer("Timestep Moving Average", oclModel, false, true, ucFloatSize, true);
 	this->oclBufferTimeHydrological = new COCLBuffer("Time (hydrological)", oclModel, false, true, ucFloatSize, true);
 
 	// We duplicate the time and timestep variables if we're using single-precision so we have copies in both formats
@@ -627,18 +630,21 @@ void CSchemeGodunov::prepare1OMemory(){
 	{
 		*(this->oclBufferTime->getHostBlock<float*>()) = static_cast<cl_float>(this->dCurrentTime);
 		*(this->oclBufferTimestep->getHostBlock<float*>()) = static_cast<cl_float>(this->dCurrentTimestep);
+		*(this->oclBufferTimestepMovAvg->getHostBlock<float*>()) = 0.0f;
 		*(this->oclBufferTimeHydrological->getHostBlock<float*>()) = 0.0f;
 		*(this->oclBufferTimeTarget->getHostBlock<float*>()) = 0.0f;
 	}
 	else {
 		*(this->oclBufferTime->getHostBlock<double*>()) = this->dCurrentTime;
 		*(this->oclBufferTimestep->getHostBlock<double*>()) = this->dCurrentTimestep;
+		*(this->oclBufferTimestepMovAvg->getHostBlock<double*>()) = 0.0;
 		*(this->oclBufferTimeHydrological->getHostBlock<double*>()) = 0.0;
 		*(this->oclBufferTimeTarget->getHostBlock<double*>()) = 0.0;
 	}
 
 	this->oclBufferTimestep->createBuffer();
 	this->oclBufferTime->createBuffer();
+	this->oclBufferTimestepMovAvg->createBuffer();
 	this->oclBufferTimeHydrological->createBuffer();
 	this->oclBufferTimeTarget->createBuffer();
 
@@ -676,7 +682,7 @@ void CSchemeGodunov::prepareGeneralKernels()
 	oclKernelTimestepReduction->setGroupSize(this->ulReductionWorkgroupSize);
 	oclKernelTimestepReduction->setGlobalSize(this->ulReductionGlobalSize);
 
-	COCLBuffer* aryArgsTimeAdvance[] = { oclBufferTime, oclBufferTimestep, oclBufferTimeHydrological, oclBufferTimestepReduction, oclBufferCellStates, oclBufferCellBed, oclBufferTimeTarget, oclBufferBatchTimesteps, oclBufferBatchSuccessful, oclBufferBatchSkipped };
+	COCLBuffer* aryArgsTimeAdvance[] = { oclBufferTime, oclBufferTimestep, oclBufferTimestepMovAvg, oclBufferTimeHydrological, oclBufferTimestepReduction, oclBufferCellStates, oclBufferCellBed, oclBufferTimeTarget, oclBufferBatchTimesteps, oclBufferBatchSuccessful, oclBufferBatchSkipped };
 	COCLBuffer* aryArgsTimestepUpdate[] = { oclBufferTime, oclBufferTimestep, oclBufferTimestepReduction, oclBufferTimeTarget, oclBufferBatchTimesteps };
 	COCLBuffer* aryArgsTimeReduction[] = { oclBufferCellStates, oclBufferCellBed, oclBufferTimestepReduction };
 	COCLBuffer* aryArgsResetCounters[] = { oclBufferBatchTimesteps, oclBufferBatchSuccessful, oclBufferBatchSkipped };
@@ -784,11 +790,12 @@ void CSchemeGodunov::release1OResources()
 	if (this->oclBuffer_opt_zymax != NULL)				delete oclBuffer_opt_zymax;
 	if (this->oclBuffer_opt_cy != NULL)					delete oclBuffer_opt_cy;
 	if (this->oclBufferCellBed != NULL)					delete oclBufferCellBed;
-	if (this->oclBufferTimestep != NULL)					delete oclBufferTimestep;
-	if (this->oclBufferTimestepReduction != NULL)			delete oclBufferTimestepReduction;
-	if (this->oclBufferTime != NULL)						delete oclBufferTime;
+	if (this->oclBufferTimestep != NULL)				delete oclBufferTimestep;
+	if (this->oclBufferTimestepReduction != NULL)		delete oclBufferTimestepReduction;
+	if (this->oclBufferTime != NULL)					delete oclBufferTime;
 	if (this->oclBufferTimeTarget != NULL)				delete oclBufferTimeTarget;
-	if (this->oclBufferTimeHydrological != NULL)			delete oclBufferTimeHydrological;
+	if (this->oclBufferTimestepMovAvg != NULL)			delete oclBufferTimestepMovAvg;
+	if (this->oclBufferTimeHydrological != NULL)		delete oclBufferTimeHydrological;
 	if (this->oclBufferBatchTimesteps != NULL)			delete oclBufferBatchTimesteps;
 	if (this->oclBufferBatchSuccessful != NULL)			delete oclBufferBatchSuccessful;
 	if (this->oclBufferBatchSkipped != NULL)			delete oclBufferBatchSkipped;
@@ -816,6 +823,7 @@ void CSchemeGodunov::release1OResources()
 	oclBufferTimestepReduction = NULL;
 	oclBufferTime = NULL;
 	oclBufferTimeTarget = NULL;
+	oclBufferTimestepMovAvg = NULL;
 	oclBufferTimeHydrological = NULL;
 	oclBufferBatchTimesteps = NULL;
 	oclBufferBatchSuccessful = NULL;
@@ -850,6 +858,7 @@ void	CSchemeGodunov::prepareSimulation()
 	oclBuffer_opt_cy->queueWriteAll();
 	oclBufferTime->queueWriteAll();
 	oclBufferTimestep->queueWriteAll();
+	oclBufferTimestepMovAvg->queueWriteAll();
 	oclBufferTimeHydrological->queueWriteAll();
 	this->pDomain->getDevice()->blockUntilFinished();
 
@@ -948,6 +957,10 @@ void CSchemeGodunov::Threaded_runBatch()
 	// associated with creating a thread.
 	while (this->bThreadRunning)
 	{
+		if (this->bSimulationSlow) {
+			return;
+		}
+
 		// Are we expected to run?
 		if (!this->bRunning || this->pDomain->getDevice()->isBusy()){
 			if (this->pDomain->getDevice()->isBusy()){
@@ -993,8 +1006,20 @@ void CSchemeGodunov::Threaded_runBatch()
 
 		// Can only schedule one iteration before we need to sync timesteps
 		unsigned int uiQueueAmount = 1;
-		uiQueueAmount = 4;
+		unsigned int estimatedQ;
 
+		if (dCurrentTimestepMovAvg > 0.001 && dTargetTime - dCurrentTime>0.01) {
+			estimatedQ = (dTargetTime - dCurrentTime) / dCurrentTimestepMovAvg;
+			uiQueueAmount = max(min(300, estimatedQ),1);
+		}
+		else {
+			if (dCurrentTime > 0.1 && dCurrentTimestepMovAvg < 0.001) {
+				this->outputAllFloodplainDataToVtk();	// Report Floodplain in a vtk file
+				this->bSimulationSlow = true;			// Declare Slow Simulation
+				return;									// Don't go beyond
+			}
+			uiQueueAmount = 1;
+		}
 
 		// Schedule a batch-load of work for the device
 		if (this->dCurrentTime < dTargetTime - 1e-8) {
@@ -1011,59 +1036,19 @@ void CSchemeGodunov::Threaded_runBatch()
 
 		// Schedule reading data back. We always need the timestep but we might not need the other details always...
 		oclBufferTimestep->queueReadAll();
+		oclBufferTimestepMovAvg->queueReadAll();
 		oclBufferTime->queueReadAll();
 		oclBufferBatchSkipped->queueReadAll();
 		oclBufferBatchSuccessful->queueReadAll();
 		oclBufferBatchTimesteps->queueReadAll();
 		this->pDomain->getDevice()->blockUntilFinished();
-		
-		//if (uiIterationsTotal % 50 == 0) {
-		//	std::cout << this->getDomain()->getName() << " Time: " << dCurrentTime << " Step: " << dCurrentTimestep << " Succ: " << uiBatchSuccessful << " Skipped:" << uiBatchSkipped << std::endl;
-		//}
-		//
-		//std::string path;
-		//
-		//if (dCurrentTime > 120000.0) {
-		//	std::cout << this->getDomain()->getName() << " Time: " << dCurrentTime << " Step: " << dCurrentTimestep << " Succ: " << uiBatchSuccessful << " Skipped:" << uiBatchSkipped << std::endl;
-		//	double* opt_h_gpu = new double[this->getDomain()->getCellCount()];
-		//	double* opt_v_x_gpu = new double[this->getDomain()->getCellCount()];
-		//	double* opt_v_y_gpu = new double[this->getDomain()->getCellCount()];
-		//	this->getDomain()->readBuffers_h_vx_vy(opt_h_gpu, opt_v_x_gpu, opt_v_y_gpu);
-		//
-		//
-		//	double* opt_z = new double[this->getDomain()->getCellCount()];
-		//	double* opt_zx_max = new double[this->getDomain()->getCellCount()];
-		//	double* opt_zy_max = new double[this->getDomain()->getCellCount()];
-		//	double* opt_s_gpu = new double[this->getDomain()->getCellCount()];
-		//	for (int i = 0; i < this->getDomain()->getCellCount(); i++){
-		//		opt_z[i] = this->getDomain()->getBedElevation(i);
-		//		opt_zx_max[i] = this->getDomain()->getZxmax(i);
-		//		opt_zy_max[i] = this->getDomain()->getZymax(i);
-		//		opt_s_gpu[i]  = this->getDomain()->getBedElevation(i) + opt_h_gpu[i];
-		//	}
-		//
-		//
-		//	path = "C:/Users/abaghdad/Desktop/temp/vtksTemp/fp_" + std::to_string(static_cast<long>((dCurrentTime - 120000.0)*100000)) + ".vtk";
-		//	this->getDomain()->output_to_vtk_file(path, dCurrentTime, "rasterName", this->getDomain()->getCols(), this->getDomain()->getRows(), opt_z, opt_zx_max, opt_zy_max, opt_h_gpu, opt_s_gpu, opt_v_x_gpu, opt_v_y_gpu);
-		//	
-		//	delete[] opt_h_gpu;
-		//	delete[] opt_v_x_gpu;
-		//	delete[] opt_v_y_gpu;
-		//	delete[] opt_z;
-		//	delete[] opt_zx_max;
-		//	delete[] opt_zy_max;
-		//	delete[] opt_s_gpu;
-		//}
-
-
 
 		this->readKeyStatistics();
+
 		dAvgTimestep = (dAvgTimestep * uiIterationsTotal + dCurrentTimestep * uiIterationsSinceTargetChanged) / (uiIterationsTotal + uiIterationsSinceTargetChanged);
 		uiIterationsTotal += uiIterationsSinceTargetChanged;
 		uiSuccessfulIterationsTotal += uiBatchSuccessful;
 		uiSkippedIterationsTotal += uiBatchSkipped;
-
-		//std::cout << "uiIterationsSinceTargetChanged: " << uiIterationsSinceTargetChanged << " uiBatchSuccessful: " << uiBatchSuccessful << " uiBatchSkipped: " << uiBatchSkipped << std::endl;
 
 		// Wait until further work is scheduled
 		this->bRunning = false;
@@ -1200,10 +1185,12 @@ void	CSchemeGodunov::readKeyStatistics()
 	if (cModel->getFloatPrecision() == model::floatPrecision::kSingle )
 	{
 		dCurrentTimestep = static_cast<cl_double>( *( oclBufferTimestep->getHostBlock<float*>() ) );
+		dCurrentTimestepMovAvg = static_cast<cl_double>( *( oclBufferTimestepMovAvg->getHostBlock<float*>() ) );
 		dCurrentTime = static_cast<cl_double>(*(oclBufferTime->getHostBlock<float*>()));
 		dBatchTimesteps = static_cast<cl_double>( *( oclBufferBatchTimesteps->getHostBlock<float*>() ) );
 	} else {
 		dCurrentTimestep = *( oclBufferTimestep->getHostBlock<double*>() );
+		dCurrentTimestepMovAvg = *(oclBufferTimestepMovAvg->getHostBlock<double*>() );
 		dCurrentTime = *(oclBufferTime->getHostBlock<double*>());
 		dBatchTimesteps = *( oclBufferBatchTimesteps->getHostBlock<double*>() );
 	}
@@ -1231,4 +1218,36 @@ void CSchemeGodunov::dumpMemory() {
 		}
 	}
 
+}
+
+void CSchemeGodunov::outputAllFloodplainDataToVtk() {
+
+	std::string path = "fp_" + this->getDomain()->getName() + "_" + std::to_string(dCurrentTime) + ".vtk";
+
+	std::cout << "Floodplain is being exported to [" << path << "]" << std::endl;
+	double* opt_h_gpu = new double[this->getDomain()->getCellCount()];
+	double* opt_v_x_gpu = new double[this->getDomain()->getCellCount()];
+	double* opt_v_y_gpu = new double[this->getDomain()->getCellCount()];
+	this->getDomain()->readBuffers_h_vx_vy(opt_h_gpu, opt_v_x_gpu, opt_v_y_gpu);
+	
+	double* opt_z = new double[this->getDomain()->getCellCount()];
+	double* opt_zx_max = new double[this->getDomain()->getCellCount()];
+	double* opt_zy_max = new double[this->getDomain()->getCellCount()];
+	double* opt_s_gpu = new double[this->getDomain()->getCellCount()];
+	for (int i = 0; i < this->getDomain()->getCellCount(); i++){
+		opt_z[i] = this->getDomain()->getBedElevation(i);
+		opt_zx_max[i] = this->getDomain()->getZxmax(i);
+		opt_zy_max[i] = this->getDomain()->getZymax(i);
+		opt_s_gpu[i]  = this->getDomain()->getBedElevation(i) + opt_h_gpu[i];
+	}
+	
+	this->getDomain()->output_to_vtk_file(path, dCurrentTime, "rasterName", this->getDomain()->getCols(), this->getDomain()->getRows(), opt_z, opt_zx_max, opt_zy_max, opt_h_gpu, opt_s_gpu, opt_v_x_gpu, opt_v_y_gpu);
+	
+	delete[] opt_h_gpu;
+	delete[] opt_v_x_gpu;
+	delete[] opt_v_y_gpu;
+	delete[] opt_z;
+	delete[] opt_zx_max;
+	delete[] opt_zy_max;
+	delete[] opt_s_gpu;
 }

@@ -1313,6 +1313,24 @@ void Hyd_Model_Floodplain::solve_model_gpu(const double next_time_point, const s
 		// Run the simulations until the target time, the results on the simulation are saved in readBuffers_opt_h
 		//cout << "Next_time_point: " << next_time_point << endl;
 		this->run_solver_gpu(next_time_point, system_id);
+		if (myScheme->isSimulationSlow()) {
+			Hyd_Param_FP hyd_Param_FP;
+			Error msg = this->set_error(26);
+			ostringstream info;
+			info << "Hydraulic system                    : " << system_id << endl;
+			info << this->get_model_description();
+
+			info << "Scheme Type: " << hyd_Param_FP.convert_schemetype2txt(myScheme->getSchemeType()) << endl;
+			info << "Courant Number: " << myScheme->getCourantNumber() << endl;
+			info << "Target Time: " << myScheme->getTargetTime() << endl;
+			info << "Current Time: " << myScheme->getCurrentTime() << endl;
+			info << "Current Timestep: " << myScheme->getCurrentTimestep() << endl;
+			info << "Current Timestep Moving Average: " << myScheme->getCurrentTimestepMovAvg() << endl;
+			info << "Floodplain Snapshot has been exported to " << "fp_" + myCarDomain->getName() + "_" + std::to_string(myScheme->getCurrentTime()) + ".vtk" << endl;
+			msg.make_second_info(info.str());
+			throw msg;
+		}
+
 		//profiler->profile("run_solver_gpu", Profiler::profilerFlags::END_PROFILING);
 
 
@@ -5455,8 +5473,13 @@ Error Hyd_Model_Floodplain::set_error(const int err_type){
 			help = "Check the file";
 			type = 5;
 			break;
+		case 26://Gpu Solver became too Slow
+			place.append("solve_model_gpu(const double next_time_point, const string system_id)");
+			reason = "The solver scheme timestep got too low. This is due to very high velocities/high depth values. The simulation exited to prevent simulation from running indefinitely";
+			help = "The floodplain at simulation time has been export in a vtk file. Check the simulation results for unrealistic values.";
+			type = 35;
+			break;
 
-	
 		default:
 			place.append("set_error(const int err_type)");
 			reason ="Unknown flag!";
