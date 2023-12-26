@@ -1006,8 +1006,8 @@ void CSchemeGodunov::Threaded_runBatch()
 			}
 
 			// Can only schedule one iteration before we need to sync timesteps
-			unsigned int uiQueueAmount = 1;
-			unsigned int estimatedQ;
+			int uiQueueAmount = 1;
+			int estimatedQ;
 
 			if (dCurrentTimestepMovAvg > 0.001 && dTargetTime - dCurrentTime>0.01) {
 				estimatedQ = (dTargetTime - dCurrentTime) / dCurrentTimestepMovAvg;
