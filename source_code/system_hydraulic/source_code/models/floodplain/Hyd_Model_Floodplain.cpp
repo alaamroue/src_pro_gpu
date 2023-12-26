@@ -1330,6 +1330,11 @@ void Hyd_Model_Floodplain::solve_model_gpu(const double next_time_point, const s
 			msg.make_second_info(info.str());
 			throw msg;
 		}
+		if (myScheme->isSolverThreadStopped()) {
+			Hyd_Param_FP hyd_Param_FP;
+			Error msg = this->set_error(27);
+			throw msg;
+		}
 
 		//profiler->profile("run_solver_gpu", Profiler::profilerFlags::END_PROFILING);
 
@@ -5477,6 +5482,12 @@ Error Hyd_Model_Floodplain::set_error(const int err_type){
 			place.append("solve_model_gpu(const double next_time_point, const string system_id)");
 			reason = "The solver scheme timestep got too low. This is due to very high velocities/high depth values. The simulation exited to prevent simulation from running indefinitely";
 			help = "The floodplain at simulation time has been export in a vtk file. Check the simulation results for unrealistic values.";
+			type = 35;
+			break;
+		case 27://Gpu Solver thread returned an error
+			place.append("solve_model_gpu(const double next_time_point, const string system_id)");
+			reason = "The solver thread reported an error. Simulation will be terminated.";
+			help = "Please read message above.";
 			type = 35;
 			break;
 

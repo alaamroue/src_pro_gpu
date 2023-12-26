@@ -116,6 +116,10 @@ void CLog::logError(std::string error_reason, unsigned char error_type, std::str
 			std::cout << "[ERR]: " << "Place: " << error_place << std::endl;
 			std::cout << "[ERR]: " << "Recommendation: " << error_help << std::endl;
 			std::cout << "---------------------------------------------" << std::endl;
+			
+			//Throw an error in the solver thread, the thread will catch it and terminate
+			if(onNonMainThread)
+				throw std::runtime_error("The error above occured on the solver thread. Simulation will be terminated.");
 		}
 		else {
 			externalLogger->logError(error_reason, error_type, error_place, error_help);

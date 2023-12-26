@@ -336,7 +336,7 @@ void	CModel::runNext(const double next_time_point)
 			domain->getScheme()->runSimulation(dTargetTime);
 		}
 
-		if (domain->getScheme()->isSimulationSlow()) {
+		if (domain->getScheme()->isSimulationSlow() || domain->getScheme()->isSolverThreadStopped()) {
 			break;
 		}
 

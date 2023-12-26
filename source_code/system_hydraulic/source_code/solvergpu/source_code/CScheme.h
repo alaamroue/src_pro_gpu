@@ -82,6 +82,7 @@ class CScheme
 		virtual void						dumpMemory() = 0;														// Read back all domain data
 		void								setOutputFreq(double);
 		bool								isSimulationSlow(void);													// Check if the simulation is too slow (timestep very low)
+		bool								isSolverThreadStopped(void);											//Check if the solver thread has errors
 
 	protected:
 
@@ -90,6 +91,7 @@ class CScheme
 
 		// Private variables
 		bool							bSimulationSlow;														// Is the simulation too slow (timestep very low)?
+		bool							bSolverThreadStopped;													// Does solver thread have errors
 		bool							bRunning;																// Is this simulation currently running?
 		bool							bThreadRunning;															// Is the worker thread running?
 		bool							bThreadTerminated;														// Has the worker thread been terminated?

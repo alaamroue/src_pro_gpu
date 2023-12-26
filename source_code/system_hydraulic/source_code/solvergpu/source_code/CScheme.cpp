@@ -26,6 +26,7 @@ CScheme::CScheme()
 	this->bThreadRunning = false;
 	this->bThreadTerminated = false;
 	this->bSimulationSlow = false;
+	this->bSolverThreadStopped = false;
 
 	this->bAutomaticQueue = true;
 	this->uiQueueAdditionSize = 1;
@@ -206,4 +207,10 @@ model::schemeTypes::schemeTypes	CScheme::getSchemeType(void)
 bool	CScheme::isSimulationSlow(void)
 {
 	return this->bSimulationSlow;
+}
+
+//Check if the solver thread has errors
+bool	CScheme::isSolverThreadStopped(void)
+{
+	return this->bSolverThreadStopped;
 }

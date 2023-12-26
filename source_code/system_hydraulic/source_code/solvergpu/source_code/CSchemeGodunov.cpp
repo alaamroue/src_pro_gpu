@@ -957,103 +957,113 @@ void CSchemeGodunov::Threaded_runBatch()
 	// associated with creating a thread.
 	while (this->bThreadRunning)
 	{
-		if (this->bSimulationSlow) {
-			return;
-		}
-
-		// Are we expected to run?
-		if (!this->bRunning || this->pDomain->getDevice()->isBusy()){
-			if (this->pDomain->getDevice()->isBusy()){
-				this->pDomain->getDevice()->blockUntilFinished();
-			}
-			continue;
-		}
-		this->cModel->profiler->profile("BatchRunning", CProfiler::profilerFlags::START_PROFILING);
-
-		// Have we been asked to update the target time?
-		if (this->bUpdateTargetTime){
-			this->bUpdateTargetTime = false;
-			this->uiIterationsSinceTargetChanged = 0;
-
-			if (cModel->getFloatPrecision() == model::floatPrecision::kSingle) {
-				*(oclBufferTimeTarget->getHostBlock<float*>()) = static_cast<cl_float>(this->dTargetTime);
-			}else {
-				*(oclBufferTimeTarget->getHostBlock<double*>()) = this->dTargetTime;
-			}
-			oclBufferTimeTarget->queueWriteAll();
-
-
-			if (dCurrentTime + dCurrentTimestep > dTargetTime) {
-				this->dCurrentTimestep = dTargetTime - dCurrentTime;
-				model::log->logWarning("Override Timestep Requested");
+		try{
+			if (this->bSimulationSlow || this->bSolverThreadStopped) {
+				return;
 			}
 
-		}
+			// Are we expected to run?
+			if (!this->bRunning || this->pDomain->getDevice()->isBusy()){
+				if (this->pDomain->getDevice()->isBusy()){
+					this->pDomain->getDevice()->blockUntilFinished();
+				}
+				continue;
+			}
+			this->cModel->profiler->profile("BatchRunning", CProfiler::profilerFlags::START_PROFILING);
 
-		// Have we been asked to import new data?
-		if (this->bImportBoundaries) {
-			this->bImportBoundaries = false;
-			this->uiIterationsSinceTargetChanged = 0;
-			oclKernelResetCounters->scheduleExecution();
+			// Have we been asked to update the target time?
+			if (this->bUpdateTargetTime){
+				this->bUpdateTargetTime = false;
+				this->uiIterationsSinceTargetChanged = 0;
 
-			if (this->bUseOptimizedBoundary == false) {
-				this->oclBufferCellBoundary->queueWriteAll();
-			}else {
-				this->oclBufferCouplingValues->queueWriteAll();
+				if (cModel->getFloatPrecision() == model::floatPrecision::kSingle) {
+					*(oclBufferTimeTarget->getHostBlock<float*>()) = static_cast<cl_float>(this->dTargetTime);
+				}else {
+					*(oclBufferTimeTarget->getHostBlock<double*>()) = this->dTargetTime;
+				}
+				oclBufferTimeTarget->queueWriteAll();
+
+
+				if (dCurrentTime + dCurrentTimestep > dTargetTime) {
+					this->dCurrentTimestep = dTargetTime - dCurrentTime;
+					model::log->logWarning("Override Timestep Requested");
+				}
+
 			}
 
-		}
+			// Have we been asked to import new data?
+			if (this->bImportBoundaries) {
+				this->bImportBoundaries = false;
+				this->uiIterationsSinceTargetChanged = 0;
+				oclKernelResetCounters->scheduleExecution();
 
-		// Can only schedule one iteration before we need to sync timesteps
-		unsigned int uiQueueAmount = 1;
-		unsigned int estimatedQ;
+				if (this->bUseOptimizedBoundary == false) {
+					this->oclBufferCellBoundary->queueWriteAll();
+				}else {
+					this->oclBufferCouplingValues->queueWriteAll();
+				}
 
-		if (dCurrentTimestepMovAvg > 0.001 && dTargetTime - dCurrentTime>0.01) {
-			estimatedQ = (dTargetTime - dCurrentTime) / dCurrentTimestepMovAvg;
-			uiQueueAmount = max(min(300, estimatedQ),1);
-		}
-		else {
-			if (dCurrentTime > 0.1 && dCurrentTimestepMovAvg < 0.001) {
-				this->outputAllFloodplainDataToVtk();	// Report Floodplain in a vtk file
-				this->bSimulationSlow = true;			// Declare Slow Simulation
-				return;									// Don't go beyond
-			}
-			uiQueueAmount = 1;
-		}
-
-		// Schedule a batch-load of work for the device
-		if (this->dCurrentTime < dTargetTime - 1e-8) {
-			oclKernelResetCounters->scheduleExecution();
-			for (unsigned int i = 0; i < uiQueueAmount; i++) {
-
-				this->scheduleIteration();
-				uiIterationsSinceTargetChanged++;
-				ulCurrentCellsCalculated += this->pDomain->getCellCount();
-				bUseAlternateKernel = !bUseAlternateKernel;
 			}
 
+			// Can only schedule one iteration before we need to sync timesteps
+			unsigned int uiQueueAmount = 1;
+			unsigned int estimatedQ;
+
+			if (dCurrentTimestepMovAvg > 0.001 && dTargetTime - dCurrentTime>0.01) {
+				estimatedQ = (dTargetTime - dCurrentTime) / dCurrentTimestepMovAvg;
+				uiQueueAmount = max(min(300, estimatedQ),1);
+			}
+			else {
+				if (dCurrentTime > 0.1 && dCurrentTimestepMovAvg < 0.001) {
+					this->outputAllFloodplainDataToVtk();	// Report Floodplain in a vtk file
+					this->bSimulationSlow = true;			// Declare Slow Simulation
+					return;									// Don't go beyond
+				}
+				uiQueueAmount = 1;
+			}
+
+			// Schedule a batch-load of work for the device
+			if (this->dCurrentTime < dTargetTime - 1e-8) {
+				oclKernelResetCounters->scheduleExecution();
+				for (unsigned int i = 0; i < uiQueueAmount; i++) {
+
+					this->scheduleIteration();
+					uiIterationsSinceTargetChanged++;
+					ulCurrentCellsCalculated += this->pDomain->getCellCount();
+					bUseAlternateKernel = !bUseAlternateKernel;
+				}
+
+			}
+
+			// Schedule reading data back. We always need the timestep but we might not need the other details always...
+			oclBufferTimestep->queueReadAll();
+			oclBufferTimestepMovAvg->queueReadAll();
+			oclBufferTime->queueReadAll();
+			oclBufferBatchSkipped->queueReadAll();
+			oclBufferBatchSuccessful->queueReadAll();
+			oclBufferBatchTimesteps->queueReadAll();
+			this->pDomain->getDevice()->blockUntilFinished();
+
+			this->readKeyStatistics();
+
+			dAvgTimestep = (dAvgTimestep * uiIterationsTotal + dCurrentTimestep * uiIterationsSinceTargetChanged) / (uiIterationsTotal + uiIterationsSinceTargetChanged);
+			uiIterationsTotal += uiIterationsSinceTargetChanged;
+			uiSuccessfulIterationsTotal += uiBatchSuccessful;
+			uiSkippedIterationsTotal += uiBatchSkipped;
+
+			// Wait until further work is scheduled
+			this->bRunning = false;
+
+			this->cModel->profiler->profile("BatchRunning", CProfiler::profilerFlags::END_PROFILING);
+
+
 		}
-
-		// Schedule reading data back. We always need the timestep but we might not need the other details always...
-		oclBufferTimestep->queueReadAll();
-		oclBufferTimestepMovAvg->queueReadAll();
-		oclBufferTime->queueReadAll();
-		oclBufferBatchSkipped->queueReadAll();
-		oclBufferBatchSuccessful->queueReadAll();
-		oclBufferBatchTimesteps->queueReadAll();
-		this->pDomain->getDevice()->blockUntilFinished();
-
-		this->readKeyStatistics();
-
-		dAvgTimestep = (dAvgTimestep * uiIterationsTotal + dCurrentTimestep * uiIterationsSinceTargetChanged) / (uiIterationsTotal + uiIterationsSinceTargetChanged);
-		uiIterationsTotal += uiIterationsSinceTargetChanged;
-		uiSuccessfulIterationsTotal += uiBatchSuccessful;
-		uiSkippedIterationsTotal += uiBatchSkipped;
-
-		// Wait until further work is scheduled
-		this->bRunning = false;
-
-		this->cModel->profiler->profile("BatchRunning", CProfiler::profilerFlags::END_PROFILING);
+		catch (const std::exception& e)
+		{
+			std::cerr << "Exception caught: " << e.what() << std::endl; // Log Error will throw an error when not in main thread
+			this->bSolverThreadStopped = true;							// Declare Error in Thread
+			return;														// Don't go beyond
+		}
 	}
 
 	this->bThreadTerminated = true;
@@ -1103,16 +1113,6 @@ void	CSchemeGodunov::scheduleIteration() {
 	oclKernelTimeAdvance->scheduleExecution();
 	profilete
 
-	// Only block after every iteration when testing things that need it...
-	// Big performance hit...
-	//this->bUseAlternateKernel = !this->bUseAlternateKernel;
-	//this->getDomain()->getDevice()->blockUntilFinished();
-	//this->readDomainAll();
-	//oclBufferTime->queueReadAll();
-	//oclBufferTimestep->queueReadAll();
-	//this->getDomain()->getDevice()->blockUntilFinished();
-	//std::cout << "Volume: " << this->getDomain()->getVolume() << " Time: " << std::to_string(*(oclBufferTime->getHostBlock<double*>())) << " Timestep: " << std::to_string(*(oclBufferTimestep->getHostBlock<double*>())) << " Exepected: " << std::to_string(*(oclBufferTime->getHostBlock<double*>()) * 5.0) << std::endl;
-	//this->bUseAlternateKernel = !this->bUseAlternateKernel;
 }
 
 // Read back all of the domain data
