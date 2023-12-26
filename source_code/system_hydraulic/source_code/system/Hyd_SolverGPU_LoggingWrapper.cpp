@@ -15,7 +15,7 @@ void Hyd_SolverGPU_LoggingWrapper::logDebug(const std::string& message) {
 	ostringstream cout;
 	if (this->output_on == true) {
 		cout << message << endl;
-		Sys_Common_Output::output_hyd->output_txt(&cout);
+		Sys_Common_Output::output_hyd->output_txt(&cout, true);
 	}
 
 }
@@ -24,7 +24,7 @@ void Hyd_SolverGPU_LoggingWrapper::logInfo(const std::string& message) {
 	ostringstream cout;
 	if (this->output_on == true) {
 		cout << message << endl;
-		Sys_Common_Output::output_hyd->output_txt(&cout);
+		Sys_Common_Output::output_hyd->output_txt(&cout, true);
 	}
 }
 
