@@ -292,8 +292,8 @@ signals:
 	///Emit that an output is required
 	void output_required(int thread_no);
 
-
-
+	///Emit the number of floodplains that will run on CPU and/or GPU (emit to the Hyd_Multiple_Hydraulic_Systems)
+	void statusbar_Multi_hyd_solver_update(unsigned int cpu_count, unsigned int gpu_count);
 
 private:
 	//members

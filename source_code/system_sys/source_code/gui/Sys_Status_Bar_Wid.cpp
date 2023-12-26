@@ -99,9 +99,18 @@ void Sys_Status_Bar_Wid::set_hydthread(const bool flag, const string number){
 	}
 	else if(flag==false){
 		this->label_status_hyd->setText("no");
+		this->set_cpu_gpu_count(0, 0);
 		buff << "HYD-thread finished at " << Sys_Output_Division::set_time();
 		this->label_status_hyd->setToolTip(buff.str().c_str());
 	}
+}
+//set the Cpu and Gpu fps
+void Sys_Status_Bar_Wid::set_cpu_gpu_count(unsigned int cpu_count, unsigned int gpu_count) {
+
+	ostringstream buff;
+	buff << cpu_count << "C " << gpu_count << "G";
+	this->label_status_cgpu->setText(buff.str().c_str());
+	buff.str("");
 }
 //Set the hydraulic-status text-label of the statusbar to "sleep"
 void Sys_Status_Bar_Wid::set_hydthread_sleep(const bool flag){

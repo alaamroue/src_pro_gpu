@@ -963,6 +963,7 @@ void Main_Wid::statusbar_connect(void){
 	this->status_wid=new Sys_Status_Bar_Wid();
 	//this->status_wid->setParent(this->statusBar());
 	//set it to the status bar
+	this->status_wid->setFixedSize(810, 80); //Not sure why this is required here
 	this->statusBar()->addPermanentWidget(this->status_wid,0);
 	this->statusBar()->showMessage("Ready", 0);
 	//connect the slots: error counter
@@ -5338,6 +5339,7 @@ void Main_Wid::set_hydcalc_per_file(void){
 	//connect the thread when is finished
 	QObject::connect(this->hyd_calc,SIGNAL(finished()),this,SLOT(thread_hyd_calc_finished()));
 	QObject::connect(this->hyd_calc,SIGNAL(emit_number_threads(QString )),this,SLOT(catch_thread_number_hy_calc(QString )));
+	QObject::connect(this->hyd_calc, SIGNAL(statusbar_main_hyd_solver_update(unsigned int, unsigned int)), this, SLOT(catch_main_statusbar_hyd_solver_update(unsigned int, unsigned int)));
 	this->action_stop_hyd_calc->setEnabled(true);
 
 	this->reset_exception_new_action();
@@ -5370,6 +5372,7 @@ void Main_Wid::set_hydcalc_per_file_task(QStringList list_id) {
 	//connect the thread when is finished
 	QObject::connect(this->hyd_calc, SIGNAL(finished()), this, SLOT(thread_hyd_calc_finished()));
 	QObject::connect(this->hyd_calc, SIGNAL(emit_number_threads(QString)), this, SLOT(catch_thread_number_hy_calc(QString)));
+	QObject::connect(this->hyd_calc, SIGNAL(statusbar_main_hyd_solver_update(unsigned int, unsigned int)), this, SLOT(catch_main_statusbar_hyd_solver_update(unsigned int, unsigned int)));
 	this->action_stop_hyd_calc->setEnabled(true);
 
 	this->reset_exception_new_action();
@@ -5429,6 +5432,10 @@ void Main_Wid::thread_hyd_calc_finished(void){
 		}
 
 	}
+}
+//Catch the number of CPU/GPU Floodplain to be working, which is emitted from each Hyd_Hydraulic_System (passed through the Hyd_Multiple_Hydraulic_Systems )
+void Main_Wid::catch_main_statusbar_hyd_solver_update(unsigned int cpu_count, unsigned int gpu_count) {
+	this->status_wid->set_cpu_gpu_count(cpu_count, gpu_count);
 }
 //Catch the number of threads, which are launched from the multiple hydraulic system for calculation
 void Main_Wid::catch_thread_number_hy_calc(QString number){
@@ -5857,6 +5864,7 @@ void Main_Wid::set_hydcalc_per_db(void){
 		//connect the thread when is finished
 		QObject::connect(this->hyd_calc,SIGNAL(finished()),this,SLOT(thread_hyd_calc_finished()));
 		QObject::connect(this->hyd_calc,SIGNAL(emit_number_threads(QString )),this,SLOT(catch_thread_number_hy_calc(QString )));
+		QObject::connect(this->hyd_calc, SIGNAL(statusbar_main_hyd_solver_update(unsigned int, unsigned int)), this, SLOT(catch_main_statusbar_hyd_solver_update(unsigned int, unsigned int)));
 
 		this->action_Close_Connection->setEnabled(false);
 		this->action_stop_hyd_calc->setEnabled(true);
@@ -5928,6 +5936,7 @@ void Main_Wid::set_hydcalc_per_task(QList<int> list_id) {
 		//connect the thread when is finished
 		QObject::connect(this->hyd_calc, SIGNAL(finished()), this, SLOT(thread_hyd_calc_finished()));
 		QObject::connect(this->hyd_calc, SIGNAL(emit_number_threads(QString)), this, SLOT(catch_thread_number_hy_calc(QString)));
+		QObject::connect(this->hyd_calc, SIGNAL(statusbar_main_hyd_solver_update(unsigned int, unsigned int)), this, SLOT(catch_main_statusbar_hyd_solver_update(unsigned int, unsigned int)));
 
 		this->action_Close_Connection->setEnabled(false);
 		this->action_stop_hyd_calc->setEnabled(true);

@@ -676,6 +676,8 @@ private slots:
 	void thread_hyd_calc_finished(void);
 	///Catch the number of threads, which are launched from the multiple hydraulic system for calculation
 	void catch_thread_number_hy_calc(QString number);
+	///Catches the signal from the CPU/GPU working floodplain emitter from the Hyd_Hydraulic_System which is passed through the Hyd_Multiple_Hydraulic_Systems
+	void catch_main_statusbar_hyd_solver_update(unsigned int cpu, unsigned int gpu);
 
 	///Set a new output flag for the hyd modul(menu hyd/common)
 	void set_hyd_outputflag(void);
