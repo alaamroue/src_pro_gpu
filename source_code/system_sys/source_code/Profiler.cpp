@@ -23,7 +23,14 @@ void Profiler::profile(std::string name, int flag) {
 	if (doesntExists(name)) {
 		createProfileElement(name);
 		if (flag == profilerFlags::END_PROFILING) {
-			std::cout << "Profiler was set to End profiling but it was never started" << std::endl;
+			bool fatal = false;
+			Error msg;
+			msg.set_msg("void Profiler::profile(std::string name, int flag)",
+				"Profiler for [" + name + "] was set to End profiling but it was never started. ",
+				"Please Report to the developers.",
+				19,
+				fatal);
+			throw msg;
 		}
 	}
 
@@ -32,7 +39,15 @@ void Profiler::profile(std::string name, int flag) {
 
 		if (flag == profilerFlags::START_PROFILING) {
 			if (profiledElement->isStarted == true) {
-				std::cout << "Profile Element " + name + " never ended. And is now requested to start" << std::endl;
+				bool fatal = false;
+				Error msg;
+				msg.set_msg("void Profiler::profile(std::string name, int flag)",
+					"Profile Element [" + name + "] never ended. And is now requested to start",
+					"Please Report to the developers.",
+					19,
+					fatal);
+				throw msg;
+
 			}
 			profiledElement->isStarted = true;
 
@@ -46,7 +61,14 @@ void Profiler::profile(std::string name, int flag) {
 		}
 		if (flag == profilerFlags::END_PROFILING) {
 			if (profiledElement->isStarted == false) {
-				std::cout << "Profile Element " + name + " never started. And is now requested to end" << std::endl;
+				bool fatal = false;
+				Error msg;
+				msg.set_msg("void Profiler::profile(std::string name, int flag)",
+					"Profile Element [" + name + "] never started. And is now requested to end",
+					"Please Report to the developers.",
+					19,
+					fatal);
+				throw msg;
 			}
 			profiledElement->isStarted = false;
 
@@ -61,7 +83,14 @@ void Profiler::profile(std::string name, int flag) {
 
 	}
 	else {
-		std::cout << "Profiler couldn't find the element it was looking for" << std::endl;
+		bool fatal = false;
+		Error msg;
+		msg.set_msg("void Profiler::profile(std::string name, int flag)",
+			"Profiler couldn't find the element [" + name + "]. ",
+			"Please Report to the developers.",
+			19,
+			fatal);
+		throw msg;
 	}
 }
 
@@ -86,7 +115,14 @@ Profiler::ProfiledElement* Profiler::getProfileElement(std::string name) {
 			return profiledElement;
 		}
 	}
-	std::cout << "Profiler never Found the element it was looking for" << std::endl;
+	bool fatal = true;
+	Error msg;
+	msg.set_msg("Profiler::ProfiledElement* Profiler::getProfileElement(std::string name)",
+		"Profiler couldn't find " + name + " in the list of elements to profile.",
+		"Please Report to the developers.",
+		19,
+		fatal);
+	throw msg;
 	return nullptr;
 }
 
@@ -94,8 +130,8 @@ void Profiler::logValues() {
 	if (!activated) {
 		return;
 	}
-
-	std::cout << "### PROFILE Results ###" << std::endl;
+	ostringstream cout;
+	cout << "### PROFILE Results ###" << endl;
 
 	int numberOfElements = this->profiledElements.size();
 
@@ -113,12 +149,13 @@ void Profiler::logValues() {
 		#endif
 	}
 
-	std::cout << "----" << std::endl;
+	cout << "----" << endl;
 	for (int i = 0; i < numberOfElements; ++i) {
-		std::cout << names[i] << " : " << times[i] << " s" << std::endl;
+		cout << names[i] << " : " << times[i] << " s" << endl;
 	}
-	std::cout << "----" << std::endl;
+	cout << "----" << endl;
 
+	Sys_Common_Output::output_hyd->output_txt(&cout, true);
 
 	delete[] names;
 	delete[] times;

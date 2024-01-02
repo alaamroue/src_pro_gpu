@@ -124,7 +124,7 @@ void CProfiler::logValues() {
 		return;
 	}
 
-	std::cout << "### PROFILE Results ###" << std::endl;
+	model::log->logInfo("### PROFILE Results ###");
 	
 	size_t numberOfElements = this->profiledElements.size();
 
@@ -145,10 +145,11 @@ void CProfiler::logValues() {
 	}
 
 	for (size_t i = 0; i < numberOfElements; ++i) {
-		std::cout << names[i] << " : " << times[i] << " s" << std::endl;
+		model::log->logInfo(names[i] + " : " + toStringExact(times[i]) + " s");
 	}
-	std::cout << "----" << std::endl;
-	std::cout << "Total Time: " << TotalTime << " s" << std::endl;
+
+	model::log->logInfo("----");
+	model::log->logInfo("Total Time: " + toStringExact(TotalTime) + " s");
 
 
 	delete[] names;
