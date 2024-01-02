@@ -31,12 +31,11 @@ typedef struct sUsePolini {
 
 void poliniAdjuster(
 	bool activated,
-	cl_double cell_s,
-	cl_double neig_s,
 	cl_double dike_z,
 	cl_double* cell_z,
 	cl_double* neig_z,
-	cl_double4* pneig,
+	cl_double4* pCellState,
+	cl_double4* pNeigState,
 	cl_uchar direction
 );
 

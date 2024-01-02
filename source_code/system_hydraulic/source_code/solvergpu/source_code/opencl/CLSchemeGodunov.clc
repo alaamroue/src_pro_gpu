@@ -183,6 +183,8 @@ void gts_cacheDisabled (
 	dManningCoef		= dManning[ ulIdx ];
 
 	cl_double dCellBedElev_original =  dCellBedElev;
+	cl_double pCellDataS_original   =  pCellData.x;
+
 	dOpt_zxmax			= pOpt_zxmax[ ulIdx ];
 	dOpt_zymax			= pOpt_zymax[ ulIdx ];
 	pUsePoleniFlags		= pUsePoleni[ ulIdx ];
@@ -259,9 +261,9 @@ void gts_cacheDisabled (
 	}
 
 	// Reconstruct interfaces
-		
+
 	// -> North
-	poliniAdjuster(usePoleniN, pCellData.x, pNeigDataN.x, dOpt_zymax, &dCellBedElev, &dNeigBedElevN, &pNeigDataN, DOMAIN_DIR_N);
+	poliniAdjuster(usePoleniN, dOpt_zymax, &dCellBedElev, &dNeigBedElevN, &pCellData, &pNeigDataN, DOMAIN_DIR_N);
 	if(pNeigDataN.x < dNeigBedElevN){pNeigDataN.x = dNeigBedElevN;}
 
 	if( dNeigBedElevN == -9999.0 || pNeigDataN.x==-9990.0) {
@@ -285,10 +287,11 @@ void gts_cacheDisabled (
 	pFlux[DOMAIN_DIR_N] = riemannSolver( DOMAIN_DIR_N, pLeft, pRight, false );
 
 	dCellBedElev = dCellBedElev_original;
+	pCellData.x = pCellDataS_original;
 	
 	
 	// -> South
-	poliniAdjuster(usePoleniS, pCellData.x, pNeigDataS.x, dOpt_znymax, &dCellBedElev, &dNeigBedElevS, &pNeigDataS, DOMAIN_DIR_S);
+	poliniAdjuster(usePoleniS, dOpt_znymax, &dCellBedElev, &dNeigBedElevS, &pCellData, &pNeigDataS, DOMAIN_DIR_S);
 	if(pNeigDataS.x < dNeigBedElevS){pNeigDataS.x = dNeigBedElevS;}
 	if( dNeigBedElevS == -9999.0 || pNeigDataS.x==-9990.0) {
 		pNeigDataS.x = pCellData.x+1.0;
@@ -310,10 +313,11 @@ void gts_cacheDisabled (
 	pFlux[DOMAIN_DIR_S] = riemannSolver( DOMAIN_DIR_S, pLeft, pRight, false );
 	
 	dCellBedElev = dCellBedElev_original;
+	pCellData.x = pCellDataS_original;
 
 	
 	// -> East
-	poliniAdjuster(usePoleniE, pCellData.x, pNeigDataE.x, dOpt_zxmax, &dCellBedElev, &dNeigBedElevE, &pNeigDataE, DOMAIN_DIR_E);
+	poliniAdjuster(usePoleniE, dOpt_zxmax, &dCellBedElev, &dNeigBedElevE, &pCellData, &pNeigDataE, DOMAIN_DIR_E);
 	if(pNeigDataE.x < dNeigBedElevE){pNeigDataE.x = dNeigBedElevE;}
 	if( dNeigBedElevE == -9999.0 || pNeigDataE.x==-9990.0) {
 		pNeigDataE.x = pCellData.x+1.0;
@@ -335,9 +339,10 @@ void gts_cacheDisabled (
 	pFlux[DOMAIN_DIR_E] = riemannSolver( DOMAIN_DIR_E, pLeft, pRight, false );
 	
 	dCellBedElev = dCellBedElev_original;
+	pCellData.x = pCellDataS_original;
 	
 	// -> West
-	poliniAdjuster(usePoleniW, pCellData.x, pNeigDataW.x, dOpt_znxmax, &dCellBedElev, &dNeigBedElevW, &pNeigDataW, DOMAIN_DIR_W);
+	poliniAdjuster(usePoleniW, dOpt_znxmax, &dCellBedElev, &dNeigBedElevW, &pCellData, &pNeigDataW, DOMAIN_DIR_W);
 	if(pNeigDataW.x < dNeigBedElevW){pNeigDataW.x = dNeigBedElevW;}
 	if( dNeigBedElevW == -9999.0 || pNeigDataW.x==-9990.0) {
 		pNeigDataW.x = pCellData.x+1.0;
@@ -357,7 +362,9 @@ void gts_cacheDisabled (
 	pNeigDataW.x  = pLeft.S0;
 	dNeigBedElevW = pLeft.S6;
 	pFlux[DOMAIN_DIR_W] = riemannSolver( DOMAIN_DIR_W, pLeft, pRight, false );
+
 	dCellBedElev = dCellBedElev_original;
+	pCellData.x = pCellDataS_original;
 
 	// Source term vector
 	// TODO: Somehow get these sorted too...
@@ -396,16 +403,34 @@ void gts_cacheDisabled (
 		pCellData.w = 0.0;
 	}
 	
-	//if (ulIdx == 1057){
-	//	printf("N: x: %f y: %f z: %f \n",pFlux[DOMAIN_DIR_N].x,pFlux[DOMAIN_DIR_N].y, pFlux[DOMAIN_DIR_N].z);
-	//	printf("E: x: %f y: %f z: %f \n",pFlux[DOMAIN_DIR_E].x,pFlux[DOMAIN_DIR_E].y, pFlux[DOMAIN_DIR_E].z);
-	//	printf("S: x: %f y: %f z: %f \n",pFlux[DOMAIN_DIR_S].x,pFlux[DOMAIN_DIR_S].y, pFlux[DOMAIN_DIR_S].z);
-	//	printf("W: x: %f y: %f z: %f \n",pFlux[DOMAIN_DIR_W].x,pFlux[DOMAIN_DIR_W].y, pFlux[DOMAIN_DIR_W].z);
-	//	printf("pSourceTerms in x: %f \n",pSourceTerms.y);
-	//	printf("pSourceTerms in y: %f \n",pSourceTerms.z);
-	//	printf("opt_h: %f opt_h_new: %f \n",pCellData.x, pCellData.x	- dLclTimestep * dDeltaValues.x);
-	//	printf("vx: %f \n",   pCellData.z	- dLclTimestep * dDeltaValues.z);
-	//	printf("vy: %f \n\n", pCellData.w	- dLclTimestep * dDeltaValues.w);
+	//\\//\\//\\-----For Debugging-----//\\//\\//\\
+	//double qx = pCellData.z	- dLclTimestep * dDeltaValues.z;
+	//double qy = pCellData.w	- dLclTimestep * dDeltaValues.w;
+	//
+	//if (ulIdx == 1317037 && pCellData.x - dCellBedElev > 0.0){
+	//	printf("dLclTimestep: %f\n",dLclTimestep );
+	//	printf("Cell: opt_s %f opt_h %f q_x %f q_y %f\n",pCellData.x, pCellData.x-dCellBedElev, pCellData.z, pCellData.w );
+	//	printf("N: opt_s %f opt_h %f q_x %f q_y %f\n",pNeigDataN.x, pNeigDataN.x-dNeigBedElevN, pNeigDataN.z, pNeigDataN.w );
+	//	printf("E: opt_s %f opt_h %f q_x %f q_y %f\n",pNeigDataE.x, pNeigDataE.x-dNeigBedElevE, pNeigDataE.z, pNeigDataE.w );
+	//	printf("S: opt_s %f opt_h %f q_x %f q_y %f\n",pNeigDataS.x, pNeigDataS.x-dNeigBedElevS, pNeigDataS.z, pNeigDataS.w );
+	//	printf("W: opt_s %f opt_h %f q_x %f q_y %f\n",pNeigDataW.x, pNeigDataW.x-dNeigBedElevW, pNeigDataW.z, pNeigDataW.w );
+	//	printf("flux: N: h: %f q_x: %f q_y: %f \n",pFlux[DOMAIN_DIR_N].x,pFlux[DOMAIN_DIR_N].z, pFlux[DOMAIN_DIR_N].w);
+	//	printf("flux: E: h: %f q_x: %f q_y: %f \n",pFlux[DOMAIN_DIR_E].x,pFlux[DOMAIN_DIR_E].z, pFlux[DOMAIN_DIR_E].w);
+	//	printf("flux: S: h: %f q_x: %f q_y: %f \n",pFlux[DOMAIN_DIR_S].x,pFlux[DOMAIN_DIR_S].z, pFlux[DOMAIN_DIR_S].w);
+	//	printf("flux: W: h: %f q_x: %f q_y: %f \n",pFlux[DOMAIN_DIR_W].x,pFlux[DOMAIN_DIR_W].z, pFlux[DOMAIN_DIR_W].w);
+	//	printf("pSourceTerms: h: %f q_x: %f q_y: %f \n",pSourceTerms.x,pSourceTerms.y, pSourceTerms.z);
+	//	printf("DeltaValues: h: %f q_x: %f q_y: %f \n",dDeltaValues.x, dDeltaValues.z, dDeltaValues.w);
+	//	printf("ucStop: %f \n",ucStop);
+	//	printf("Vx: %f \n",   (pCellData.z	- dLclTimestep * dDeltaValues.z)/(pCellData.x	- dLclTimestep * dDeltaValues.x - dCellBedElev));
+	//	printf("Vy: %f \n\n", (pCellData.w	- dLclTimestep * dDeltaValues.w)/(pCellData.x	- dLclTimestep * dDeltaValues.x - dCellBedElev));
+	//	//printf("pSourceTerms in x: %f \n",pSourceTerms.y);
+	//	//printf("pSourceTerms in y: %f \n",pSourceTerms.z);
+	//	//printf("opt_s: %f opt_s_new: %f \n",pCellData.x, pCellData.x	- dLclTimestep * dDeltaValues.x);
+	//	//printf("opt_h: %f opt_h_new: %f \n",pCellData.x-dCellBedElev, pCellData.x	- dLclTimestep * dDeltaValues.x-dCellBedElev);
+	//	//printf("Qx: %f \n",   pCellData.z	- dLclTimestep * dDeltaValues.z);
+	//	//printf("Qy: %f \n\n", pCellData.w	- dLclTimestep * dDeltaValues.w);
+	//	//printf("Vx: %f \n",   (pCellData.z	- dLclTimestep * dDeltaValues.z)/(pCellData.x	- dLclTimestep * dDeltaValues.x-dCellBedElev));
+	//	//printf("Vy: %f \n\n", (pCellData.w	- dLclTimestep * dDeltaValues.w)/(pCellData.x	- dLclTimestep * dDeltaValues.x-dCellBedElev));
 	//}
 
 	// Update the flow state
@@ -430,8 +455,20 @@ void gts_cacheDisabled (
 		pCellData.y = pCellData.x;
 
 	// Crazy low depths?
-	if ( pCellData.x - dCellBedElev < VERY_SMALL )
+	//if ( pCellData.x - dCellBedElev < 1e-5 ){ 
+	//	pCellData.x = dCellBedElev;
+	//	pCellData.z = 0.0;
+	//	pCellData.w = 0.0;
+	//}
+	// Crazy low depths?
+	if ( pCellData.x - dCellBedElev < 1e-5 ){ 
+		pCellData.z = 0.0;
+		pCellData.w = 0.0;
+	}
+	// Crazy low depths?
+	if ( pCellData.x - dCellBedElev < 1e-10 ){ 
 		pCellData.x = dCellBedElev;
+	}
 
 	// Commit to global memory
 	pCellStateDst[ ulIdx ] = pCellData;
@@ -439,12 +476,11 @@ void gts_cacheDisabled (
 
 void poliniAdjuster(
 	bool activated,
-	cl_double cell_s,
-	cl_double neig_s,
 	cl_double dike_z,
 	cl_double* cell_z,
 	cl_double* neig_z,
-	cl_double4* pneig,
+	cl_double4* pCellState,
+	cl_double4* pNeigState,
 	cl_uchar direction
 ){
 	if(!activated){
@@ -452,35 +488,43 @@ void poliniAdjuster(
 	}
 
 	if(*neig_z == -9999.0){
-		*neig_z = 100;
 		return;
-		//return;
 	}
-
-	cl_double flowDepth;
-	cl_double flowDepthNeigh;
-	flowDepth = cell_s - dike_z;
-	flowDepthNeigh = neig_s - dike_z;
 	
-	// Cell Lower / Neig Lower
-	if (flowDepth <= 0.0 && flowDepthNeigh <= 0.0){
-		*neig_z = dike_z;
+	cl_double l_cell_s = (*pCellState).x;
+	cl_double l_neig_s = (*pNeigState).x;
+	cl_double l_cell_z = (*pCellState).x;
+	cl_double l_neig_z = (*pNeigState).x;
 
+	// Cell Lower / Neig Lower
+	if (l_cell_s <= dike_z && l_neig_s <= dike_z){
+		*neig_z = dike_z;
+		(*pNeigState).x = dike_z;
 	}
 	// Cell Higher / Neig Lower
-	if (flowDepth > 0.0 && flowDepthNeigh <= 0.0){
-		//should neigh be also dike_z?
+	else if (l_cell_s > dike_z && l_neig_s <= dike_z){
+		//printf("case 2\n");
 		*cell_z = dike_z;
+		(*pCellState).x = l_cell_s + l_cell_z - dike_z;
 	}
 		
 	// Cell Lower / Neig Higher
-	if (flowDepth <= 0.0 && flowDepthNeigh > 0.0){
+	else if (l_cell_s <= dike_z && l_neig_s > dike_z){
 		*neig_z = dike_z;
+		(*pNeigState).x = l_neig_s + l_neig_z - dike_z;
 	}
 		
 	// Cell Higher / Neig Higher
-	if (flowDepth > 0.0 && flowDepthNeigh > 0.0){
-		*cell_z = dike_z;
-		*neig_z = dike_z;
+	else if (l_cell_s > dike_z && l_neig_s > dike_z){
+		if (dike_z > *cell_z){
+			//printf("case 5\n");
+			*cell_z = dike_z;
+			(*pCellState).x = l_cell_s + l_cell_z - dike_z;
+		}
+		if (dike_z > *neig_z){
+			//printf("case 6\n");
+			*neig_z = dike_z;
+			(*pNeigState).x = l_neig_s + l_neig_z - dike_z;
+		}
 	}
 }
