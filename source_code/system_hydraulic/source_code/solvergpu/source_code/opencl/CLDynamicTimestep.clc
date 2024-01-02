@@ -230,10 +230,6 @@ void tst_Reduce(
 		
 		if ( dDepth > QUITE_SMALL && dBedElevation > -9999.0 )
 		{
-			#ifdef DIFFUSIVE_SCHEME
-				dCellSpeed = fabs(pCellState.z)/DOMAIN_DELTAX + fabs(pCellState.w)/DOMAIN_DELTAY; 
-			#endif
-
 			#ifdef GODUNOV_OR_MUSCL
 				dVelX = pCellState.z / dDepth;
 				dVelY = pCellState.w / dDepth;
@@ -244,11 +240,15 @@ void tst_Reduce(
 				dVelY += sqrt( GRAVITY * dDepth );
 			#endif
 
-			#ifdef INERTIAL_SCHEME
+			#ifdef DIFFUSIVE_SCHEME
 				dVelX = sqrt( GRAVITY * dDepth );
 				dVelY = sqrt( GRAVITY * dDepth );
 			#endif
 
+			#ifdef INERTIAL_SCHEME
+				dVelX = sqrt( GRAVITY * dDepth );
+				dVelY = sqrt( GRAVITY * dDepth );
+			#endif
 
 			dCellSpeed = ( dVelX  < dVelY ) ? dVelY : dVelX;
 
