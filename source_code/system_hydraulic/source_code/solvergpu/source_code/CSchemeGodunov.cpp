@@ -1218,6 +1218,98 @@ void CSchemeGodunov::dumpMemory() {
 		}
 	}
 
+	}
+
+void CSchemeGodunov::findFastestCells(DomainCell* first, DomainCell* second, DomainCell* third) {
+
+	double* opt_h_gpu = new double[this->getDomain()->getCellCount()];
+	double* opt_v_x_gpu = new double[this->getDomain()->getCellCount()];
+	double* opt_v_y_gpu = new double[this->getDomain()->getCellCount()];
+	this->getDomain()->readBuffers_h_vx_vy(opt_h_gpu, opt_v_x_gpu, opt_v_y_gpu);
+
+	unsigned long cellId1 = 0;
+	double cellSpeed1 = 0;
+	unsigned long cellId2 = 0;
+	double cellSpeed2 = 0;
+	unsigned long cellId3 = 0;
+	double cellSpeed3 = 0;
+	double cellSpeed, dDepth, dVelX, dVelY;
+
+	for (unsigned long cellId = 0; cellId < this->getDomain()->getCellCount(); cellId++){
+		if (this->getDomain()->getBedElevation(cellId) != -9999.0) {
+			dDepth = opt_h_gpu[cellId];
+
+			if (this->getSchemeType() == model::schemeTypes::kDiffusiveGPU || this->getSchemeType() == model::schemeTypes::kInertialGPU) {
+				dVelX = sqrt(9.81 * dDepth);
+				dVelY = sqrt(9.81 * dDepth);
+
+				cellSpeed = (dVelX < dVelY) ? dVelY : dVelX;
+			}
+			else if (this->getSchemeType() == model::schemeTypes::kGodunovGPU || this->getSchemeType() == model::schemeTypes::kMUSCLGPU) {
+				dVelX = opt_v_x_gpu[cellId] / dDepth;
+				dVelY = opt_v_y_gpu[cellId] / dDepth;
+				if (dVelX < 0.0) dVelX = -dVelX;
+				if (dVelY < 0.0) dVelY = -dVelY;
+
+				dVelX += sqrt(9.81 * dDepth);
+				dVelY += sqrt(9.81 * dDepth);
+			}
+			cellSpeed = (dVelX < dVelY) ? dVelY : dVelX;
+
+			if (cellSpeed >= cellSpeed1) {
+				std::swap(cellId2, cellId3);
+				std::swap(cellSpeed2, cellSpeed3);
+				std::swap(cellId1, cellId2);
+				std::swap(cellSpeed1, cellSpeed2);
+				cellId1 = cellId;
+				cellSpeed1 = cellSpeed;
+				continue;
+			}
+
+			if (cellSpeed >= cellSpeed2) {
+				std::swap(cellId2, cellId3);
+				std::swap(cellSpeed2, cellSpeed3);
+				cellId2 = cellId;
+				cellSpeed2 = cellSpeed;
+				continue;
+			}
+
+			if (cellSpeed >= cellSpeed3) {
+				cellId3 = cellId;
+				cellSpeed3 = cellSpeed;
+				continue;
+			}
+		}
+
+	}
+	first->ulCellId = cellId1;
+	first->dDepth = opt_h_gpu[cellId1];
+	first->dElevation = this->getDomain()->getBedElevation(cellId1);
+	first->dV_x = opt_v_x_gpu[cellId1];
+	first->dV_y = opt_v_y_gpu[cellId1];
+	first->dCalculatedVelocity = cellSpeed1;
+	first->dExpectedTimeStep = this->getDomain()->getCellResolutionX() > this->getDomain()->getCellResolutionY() ? this->getDomain()->getCellResolutionX()/ cellSpeed1 : this->getDomain()->getCellResolutionY() / cellSpeed1;
+
+	second->ulCellId = cellId2;
+	second->dDepth = opt_h_gpu[cellId2];
+	second->dElevation = this->getDomain()->getBedElevation(cellId2);
+	second->dV_x = opt_v_x_gpu[cellId2];
+	second->dV_y = opt_v_y_gpu[cellId2];
+	second->dCalculatedVelocity = cellSpeed2;
+	second->dExpectedTimeStep = this->getDomain()->getCellResolutionX() > this->getDomain()->getCellResolutionY() ? this->getDomain()->getCellResolutionX() / cellSpeed2 : this->getDomain()->getCellResolutionY() / cellSpeed2;
+
+	third->ulCellId = cellId3;
+	third->dDepth = opt_h_gpu[cellId3];
+	third->dElevation = this->getDomain()->getBedElevation(cellId3);
+	third->dV_x = opt_v_x_gpu[cellId3];
+	third->dV_y = opt_v_y_gpu[cellId3];
+	third->dCalculatedVelocity = cellSpeed3;
+	third->dExpectedTimeStep = this->getDomain()->getCellResolutionX() > this->getDomain()->getCellResolutionY() ? this->getDomain()->getCellResolutionX() / cellSpeed3 : this->getDomain()->getCellResolutionY() / cellSpeed3;
+
+
+	delete[] opt_h_gpu;
+	delete[] opt_v_x_gpu;
+	delete[] opt_v_y_gpu;
 }
 
 void CSchemeGodunov::outputAllFloodplainDataToVtk() {
@@ -1234,7 +1326,7 @@ void CSchemeGodunov::outputAllFloodplainDataToVtk() {
 	double* opt_zx_max = new double[this->getDomain()->getCellCount()];
 	double* opt_zy_max = new double[this->getDomain()->getCellCount()];
 	double* opt_s_gpu = new double[this->getDomain()->getCellCount()];
-	for (int i = 0; i < this->getDomain()->getCellCount(); i++){
+	for (unsigned long i = 0; i < this->getDomain()->getCellCount(); i++){
 		opt_z[i] = this->getDomain()->getBedElevation(i);
 		opt_zx_max[i] = this->getDomain()->getZxmax(i);
 		opt_zy_max[i] = this->getDomain()->getZymax(i);

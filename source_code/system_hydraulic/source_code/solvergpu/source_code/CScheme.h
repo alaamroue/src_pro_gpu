@@ -80,6 +80,7 @@ class CScheme
 		virtual void						cleanupSimulation() = 0;												// Dispose of transient data and clean-up this domain
 		virtual COCLBuffer*					getNextCellSourceBuffer() = 0;											// Get the next source cell state buffer
 		virtual void						dumpMemory() = 0;														// Read back all domain data
+		virtual void						findFastestCells(DomainCell*, DomainCell*, DomainCell*) = 0;			//
 		void								setOutputFreq(double);
 		bool								isSimulationSlow(void);													// Check if the simulation is too slow (timestep very low)
 		bool								isSolverThreadStopped(void);											//Check if the solver thread has errors

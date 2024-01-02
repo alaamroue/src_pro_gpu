@@ -304,11 +304,10 @@ void	CDomainCartesian::resetAllValues(){
 		for (unsigned long i = 0; i < this->ulCouplingArraySize; i++){
 			if (this->ucFloatSize == 4){
 				this->fCouplingValues[i] = 0.0;	// Optimized Coupling Values
-				this->ulCouplingIDs[i] = 0;// Optimized Coupling IDs
 			}else {
-				this->fCouplingValues[i] = 0.0;	// Optimized Coupling Values
-				this->ulCouplingIDs[i] = 0;    // Optimized Coupling Values
+				this->dCouplingValues[i] = 0.0;	// Optimized Coupling Values
 			}
+			this->ulCouplingIDs[i] = 0;    // Optimized Coupling Values
 		}
 	}
 	model::log->logInfo("Reseting heap domain data Finished.");
@@ -1053,6 +1052,7 @@ void CDomainCartesian::output_to_vtk_file(std::string path, double time, std::st
 
 	//get the file name
 	double temp_double;
+	unsigned int temp_uint;
 	std::string filename = path;
 	int sizeT = sizeX * sizeY;
 
@@ -1091,6 +1091,16 @@ void CDomainCartesian::output_to_vtk_file(std::string path, double time, std::st
 	//output data
 	std::string buff_unit;
 	txt << "CELL_DATA " << sizeT << std::endl;
+
+	txt << "SCALARS  cell_id unsigned_int" << std::endl;
+	txt << "LOOKUP_TABLE default" << std::endl;
+
+	for (unsigned int i = 0; i < sizeT; i++) {
+		temp_uint = i;
+		Util::SwapEnd(temp_uint);
+		txt.write(reinterpret_cast<char*>(&temp_uint), sizeof(unsigned int));
+	}
+	txt << std::endl;
 
 	txt << "SCALARS  opt_z double" << std::endl;
 	txt << "LOOKUP_TABLE default" << std::endl;

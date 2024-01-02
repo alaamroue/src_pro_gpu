@@ -95,6 +95,12 @@ namespace Util
 		for (long i = 0; i < static_cast<long>(sizeof(var) / 2); i++)
 			std::swap(varArray[sizeof(var) - 1 - i], varArray[i]);
 	}
+	void SwapEnd(unsigned int& var)
+	{
+		char* varArray = reinterpret_cast<char*>(&var);
+		for (long i = 0; i < static_cast<long>(sizeof(var) / 2); i++)
+			std::swap(varArray[sizeof(var) - 1 - i], varArray[i]);
+	}
 
 	//Returns a string of an OpenCL error
 	std::string	get_error_str(int error_id){

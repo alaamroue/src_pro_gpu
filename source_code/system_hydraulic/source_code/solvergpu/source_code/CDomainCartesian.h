@@ -47,6 +47,17 @@ enum direction
 	west = 3
 };
 
+// Data structures used in interop
+struct DomainCell
+{
+	unsigned long	ulCellId;
+	double			dDepth;
+	double			dElevation;
+	double			dV_x;
+	double			dV_y;
+	double			dCalculatedVelocity;
+	double			dExpectedTimeStep;
+};
 /*
  *  DOMAIN CLASS
  *  CDomainCartesian

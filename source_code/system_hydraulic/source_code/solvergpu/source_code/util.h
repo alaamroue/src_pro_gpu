@@ -30,6 +30,7 @@ namespace Util
 	std::string     to_string_exact(double);					// Convert double to string (useful for extra small or extra large doubles like 1e-10)
 	std::string		get_error_str(int);							// Returns a string of an OpenCL error
 	void			SwapEnd(double& var);						// In-place byte order swap for a double-precision floating-point number.
+	void			SwapEnd(unsigned int& var);					// In-place byte order swap for an unsigned int
 
 }
 
